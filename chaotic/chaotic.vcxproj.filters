@@ -1,0 +1,384 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Sources">
+      <UniqueIdentifier>{76ed4265-56ad-4060-904b-8b618c3c7a24}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Sources\Private">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Sources\Public">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="Sources\Private\Bindable">
+      <UniqueIdentifier>{bd851c6e-88c6-4818-b066-a3aca4977db4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Sources\Private\Drawable">
+      <UniqueIdentifier>{f3ed4f8b-c77e-4df8-bb87-6387fe9ccce6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Sources\Private\Exception">
+      <UniqueIdentifier>{d23d70c6-043c-4331-bada-2823c0a82e9d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Sources\Private\Image">
+      <UniqueIdentifier>{f39cd48c-d727-47ec-80f6-684da56b5ac9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Sources\Private\Math">
+      <UniqueIdentifier>{4336ea6c-9cd3-4eb3-bfa6-4d7e58375ec9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Sources\Public\Bindable">
+      <UniqueIdentifier>{393f4f9d-8dcd-4b45-8fe5-d12b00a130c6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Sources\Public\Drawable">
+      <UniqueIdentifier>{097c40ee-d1ce-4238-80a3-b11b9596d30a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Sources\Public\Exception">
+      <UniqueIdentifier>{570cde26-cebb-4504-acc8-e786330ef8ff}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Sources\Public\Image">
+      <UniqueIdentifier>{7ad9696f-2dbb-4bf8-9a9c-47b30d931fa0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Sources\Public\Math">
+      <UniqueIdentifier>{f92125a1-e7bb-46cb-837e-634d6059e6e6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Sources\Public\_chaotic">
+      <UniqueIdentifier>{79faf90c-f967-4c86-923f-291164232f10}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Shaders">
+      <UniqueIdentifier>{8fcce6a7-61b5-438b-b7f0-f570d3be1f6d}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="source\Drawable.cpp">
+      <Filter>Sources\Private</Filter>
+    </ClCompile>
+    <ClCompile Include="source\embedded_resources.cpp">
+      <Filter>Sources\Private</Filter>
+    </ClCompile>
+    <ClCompile Include="source\Graphics.cpp">
+      <Filter>Sources\Private</Filter>
+    </ClCompile>
+    <ClCompile Include="source\iGManager.cpp">
+      <Filter>Sources\Private</Filter>
+    </ClCompile>
+    <ClCompile Include="source\Keyboard.cpp">
+      <Filter>Sources\Private</Filter>
+    </ClCompile>
+    <ClCompile Include="source\Mouse.cpp">
+      <Filter>Sources\Private</Filter>
+    </ClCompile>
+    <ClCompile Include="source\Timer.cpp">
+      <Filter>Sources\Private</Filter>
+    </ClCompile>
+    <ClCompile Include="source\Window.cpp">
+      <Filter>Sources\Private</Filter>
+    </ClCompile>
+    <ClCompile Include="source\Drawable\Background.cpp">
+      <Filter>Sources\Private\Drawable</Filter>
+    </ClCompile>
+    <ClCompile Include="source\Drawable\Curve.cpp">
+      <Filter>Sources\Private\Drawable</Filter>
+    </ClCompile>
+    <ClCompile Include="source\Drawable\Light.cpp">
+      <Filter>Sources\Private\Drawable</Filter>
+    </ClCompile>
+    <ClCompile Include="source\Drawable\Polihedron.cpp">
+      <Filter>Sources\Private\Drawable</Filter>
+    </ClCompile>
+    <ClCompile Include="source\Drawable\Scatter.cpp">
+      <Filter>Sources\Private\Drawable</Filter>
+    </ClCompile>
+    <ClCompile Include="source\Drawable\Surface.cpp">
+      <Filter>Sources\Private\Drawable</Filter>
+    </ClCompile>
+    <ClCompile Include="source\Bindable\Blender.cpp">
+      <Filter>Sources\Private\Bindable</Filter>
+    </ClCompile>
+    <ClCompile Include="source\Bindable\ConstantBuffer.cpp">
+      <Filter>Sources\Private\Bindable</Filter>
+    </ClCompile>
+    <ClCompile Include="source\Bindable\DepthStencil.cpp">
+      <Filter>Sources\Private\Bindable</Filter>
+    </ClCompile>
+    <ClCompile Include="source\Bindable\IndexBuffer.cpp">
+      <Filter>Sources\Private\Bindable</Filter>
+    </ClCompile>
+    <ClCompile Include="source\Bindable\InputLayout.cpp">
+      <Filter>Sources\Private\Bindable</Filter>
+    </ClCompile>
+    <ClCompile Include="source\Bindable\PixelShader.cpp">
+      <Filter>Sources\Private\Bindable</Filter>
+    </ClCompile>
+    <ClCompile Include="source\Bindable\Rasterizer.cpp">
+      <Filter>Sources\Private\Bindable</Filter>
+    </ClCompile>
+    <ClCompile Include="source\Bindable\Sampler.cpp">
+      <Filter>Sources\Private\Bindable</Filter>
+    </ClCompile>
+    <ClCompile Include="source\Bindable\Texture.cpp">
+      <Filter>Sources\Private\Bindable</Filter>
+    </ClCompile>
+    <ClCompile Include="source\Bindable\Topology.cpp">
+      <Filter>Sources\Private\Bindable</Filter>
+    </ClCompile>
+    <ClCompile Include="source\Bindable\VertexBuffer.cpp">
+      <Filter>Sources\Private\Bindable</Filter>
+    </ClCompile>
+    <ClCompile Include="source\Bindable\VertexShader.cpp">
+      <Filter>Sources\Private\Bindable</Filter>
+    </ClCompile>
+    <ClCompile Include="source\Exception\DxgiInfoManager.cpp">
+      <Filter>Sources\Private\Exception</Filter>
+    </ClCompile>
+    <ClCompile Include="source\Exception\Exception.cpp">
+      <Filter>Sources\Private\Exception</Filter>
+    </ClCompile>
+    <ClCompile Include="source\Image\Image.cpp">
+      <Filter>Sources\Private\Image</Filter>
+    </ClCompile>
+    <ClCompile Include="source\Math\Quaternion.cpp">
+      <Filter>Sources\Private\Math</Filter>
+    </ClCompile>
+    <ClCompile Include="source\Math\Vectors.cpp">
+      <Filter>Sources\Private\Math</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="include\Bindable.h">
+      <Filter>Sources\Public</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Drawable.h">
+      <Filter>Sources\Public</Filter>
+    </ClInclude>
+    <ClInclude Include="include\embedded_resources.h">
+      <Filter>Sources\Public</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Graphics.h">
+      <Filter>Sources\Public</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Header.h">
+      <Filter>Sources\Public</Filter>
+    </ClInclude>
+    <ClInclude Include="include\iGManager.h">
+      <Filter>Sources\Public</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Keyboard.h">
+      <Filter>Sources\Public</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mouse.h">
+      <Filter>Sources\Public</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Timer.h">
+      <Filter>Sources\Public</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Window.h">
+      <Filter>Sources\Public</Filter>
+    </ClInclude>
+    <ClInclude Include="include\WinHeader.h">
+      <Filter>Sources\Public</Filter>
+    </ClInclude>
+    <ClInclude Include="chaotic_headers\chaotic.h">
+      <Filter>Sources\Public\_chaotic</Filter>
+    </ClInclude>
+    <ClInclude Include="chaotic_headers\chaotic_customs.h">
+      <Filter>Sources\Public\_chaotic</Filter>
+    </ClInclude>
+    <ClInclude Include="chaotic_headers\chaotic_defaults.h">
+      <Filter>Sources\Public\_chaotic</Filter>
+    </ClInclude>
+    <ClInclude Include="chaotic_headers\chaotic_internals.h">
+      <Filter>Sources\Public\_chaotic</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Bindable\BindableBase.h">
+      <Filter>Sources\Public\Bindable</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Bindable\Blender.h">
+      <Filter>Sources\Public\Bindable</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Bindable\ConstantBuffer.h">
+      <Filter>Sources\Public\Bindable</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Bindable\DepthStencil.h">
+      <Filter>Sources\Public\Bindable</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Bindable\IndexBuffer.h">
+      <Filter>Sources\Public\Bindable</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Bindable\InputLayout.h">
+      <Filter>Sources\Public\Bindable</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Bindable\PixelShader.h">
+      <Filter>Sources\Public\Bindable</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Bindable\Rasterizer.h">
+      <Filter>Sources\Public\Bindable</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Bindable\Sampler.h">
+      <Filter>Sources\Public\Bindable</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Bindable\Texture.h">
+      <Filter>Sources\Public\Bindable</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Bindable\Topology.h">
+      <Filter>Sources\Public\Bindable</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Bindable\VertexBuffer.h">
+      <Filter>Sources\Public\Bindable</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Bindable\VertexShader.h">
+      <Filter>Sources\Public\Bindable</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Drawable\Background.h">
+      <Filter>Sources\Public\Drawable</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Drawable\Curve.h">
+      <Filter>Sources\Public\Drawable</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Drawable\Light.h">
+      <Filter>Sources\Public\Drawable</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Drawable\Polihedron.h">
+      <Filter>Sources\Public\Drawable</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Drawable\Scatter.h">
+      <Filter>Sources\Public\Drawable</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Drawable\Surface.h">
+      <Filter>Sources\Public\Drawable</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Exception\_exDefault.h">
+      <Filter>Sources\Public\Exception</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Exception\_exGraphics.h">
+      <Filter>Sources\Public\Exception</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Exception\_exWindow.h">
+      <Filter>Sources\Public\Exception</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Exception\DxgiInfoManager.h">
+      <Filter>Sources\Public\Exception</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Exception\Exception.h">
+      <Filter>Sources\Public\Exception</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Image\Color.h">
+      <Filter>Sources\Public\Image</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Image\Image.h">
+      <Filter>Sources\Public\Image</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Math\constants.h">
+      <Filter>Sources\Public\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Math\Matrix.h">
+      <Filter>Sources\Public\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Math\Quaternion.h">
+      <Filter>Sources\Public\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Math\Vectors.h">
+      <Filter>Sources\Public\Math</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="shaders\BackgroundPS.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="shaders\BackgroundVS.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="shaders\ColorCurveVS.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="shaders\CubeTexturePS.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="shaders\CurveVS.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="shaders\DynamicBgPS.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="shaders\DynamicBgVS.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="shaders\GlobalColorPS.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="shaders\GlobalColorVS.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="shaders\LightPS.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="shaders\LightVS.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="shaders\OITCubeTexturePS.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="shaders\OITGlobalColorPS.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="shaders\OITresolvePS.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="shaders\OITresolveVS.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="shaders\OITUnlitCubeTexturePS.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="shaders\OITUnlitGlobalColorPS.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="shaders\OITUnlitVertexColorPS.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="shaders\OITUnlitVertexTexturePS.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="shaders\OITVertexColorPS.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="shaders\OITVertexTexturePS.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="shaders\UnlitCubeTexturePS.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="shaders\UnlitGlobalColorPS.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="shaders\UnlitVertexColorPS.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="shaders\UnlitVertexTexturePS.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="shaders\VertexColorPS.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="shaders\VertexColorVS.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="shaders\VertexTexturePS.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="shaders\VertexTextureVS.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="shaders\OITheader.hlsli">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="shaders\Perspective.hlsli">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="shaders\Quaternion.hlsli">
+      <Filter>Shaders</Filter>
+    </None>
+  </ItemGroup>
+</Project>

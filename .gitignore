@@ -1,0 +1,17 @@
+## --------------------------------
+## Simple .gitignore for Chaotic
+## --------------------------------
+
+# Build Outputs
+lib/
+bin/
+.intermediate/
+
+# Shader Builds
+*.cso
+
+# VisualStudid
+.vs/
+
+# Test Project
+chaotic_tests/
