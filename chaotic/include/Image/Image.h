@@ -85,7 +85,7 @@ public:
 	bool save(const char* fmt_filename, Arg0 arg0, Args... args) const { return save(internal_formatting(fmt_filename, arg0, args...)); }
 
 	// Saves the image to the specified file path.
-	bool save(const char* fmt_filename) const;
+	bool save(const char* filename) const;
 
 	// Getters
 

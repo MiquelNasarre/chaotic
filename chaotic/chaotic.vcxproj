@@ -31,11 +31,12 @@
     <ClCompile Include="source\Bindable\Topology.cpp" />
     <ClCompile Include="source\Bindable\VertexBuffer.cpp" />
     <ClCompile Include="source\Bindable\VertexShader.cpp" />
+    <ClCompile Include="source\chaotic_demo.cpp" />
     <ClCompile Include="source\Drawable.cpp" />
     <ClCompile Include="source\Drawable\Background.cpp" />
     <ClCompile Include="source\Drawable\Curve.cpp" />
     <ClCompile Include="source\Drawable\Light.cpp" />
-    <ClCompile Include="source\Drawable\Polihedron.cpp" />
+    <ClCompile Include="source\Drawable\Polyhedron.cpp" />
     <ClCompile Include="source\Drawable\Scatter.cpp" />
     <ClCompile Include="source\Drawable\Surface.cpp" />
     <ClCompile Include="source\embedded_resources.cpp" />
@@ -74,7 +75,7 @@
     <ClInclude Include="include\Drawable\Background.h" />
     <ClInclude Include="include\Drawable\Curve.h" />
     <ClInclude Include="include\Drawable\Light.h" />
-    <ClInclude Include="include\Drawable\Polihedron.h" />
+    <ClInclude Include="include\Drawable\Polyhedron.h" />
     <ClInclude Include="include\Drawable\Scatter.h" />
     <ClInclude Include="include\Drawable\Surface.h" />
     <ClInclude Include="include\embedded_resources.h" />
@@ -446,7 +447,7 @@
       <PreprocessorDefinitions>PROJECT_DIR=LR"($(ProjectDir))";_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>$(ProjectDir)include/</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)include/;$(SolutionDir)imgui/include/;</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -466,7 +467,7 @@
       <PreprocessorDefinitions>PROJECT_DIR=LR"($(ProjectDir))";NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>$(ProjectDir)include/</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)include/;$(SolutionDir)imgui/include/;</AdditionalIncludeDirectories>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
     </ClCompile>
     <Link>

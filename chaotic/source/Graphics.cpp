@@ -172,6 +172,7 @@ struct GraphicsInternals
 	OITransparencyInternals* OIT = nullptr;
 
 	Image* captureImage = nullptr;
+	bool capture_ui_visible = false;
 	ComPtr<ID3D11Texture2D> pCaptureStaging = {};
 };
 
@@ -239,7 +240,7 @@ Graphics::~Graphics()
 
 	// Disable OIT if enabled.
 	if (data.oitEnabled)
-		disableOITransparency();
+		disableTransparency();
 
 	// Delete the perspective Constant Buffer
 	delete data.Perspective;
@@ -453,6 +454,11 @@ void Graphics::pushFrame()
 {
 	GraphicsInternals& data = *((GraphicsInternals*)GraphicsData);
 
+	// If you are not the render target, you must be.
+	Graphics* target = currentRenderTarget;
+	if (target != this)
+		setRenderTarget();
+
 	// If OIT is enabled before swapping it needs to merge the RTV with the accum 
 	// and revealage buffer on a final draw call.
 	if (data.oitEnabled)
@@ -487,6 +493,65 @@ void Graphics::pushFrame()
 		data.defaultDephtStencil->Bind();
 		data.defaultBlender->Bind();
 	}
+
+	// Copies the render buffer into the capture image.
+	auto capture = [&]()
+		{
+			// Access the back buffer
+			ComPtr<ID3D11Resource> pBackBuffer;
+			GFX_THROW_INFO(data.pSwap->GetBuffer(0, __uuidof(ID3D11Resource), &pBackBuffer));
+
+			// View it as a texture
+			ComPtr<ID3D11Texture2D> pBackBufferTex;
+			GFX_THROW_INFO(pBackBuffer.As(&pBackBufferTex));
+
+			// If the copy buffer is not created, create it.
+			if (!data.pCaptureStaging)
+			{
+				D3D11_TEXTURE2D_DESC stDesc = {};
+
+				stDesc.BindFlags = 0;
+				stDesc.MiscFlags = 0;
+				stDesc.Width = WindowDim.x;
+				stDesc.Height = WindowDim.y;
+				stDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+				stDesc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
+				stDesc.Usage = D3D11_USAGE_STAGING;
+				stDesc.MipLevels = 1;
+				stDesc.ArraySize = 1;
+				stDesc.SampleDesc.Count = 1;
+				stDesc.SampleDesc.Quality = 0;
+
+				GFX_THROW_INFO(_device->CreateTexture2D(&stDesc, nullptr, &data.pCaptureStaging));
+			}
+
+			// Copy data from the back buffer to the copy buffer.
+			_context->CopyResource(data.pCaptureStaging.Get(), pBackBufferTex.Get());
+
+			// Map staging resource to CPU pointer.
+			D3D11_MAPPED_SUBRESOURCE msr = {};
+			GFX_THROW_INFO(_context->Map(data.pCaptureStaging.Get(), 0, D3D11_MAP_READ, 0, &msr));
+
+			// Create the image with the desired dimensions.
+			if (data.captureImage->width() != WindowDim.x || data.captureImage->height() != WindowDim.y)
+				data.captureImage->reset(WindowDim.x, WindowDim.y);
+
+			// Copy image pixels
+			const unsigned rowBytes = WindowDim.x * sizeof(Color);
+			for (int y = 0; y < WindowDim.y; y++)
+				memcpy((byte*)data.captureImage->pixels() + y * rowBytes, (byte*)msr.pData + y * msr.RowPitch, rowBytes);
+
+			// Unmap resource
+			_context->Unmap(data.pCaptureStaging.Get(), 0);
+
+			// Reset image buffer.
+			data.captureImage = nullptr;
+		};
+
+	// If a frame capture is scheduled with no UI capture here.
+	if (data.captureImage && !data.capture_ui_visible)
+		capture();
+
 #ifdef _INCLUDE_IMGUI
 	// If the window has an imGui instance call the render function before swapping.
 	Window* pWnd = reinterpret_cast<Window*>(GetWindowLongPtr(data.HWnd, GWLP_USERDATA));
@@ -494,68 +559,23 @@ void Graphics::pushFrame()
 		((iGManager*)(*pWnd->imGuiPtrAdress()))->render();
 #endif
 
-	// If a frame capture is scheduled, copy the buffer before swapping.
-	if (data.captureImage)
-	{
-		// Access the back buffer
-		ComPtr<ID3D11Resource> pBackBuffer;
-		GFX_THROW_INFO(data.pSwap->GetBuffer(0, __uuidof(ID3D11Resource), &pBackBuffer));
-
-		// View it as a texture
-		ComPtr<ID3D11Texture2D> pBackBufferTex;
-		GFX_THROW_INFO(pBackBuffer.As(&pBackBufferTex));
-
-		// If the copy buffer is not created, create it.
-		if (!data.pCaptureStaging)
-		{
-			D3D11_TEXTURE2D_DESC stDesc = {};
-
-			stDesc.BindFlags = 0;
-			stDesc.MiscFlags = 0;
-			stDesc.Width = WindowDim.x;
-			stDesc.Height = WindowDim.y;
-			stDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
-			stDesc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
-			stDesc.Usage = D3D11_USAGE_STAGING;
-			stDesc.MipLevels = 1;
-			stDesc.ArraySize = 1;
-			stDesc.SampleDesc.Count = 1;
-			stDesc.SampleDesc.Quality = 0;
-
-			GFX_THROW_INFO(_device->CreateTexture2D(&stDesc, nullptr, &data.pCaptureStaging));
-		}
-
-		// Copy data from the back buffer to the copy buffer.
-		_context->CopyResource(data.pCaptureStaging.Get(), pBackBufferTex.Get());
-
-		// Map staging resource to CPU pointer.
-		D3D11_MAPPED_SUBRESOURCE msr = {};
-		GFX_THROW_INFO(_context->Map(data.pCaptureStaging.Get(), 0, D3D11_MAP_READ, 0, &msr));
-
-		// Create the image with the desired dimensions.
-		if (data.captureImage->width() != WindowDim.x || data.captureImage->height() != WindowDim.y)
-			data.captureImage->reset(WindowDim.x, WindowDim.y);
-
-		// Copy image pixels
-		const unsigned rowBytes = WindowDim.x * sizeof(Color);
-		for (int y = 0; y < WindowDim.y; y++)
-			memcpy((byte*)data.captureImage->pixels() + y * rowBytes, (byte*)msr.pData + y * msr.RowPitch, rowBytes);
-
-		// Unmap resource
-		_context->Unmap(data.pCaptureStaging.Get(), 0);
-
-		// Reset image buffer.
-		data.captureImage = nullptr;
-	}
+	// If a frame capture is scheduled with UI capture here.
+	if (data.captureImage && data.capture_ui_visible)
+		capture();
 
 	// Present the new frame to the window.
 	HRESULT hr;
-	if (FAILED(hr = data.pSwap->Present(1u, 0u))) {
+	if (FAILED(hr = data.pSwap->Present(1u, 0u))) 
+	{
 		if (hr == DXGI_ERROR_DEVICE_REMOVED)
 			throw GFX_DEVICE_REMOVED_EXCEPT(_device->GetDeviceRemovedReason());
 		else
 			throw GFX_EXCEPT(hr);
 	}
+
+	// Reset to old render target if was another.
+	if (target && target != this)
+		target->setRenderTarget();
 }
 
 // Clears the buffer with the specified color. If all buffers is false it will only clear
@@ -604,7 +624,7 @@ void Graphics::clearTransparencyBuffers()
 // Updates the perspective on the window, by changing the observer quaternion, 
 // the center of the POV and the scale of the object looked at.
 
-void Graphics::updatePerspective(Quaternion obs, Vector3f center, float scale)
+void Graphics::setPerspective(Quaternion obs, Vector3f center, float scale)
 {
 	GraphicsInternals& data = *((GraphicsInternals*)GraphicsData);
 
@@ -620,11 +640,47 @@ void Graphics::updatePerspective(Quaternion obs, Vector3f center, float scale)
 	data.Perspective->update(&cbuff);
 }
 
+// Sets the observer quaternion that defines the POV on the window.
+
+void Graphics::setObserver(Quaternion obs)
+{
+	GraphicsInternals& data = *((GraphicsInternals*)GraphicsData);
+
+	if (!obs)
+		throw INFO_EXCEPT("The observer must be a quaternion diferent than zero");
+
+	cbuff.observer = obs.normalize();
+	data.Perspective->update(&cbuff);
+}
+
+// Sets the center of the window perspective.
+
+void Graphics::setCenter(Vector3f center)
+{
+	GraphicsInternals& data = *((GraphicsInternals*)GraphicsData);
+
+	cbuff.center = center.getVector4();
+	data.Perspective->update(&cbuff);
+}
+
+// Sets the scale of the objects, defined as pixels per unit distance.
+
+void Graphics::setScale(float scale)
+{
+	GraphicsInternals& data = *((GraphicsInternals*)GraphicsData);
+
+	Scale = scale;
+	cbuff.scaling = { scale / WindowDim.x, scale / WindowDim.y, scale, 0.f };
+
+	data.Perspective->update(&cbuff);
+}
+
 // Schedules a frame capture to be done during the next pushFrame() call. It expects 
 // a valid pointer to an Image where the capture will be stored. The image dimensions 
 // will be adjusted automatically. Pointer must be valid during next push call.
+// If ui_visible is set to false the capture will be taken before rendering imGui.
 
-void Graphics::scheduleFrameCapture(Image* image)
+void Graphics::scheduleFrameCapture(Image* image, bool ui_visible)
 {
 	GraphicsInternals& data = *((GraphicsInternals*)GraphicsData);
 
@@ -638,6 +694,7 @@ void Graphics::scheduleFrameCapture(Image* image)
 		throw INFO_EXCEPT("Expected to find a valid image pointer on scheduleFrameCapture but found nullptr.");
 
 	data.captureImage = image;
+	data.capture_ui_visible = ui_visible;
 }
 
 // To draw transparent objects this setting needs to be toggled on, it causes extra 
@@ -645,7 +702,7 @@ void Graphics::scheduleFrameCapture(Image* image)
 // It uses the McGuire/Bavoli OIT approach. For more information you can check the 
 // original paper at: https://jcgt.org/published/0002/02/09/
 
-void Graphics::enableOITransparency()
+void Graphics::enableTransparency()
 {
 	GraphicsInternals& data = *((GraphicsInternals*)GraphicsData);
 
@@ -782,7 +839,7 @@ void Graphics::enableOITransparency()
 
 // Deletes the extra buffers and disables the extra steps when pushing frames.
 
-void Graphics::disableOITransparency()
+void Graphics::disableTransparency()
 {
 	GraphicsInternals& data = *((GraphicsInternals*)GraphicsData);
 
@@ -799,7 +856,7 @@ void Graphics::disableOITransparency()
 
 // Returns whether OITransparency is enabled on this Graphics object.
 
-bool Graphics::isOITransparencyEnabled() const
+bool Graphics::isTransparencyEnabled() const
 {
 	GraphicsInternals& data = *((GraphicsInternals*)GraphicsData);
 

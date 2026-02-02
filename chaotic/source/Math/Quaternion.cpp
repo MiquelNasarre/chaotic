@@ -33,7 +33,7 @@ const char* Quaternion::str(const char* fmt) const
 // Returns the quaternion needed to rotate a the provided axis the specified angle. To rotate 
 // a figure with this quaternion you do "P_rot = q * P * q.inv" for every point P in the figure.
 
-Quaternion rotationQuaternion(Vector3f axis, float angle)
+Quaternion Quaternion::Rotation(Vector3f axis, float angle)
 {
 	if (!axis) return 1.f;
 

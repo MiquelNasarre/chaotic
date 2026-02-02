@@ -183,7 +183,7 @@ struct SURFACE_DESC
 	// Whether the edge values of the range are included in the set.
 	bool border_points_included = true;
 
-	// By default polihedrons and surfaces are lit by four different color lights
+	// By default polyhedrons and surfaces are lit by four different color lights
 	// around the center of coordinates, allows for a nice default that iluminates
 	// everything and distiguishes different areas, disable to set all to black.
 	bool default_initial_lights = true;

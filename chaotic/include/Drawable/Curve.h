@@ -86,7 +86,7 @@ public:
 	// expects the initial function pointer to still be callable, it will evaluate it on the new 
 	// range and send the vertices to the GPU. If coloring is functional it also expects the color 
 	// function to still be callable, if coloring is not functional it will reuse the old colors.
-	void updateRange(Vector2f range);
+	void updateRange(Vector2f range = {});
 
 	// If updates are enabled, and coloring is with a list, this function allows to change 
 	// the current vertex colors for the new ones specified. It expects a valid pointer 

@@ -75,7 +75,7 @@ public:
 
 	// Clears the buffer with the specified color. If all buffers is false it will only clear
 	// the screen color. the depth buffer and the transparency buffers will stay the same.
-	void clearBuffer(Color color, bool all_buffers = true);
+	void clearBuffer(Color color = Color::Black, bool all_buffers = true);
 
 	// Clears the depth buffer so that all objects painted are moved to the back.
 	// The last frame pixels are still on the render target.
@@ -85,26 +85,36 @@ public:
 	// IF it is not enabled it does nothing.
 	void clearTransparencyBuffers();
 
-	// Updates the perspective on the window, by changing the observer direction, 
+	// Sets the perspective on the window, by changing the observer direction, 
 	// the center of the POV and the scale of the object looked at.
-	void updatePerspective(Quaternion obs, Vector3f center, float scale);
+	void setPerspective(Quaternion obs, Vector3f center, float scale);
+
+	// Sets the observer quaternion that defines the POV on the window.
+	void setObserver(Quaternion obs);
+
+	// Sets the center of the window perspective.
+	void setCenter(Vector3f center);
+
+	// Sets the scale of the objects, defined as pixels per unit distance.
+	void setScale(float scale);
 
 	// Schedules a frame capture to be done during the next pushFrame() call. It expects 
 	// a valid pointer to an Image where the capture will be stored. The image dimensions 
 	// will be adjusted automatically. Pointer must be valid during next push call.
-	void scheduleFrameCapture(Image* image);
+	// If ui_visible is set to false the capture will be taken before rendering imGui.
+	void scheduleFrameCapture(Image* image, bool ui_visible = true);
 
 	// To draw transparent objects this setting needs to be toggled on, it causes extra 
 	// conputation due to other buffers being used for rendering, so only turn on if needed.
 	// It uses the McGuire/Bavoli OIT approach. For more information you can check the 
 	// original paper at: https://jcgt.org/published/0002/02/09/
-	void enableOITransparency();
+	void enableTransparency();
 
 	// Deletes the extra buffers and disables the extra steps when pushing frames.
-	void disableOITransparency();
+	void disableTransparency();
 
 	// Returns whether OITransparency is enabled on this Graphics object.
-	bool isOITransparencyEnabled() const;
+	bool isTransparencyEnabled() const;
 
 	// Returns the current observer quaternion.
 	inline Quaternion getObserver() const { return cbuff.observer; }

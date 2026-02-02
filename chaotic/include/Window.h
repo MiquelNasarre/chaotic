@@ -86,6 +86,8 @@ private:
 public:
 	// Returns a reference to the window internal Graphics object.
 	Graphics& graphics();
+	// Returns a constant reference to the window internal Graphics object.
+	const Graphics& graphics() const;
 
 	// Function that may be called every frame during the App runtime. It manages the
 	// message pipeline, pushing events to the Mouse and Keboard for user interaction,
@@ -108,7 +110,7 @@ public:
 
 	// Creates the window and its associated Graphics, expects a valid descriptor 
 	// pointer, if not provided it chooses the default descriptor settings.
-	Window(WINDOW_DESC* pDesc = nullptr);
+	Window(const WINDOW_DESC* pDesc = nullptr);
 
 	// Handles the proper deletion of the window data after its closing.
 	~Window();
@@ -121,6 +123,9 @@ public:
 
 	// Checks whether the window has focus.
 	bool hasFocus() const;
+
+	// Sets the focus to the current window.
+	void requestFocus();
 
 	// Set the title of the window, allows for formatted strings.
 	void setTitle(const char* name, ...);
@@ -137,6 +142,10 @@ public:
 	// Selects the monitor where the wallpaper will be shown. If -1
 	// then the wallpaper window will expand to all monitors in use.
 	void setWallpaperMonitor(int monitor_idx);
+
+	// For the wallpaper mode, it tells you if a specific monitor 
+	// exists or not. Expand option, -1, is not considered a monitor.
+	static bool hasMonitor(int monitor_idx);
 
 	// Toggles the dark theme of the window on or off as specified.
 	void setDarkTheme(bool DARK_THEME);
@@ -161,6 +170,43 @@ public:
 
 	// Returs the current framerate of the process.
 	static float getFramerate();
+
+public:
+	// --- GRAPHICS OVERLOADED CALLS FOR SIMPLICITY ---
+
+	// Original method on the graphics class. Sets this window as render target.
+	inline void setRenderTarget()													{ graphics().setRenderTarget(); }
+	// Original method on the graphics class. Shows the new frame to the window.
+	inline void pushFrame()															{ graphics().pushFrame(); }
+	// Original method on the graphics class. Clears the buffer with the specified color.
+	inline void clearBuffer(Color color = Color::Black, bool all_buffers = true)	{ graphics().clearBuffer(color, all_buffers); }
+	// Original method on the graphics class. Clears the depth buffer.
+	inline void clearDepthBuffer()													{ graphics().clearDepthBuffer(); }
+	// Original method on the graphics class. Clears the buffers used for transparencies.
+	inline void clearTransparencyBuffers()											{ graphics().clearTransparencyBuffers(); }
+	// Original method on the graphics class. Updates the perspective on the window.
+	inline void setPerspective(Quaternion obs, Vector3f center, float scale)		{ graphics().setPerspective(obs, center, scale); }
+	// Original method on the graphics class. Sets the observer quaternion.
+	inline void setObserver(Quaternion obs)											{ graphics().setObserver(obs); }
+	// Original method on the graphics class. Sets the center of the window perspective.
+	inline void setCenter(Vector3f center)											{ graphics().setCenter(center); }
+	// Original method on the graphics class. Sets the scale of the objects.
+	inline void setScale(float scale)												{ graphics().setScale(scale); }
+	// Original method on the graphics class. Schedules a frame capture to be done.
+	inline void scheduleFrameCapture(Image* image, bool ui_visible = true)			{ graphics().scheduleFrameCapture(image, ui_visible); }
+	// Original method on the graphics class. Allows transparent drawables.
+	inline void enableTransparency()												{ graphics().enableTransparency(); }
+	// Original method on the graphics class. Disallows transparent drawables.
+	inline void disableTransparency()												{ graphics().disableTransparency(); }
+	// Original method on the graphics class. Tells you whether transparenzy is allowed.
+	inline bool isTransparencyEnabled() const										{ return graphics().isTransparencyEnabled(); }
+	// Original method on the graphics class. Returns the current observer quaternion.
+	inline Quaternion getObserver() const											{ return graphics().getObserver(); }
+	// Original method on the graphics class. Returns the current Center POV.
+	inline Vector3f getCenter() const												{ return graphics().getCenter(); }
+	// Original method on the graphics class. Returns the current scals.
+	inline float getScale() const													{ return graphics().getScale(); }
+
 private:
 	// --- INTERNALS ---
 

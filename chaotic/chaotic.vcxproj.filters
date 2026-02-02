@@ -83,7 +83,7 @@
     <ClCompile Include="source\Drawable\Light.cpp">
       <Filter>Sources\Private\Drawable</Filter>
     </ClCompile>
-    <ClCompile Include="source\Drawable\Polihedron.cpp">
+    <ClCompile Include="source\Drawable\Polyhedron.cpp">
       <Filter>Sources\Private\Drawable</Filter>
     </ClCompile>
     <ClCompile Include="source\Drawable\Scatter.cpp">
@@ -142,6 +142,9 @@
     </ClCompile>
     <ClCompile Include="source\Math\Vectors.cpp">
       <Filter>Sources\Private\Math</Filter>
+    </ClCompile>
+    <ClCompile Include="source\chaotic_demo.cpp">
+      <Filter>Sources\Private</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -238,7 +241,7 @@
     <ClInclude Include="include\Drawable\Light.h">
       <Filter>Sources\Public\Drawable</Filter>
     </ClInclude>
-    <ClInclude Include="include\Drawable\Polihedron.h">
+    <ClInclude Include="include\Drawable\Polyhedron.h">
       <Filter>Sources\Public\Drawable</Filter>
     </ClInclude>
     <ClInclude Include="include\Drawable\Scatter.h">

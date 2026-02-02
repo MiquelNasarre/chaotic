@@ -320,12 +320,16 @@ void Curve::updateRange(Vector2f range)
 	if (!data.desc.enable_updates)
 		throw INFO_EXCEPT("Trying to update the vertices on a Curve with updates disabled.");
 
+	// Unpdate range values if requested.
+	if (range)
+		data.desc.range = range;
+
 	// Define the t_values where the generator function will be evaluated.
 	float dt = data.desc.border_points_included ?
-		(range.y - range.x) / (data.desc.vertex_count - 1.f) :
-		(range.y - range.x) / (data.desc.vertex_count + 1.f);
+		(data.desc.range.y - data.desc.range.x) / (data.desc.vertex_count - 1.f) :
+		(data.desc.range.y - data.desc.range.x) / (data.desc.vertex_count + 1.f);
 
-	float t_i = data.desc.border_points_included ? range.x : range.x + dt;
+	float t_i = data.desc.border_points_included ? data.desc.range.x : data.desc.range.x + dt;
 
 	switch (data.desc.coloring)
 	{

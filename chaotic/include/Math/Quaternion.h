@@ -152,6 +152,12 @@ struct alignas(16) Quaternion
 	// Comparisson operators.
 	constexpr bool operator!=(const Quaternion& other) const { return (r != other.r) || (i != other.i) || (j != other.j) || (k != other.k); }
 	constexpr bool operator==(const Quaternion& other) const { return (r == other.r) && (i == other.i) && (j == other.j) && (k == other.k); }
+
+	// -- STATIC CONSTRUCTOR FOR ROTATION ---
+
+	// Returns the quaternion needed to rotate a the provided axis the specified angle. To rotate 
+	// a figure with this quaternion you do "P_rot = q * P * q.inv" for every point P in the figure.
+	static Quaternion Rotation(Vector3f axis, float angle);
 };
 
 // Reversed order multiplication.
@@ -165,7 +171,3 @@ constexpr Quaternion operator/(const float& lhs, const Quaternion& rhs) { return
 
 // Reversed order subtraction.
 constexpr Quaternion operator-(const float& lhs, const Quaternion& rhs) { return -rhs + lhs; }
-
-// Returns the quaternion needed to rotate a the provided axis the specified angle. To rotate 
-// a figure with this quaternion you do "P_rot = q * P * q.inv" for every point P in the figure.
-extern Quaternion rotationQuaternion(Vector3f axis, float angle);

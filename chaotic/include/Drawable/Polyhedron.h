@@ -1,7 +1,7 @@
 #pragma once
 #include "Drawable.h"
 
-/* POLIHEDRON DRAWABLE CLASS
+/* POLYHEDRON DRAWABLE CLASS
 -------------------------------------------------------------------------------------------------------
 -------------------------------------------------------------------------------------------------------
 Drawable class to draw triangle meshes, it is a must for any rendering library and in
@@ -19,11 +19,11 @@ to create images for the texture you can check the Image class header.
 -------------------------------------------------------------------------------------------------------
 */
 
-// Polihedron descriptor struct, to be created and passed as a pointer to initialize
-// a polihedron, it allows for different coloring and rendering settings. The 
+// Polyhedron descriptor struct, to be created and passed as a pointer to initialize
+// a polyhedron, it allows for different coloring and rendering settings. The 
 // pointers memory is to be managed by the user, the creation function will not 
 // modify or store any of the original pointers in the descriptor.
-struct POLIHEDRON_DESC
+struct POLYHEDRON_DESC
 {
 	// Expects a valid pointer to a list of vertices. The list must be 
 	// as long as the highest index found in the triangle list.
@@ -34,11 +34,11 @@ struct POLIHEDRON_DESC
 	// long as three intergers times the triangle count.
 	Vector3i* triangle_list = nullptr;
 
-	// Number of triangles that form the Polihedron.
+	// Number of triangles that form the Polyhedron.
 	unsigned triangle_count = 0u;
 
-	// Specifies how the coloring will be done for the Polihedron.
-	enum POLIHEDRON_COLORING
+	// Specifies how the coloring will be done for the Polyhedron.
+	enum POLYHEDRON_COLORING
 	{
 		TEXTURED_COLORING,
 		PER_VERTEX_COLORING,
@@ -55,7 +55,7 @@ struct POLIHEDRON_DESC
 	Color* color_list = nullptr;
 
 	// If coloring is set to textured it expects a valid pointer to 
-	// an image containing the texture to be used by the Polihedron.
+	// an image containing the texture to be used by the Polyhedron.
 	Image* texture_image = nullptr;
 
 	// If coloring is set to textured it expects a valid pointer to 
@@ -63,8 +63,8 @@ struct POLIHEDRON_DESC
 	// vertex of every triangle. Three times the traiangle count.
 	Vector2i* texture_coordinates_list = nullptr;
 
-	// If the Polihedron is iluminated it specifies how the normal vectors will be obtained.
-	enum POLIHEDRON_NORMALS
+	// If the Polyhedron is iluminated it specifies how the normal vectors will be obtained.
+	enum POLYHEDRON_NORMALS
 	{
 		// The normal vectors will be computed by triagle and assigned to each vertex 
 		// accordingly, grid pattern is clearly visible unless the grid is very thin.
@@ -87,34 +87,34 @@ struct POLIHEDRON_DESC
 	// Whether both sides of each triangle are rendered or not.
 	bool double_sided_rendering = true;
 
-	// Whether the polihedron uses ilumination or not.
+	// Whether the polyhedron uses ilumination or not.
 	bool enable_iluminated = true;
 
 	// Sets Order Indepentdent Transparency for the Polihedrom. Check 
 	// Graphics.h or Blender.h for more information on how to use it.
 	bool enable_transparency = false;
 
-	// Whether the polihedron allows for shape updates, leave at false if 
-	// you don't intend to update the shape of the Polihedron. Only the functions 
+	// Whether the polyhedron allows for shape updates, leave at false if 
+	// you don't intend to update the shape of the Polyhedron. Only the functions 
 	// updateVertices(), updateColors(), updateTextureCoordinates() require it.
 	bool enable_updates	= false;
 
-	// IF true renders only the aristas of the Polihedron.
+	// IF true renders only the aristas of the Polyhedron.
 	bool wire_frame_topology = false;
 
 	// Uses a nearest point sampler instead of a linear one.
 	bool pixelated_texture = false;
 
-	// By default polihedrons and surfaces are lit by four different color lights
+	// By default polyhedrons and surfaces are lit by four different color lights
 	// around the center of coordinates, allows for a nice default that iluminates
 	// everything and distiguishes different areas, disable to set all to black.
 	bool default_initial_lights = true;
 };
 
-// Polihedron drawable class, used for drawing and interacting with user defined triangle 
+// Polyhedron drawable class, used for drawing and interacting with user defined triangle 
 // meshes on a Graphics instance. Allows for different rendering settings including but not 
 // limited to textures, ilumination, transparencies. Check the descriptor to see all options.
-class Polihedron : public Drawable
+class Polyhedron : public Drawable
 {
 public:
 	// To facilitate the loading of triangle meshes, this function is a parser for 
@@ -123,18 +123,18 @@ public:
 	// NOTE: All data is allocated by (new) and its deletion must be handled by the 
 	// user. The image pointer used is the same as provided.
 	// If any error occurs, including missing file, it will throw.
-	static POLIHEDRON_DESC getDescFromObj(const char* obj_file_path, Image* texture = nullptr);
+	static POLYHEDRON_DESC getDescFromObj(const char* obj_file_path, Image* texture = nullptr);
 
 public:
-	// Polihedron constructor, if the pointer is valid it will call the initializer.
-	Polihedron(const POLIHEDRON_DESC* pDesc = nullptr);
+	// Polyhedron constructor, if the pointer is valid it will call the initializer.
+	Polyhedron(const POLYHEDRON_DESC* pDesc = nullptr);
 
 	// Frees the GPU pointers and all the stored data.
-	~Polihedron();
+	~Polyhedron();
 
-	// Initializes the Polihedron object, it expects a valid pointer to a descriptor
+	// Initializes the Polyhedron object, it expects a valid pointer to a descriptor
 	// and will initialize everything as specified, can only be called once per object.
-	void initialize(const POLIHEDRON_DESC* pDesc);
+	void initialize(const POLYHEDRON_DESC* pDesc);
 
 	// If updates are enabled this function allows to change the current vertex positions
 	// for the new ones specified. It expects a valid pointer with a list as long as the 
@@ -148,7 +148,7 @@ public:
 	void updateColors(const Color* color_list);
 
 	// If normals are provided this function allows to update the normal vectors in the 
-	// same satting that the Polihedron was initialized on. It expects a valid list of
+	// same satting that the Polyhedron was initialized on. It expects a valid list of
 	// normal vectors of the correspoding lenght.
 	void updateNormals(const Vector3f* normal_vectors_list);
 
@@ -158,16 +158,16 @@ public:
 	// triangle. Three times the triangle count.
 	void updateTextureCoordinates(const Vector2i* texture_coordinates_list);
 
-	// If the coloring is set to global, updates the global Polihedron color.
+	// If the coloring is set to global, updates the global Polyhedron color.
 	void updateGlobalColor(Color color);
 
-	// Updates the rotation quaternion of the Polihedron. If multiplicative it will apply
+	// Updates the rotation quaternion of the Polyhedron. If multiplicative it will apply
 	// the rotation on top of the current rotation. For more information on how to rotate
 	// with quaternions check the Quaternion header file.
 	void updateRotation(Quaternion rotation, bool multiplicative = false);
 
 	// Updates the scene position of the Polihedrom. If additive it will add the vector
-	// to the current position vector of the Polihedron.
+	// to the current position vector of the Polyhedron.
 	void updatePosition(Vector3f position, bool additive = false);
 
 	// Updates the matrix multiplied to the Polihedrom, adding any arbitrary linear distortion 
@@ -184,7 +184,7 @@ public:
 	// Eight lights are allowed. And the intensities are directional and diffused.
 	void updateLight(unsigned id, Vector2f intensities, Color color, Vector3f position);
 
-	// If ilumination is enabled clears all lights for the Polihedron.
+	// If ilumination is enabled clears all lights for the Polyhedron.
 	void clearLights();
 
 	// If ilumination is enabled, to the valid pointers it writes the specified lights data.
@@ -204,5 +204,5 @@ public:
 	
 private:
 	// Pointer to the internal class storage.
-	void* polihedronData = nullptr;
+	void* polyhedronData = nullptr;
 };

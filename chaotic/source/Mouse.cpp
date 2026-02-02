@@ -78,7 +78,7 @@ void Mouse::resetWheel()
 	deltaWheel = 0;
 }
 
-// Returns the current mouse wheel movement value. Does not reset it.
+// Returns the current mouse wheel movement value. Does reset it.
 
 int Mouse::getWheel()
 {

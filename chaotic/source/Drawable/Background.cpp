@@ -229,8 +229,9 @@ void Background::updateFieldOfView(Vector2f FOV)
 
 // If the background is static it updates the rectangle of Image pixels drawn. By 
 // default it draws the entire image: min->(0,0) max->(width,height).
+// The dimensions are in image pixels, intermediate positions are allowed.
 
-void Background::updateRectangle(Vector2i min_coords, Vector2i max_coords)
+void Background::updateRectangle(Vector2f min_coords, Vector2f max_coords)
 {
 	if (!isInit)
 		throw INFO_EXCEPT("Trying to update the rectangle view on an uninitialized Background.");
@@ -245,10 +246,10 @@ void Background::updateRectangle(Vector2i min_coords, Vector2i max_coords)
 
 	_float4vector rectangle =
 	{
-		float(min_coords.x) / data.imageDim.x,
-		float(min_coords.y) / data.imageDim.y,
-		float(max_coords.x) / data.imageDim.x,
-		float(max_coords.y) / data.imageDim.y
+		min_coords.x / data.imageDim.x,
+		min_coords.y / data.imageDim.y,
+		max_coords.x / data.imageDim.x,
+		max_coords.y / data.imageDim.y
 	};
 	data.pCBuff->update(&rectangle);
 }

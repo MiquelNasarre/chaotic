@@ -1,4 +1,4 @@
-#include "Drawable/Polihedron.h"
+#include "Drawable/Polyhedron.h"
 #include "Bindable/BindableBase.h"
 
 #include "Exception/_exDefault.h"
@@ -12,12 +12,12 @@
 
 /*
 -----------------------------------------------------------------------------------------------------------
- Polihedron Internals
+ Polyhedron Internals
 -----------------------------------------------------------------------------------------------------------
 */
 
-// Struct that stores the internal data for a given Polihedron object.
-struct PolihedronInternals
+// Struct that stores the internal data for a given Polyhedron object.
+struct PolyhedronInternals
 {
 	struct Vertex
 	{
@@ -82,7 +82,7 @@ struct PolihedronInternals
 
 	VertexBuffer* pUpdateVB = nullptr;
 
-	POLIHEDRON_DESC desc = {};
+	POLYHEDRON_DESC desc = {};
 };
 
 /*
@@ -98,7 +98,7 @@ struct PolihedronInternals
 // user. The image pointer used is the same as provided.
 // If any error occurs, including missing file, it will throw.
 
-POLIHEDRON_DESC Polihedron::getDescFromObj(const char* obj_file_path, Image* texture)
+POLYHEDRON_DESC Polyhedron::getDescFromObj(const char* obj_file_path, Image* texture)
 {
 	// First let's open the file.
 	FILE* file = nullptr;
@@ -106,7 +106,7 @@ POLIHEDRON_DESC Polihedron::getDescFromObj(const char* obj_file_path, Image* tex
 	if (!file)
 		throw INFO_EXCEPT("OBJ parse error: Unable to open OBJ file.");
 
-	POLIHEDRON_DESC desc = {};
+	POLYHEDRON_DESC desc = {};
 	desc.texture_image = texture;
 
 	// Define convenient helpers
@@ -249,19 +249,19 @@ POLIHEDRON_DESC Polihedron::getDescFromObj(const char* obj_file_path, Image* tex
 	// Set parameters
 	if (wantTextured)
 	{
-		desc.coloring = POLIHEDRON_DESC::TEXTURED_COLORING;
+		desc.coloring = POLYHEDRON_DESC::TEXTURED_COLORING;
 		desc.texture_coordinates_list = new Vector2i[triangleCount * 3u];
 	}
 	else
-		desc.coloring = POLIHEDRON_DESC::GLOBAL_COLORING;
+		desc.coloring = POLYHEDRON_DESC::GLOBAL_COLORING;
 
 	if (wantPerTriNormals)
 	{
-		desc.normal_computation = POLIHEDRON_DESC::PER_TRIANGLE_LIST_NORMALS;
+		desc.normal_computation = POLYHEDRON_DESC::PER_TRIANGLE_LIST_NORMALS;
 		desc.normal_vectors_list = new Vector3f[triangleCount * 3u];
 	}
 	else
-		desc.normal_computation = POLIHEDRON_DESC::COMPUTED_TRIANGLE_NORMALS;
+		desc.normal_computation = POLYHEDRON_DESC::COMPUTED_TRIANGLE_NORMALS;
 
 
 	// Cleanup helper
@@ -433,7 +433,7 @@ POLIHEDRON_DESC Polihedron::getDescFromObj(const char* obj_file_path, Image* tex
 						// Drop normals and compute later (same end-result as your previous logic)
 						delete[] desc.normal_vectors_list;
 						desc.normal_vectors_list = nullptr;
-						desc.normal_computation = POLIHEDRON_DESC::COMPUTED_TRIANGLE_NORMALS;
+						desc.normal_computation = POLYHEDRON_DESC::COMPUTED_TRIANGLE_NORMALS;
 						wantPerTriNormals = false;
 					}
 					else
@@ -464,9 +464,9 @@ POLIHEDRON_DESC Polihedron::getDescFromObj(const char* obj_file_path, Image* tex
 -----------------------------------------------------------------------------------------------------------
 */
 
-// Polihedron constructor, if the pointer is valid it will call the initializer.
+// Polyhedron constructor, if the pointer is valid it will call the initializer.
 
-Polihedron::Polihedron(const POLIHEDRON_DESC* pDesc)
+Polyhedron::Polyhedron(const POLYHEDRON_DESC* pDesc)
 {
 	if (pDesc)
 		initialize(pDesc);
@@ -474,12 +474,12 @@ Polihedron::Polihedron(const POLIHEDRON_DESC* pDesc)
 
 // Frees the GPU pointers and all the stored data.
 
-Polihedron::~Polihedron()
+Polyhedron::~Polyhedron()
 {
 	if (!isInit)
 		return;
 
-	PolihedronInternals& data = *(PolihedronInternals*)polihedronData;
+	PolyhedronInternals& data = *(PolyhedronInternals*)polyhedronData;
 
 	if (data.Vertices)
 		delete[] data.Vertices;
@@ -496,39 +496,39 @@ Polihedron::~Polihedron()
 	delete &data;
 }
 
-// Initializes the Polihedron object, it expects a valid pointer to a descriptor
+// Initializes the Polyhedron object, it expects a valid pointer to a descriptor
 // and will initialize everything as specified, can only be called once per object.
 
-void Polihedron::initialize(const POLIHEDRON_DESC* pDesc)
+void Polyhedron::initialize(const POLYHEDRON_DESC* pDesc)
 {
 	if (!pDesc)
-		throw INFO_EXCEPT("Trying to initialize a Polihedron with an invalid descriptor pointer.");
+		throw INFO_EXCEPT("Trying to initialize a Polyhedron with an invalid descriptor pointer.");
 
 	if (isInit)
-		throw INFO_EXCEPT("Trying to initialize a Polihedron that has already been initialized.");
+		throw INFO_EXCEPT("Trying to initialize a Polyhedron that has already been initialized.");
 	else
 		isInit = true;
 
-	polihedronData = new PolihedronInternals;
-	PolihedronInternals& data = *(PolihedronInternals*)polihedronData;
+	polyhedronData = new PolyhedronInternals;
+	PolyhedronInternals& data = *(PolyhedronInternals*)polyhedronData;
 
 	data.desc = *pDesc;
 
 	if (!data.desc.vertex_list)
-		throw INFO_EXCEPT("Found nullptr when trying to access a vertex list to create a Polihedron.");
+		throw INFO_EXCEPT("Found nullptr when trying to access a vertex list to create a Polyhedron.");
 
 	if (!data.desc.triangle_list)
-		throw INFO_EXCEPT("Found nullptr when trying to access a triangle list to create a Polihedron.");
+		throw INFO_EXCEPT("Found nullptr when trying to access a triangle list to create a Polyhedron.");
 
-	if (data.desc.normal_computation != POLIHEDRON_DESC::COMPUTED_TRIANGLE_NORMALS && !data.desc.normal_vectors_list)
-		throw INFO_EXCEPT("Found nullptr when trying to access a normal vector list to create a Polihedron.");
+	if (data.desc.normal_computation != POLYHEDRON_DESC::COMPUTED_TRIANGLE_NORMALS && !data.desc.normal_vectors_list)
+		throw INFO_EXCEPT("Found nullptr when trying to access a normal vector list to create a Polyhedron.");
 
 
 	switch (data.desc.coloring)
 	{
-		case POLIHEDRON_DESC::GLOBAL_COLORING:
+		case POLYHEDRON_DESC::GLOBAL_COLORING:
 		{
-			data.Vertices = new PolihedronInternals::Vertex[3 * data.desc.triangle_count];
+			data.Vertices = new PolyhedronInternals::Vertex[3 * data.desc.triangle_count];
 
 			for (unsigned i = 0u; i < data.desc.triangle_count; i++)
 			{
@@ -544,7 +544,7 @@ void Polihedron::initialize(const POLIHEDRON_DESC* pDesc)
 				{
 					switch (data.desc.normal_computation)
 					{
-						case POLIHEDRON_DESC::COMPUTED_TRIANGLE_NORMALS:
+						case POLYHEDRON_DESC::COMPUTED_TRIANGLE_NORMALS:
 						{
 							Vector3f norm = ((v1 - v0) * (v2 - v0)).normalize();
 
@@ -554,7 +554,7 @@ void Polihedron::initialize(const POLIHEDRON_DESC* pDesc)
 							break;
 						}
 
-						case POLIHEDRON_DESC::PER_TRIANGLE_LIST_NORMALS:
+						case POLYHEDRON_DESC::PER_TRIANGLE_LIST_NORMALS:
 						{
 							data.Vertices[3 * i + 0].norm = data.desc.normal_vectors_list[3 * i + 0].getVector4();
 							data.Vertices[3 * i + 1].norm = data.desc.normal_vectors_list[3 * i + 1].getVector4();
@@ -562,7 +562,7 @@ void Polihedron::initialize(const POLIHEDRON_DESC* pDesc)
 							break;
 						}
 
-						case POLIHEDRON_DESC::PER_VERTEX_LIST_NORMALS:
+						case POLYHEDRON_DESC::PER_VERTEX_LIST_NORMALS:
 						{
 							data.Vertices[3 * i + 0].norm = data.desc.normal_vectors_list[data.desc.triangle_list[i].x].getVector4();
 							data.Vertices[3 * i + 1].norm = data.desc.normal_vectors_list[data.desc.triangle_list[i].y].getVector4();
@@ -571,7 +571,7 @@ void Polihedron::initialize(const POLIHEDRON_DESC* pDesc)
 						}
 
 						default:
-							throw INFO_EXCEPT("Unknown normal computation mode found when trying to initialize a Polihedron.");
+							throw INFO_EXCEPT("Unknown normal computation mode found when trying to initialize a Polyhedron.");
 					}
 				}
 			}
@@ -628,12 +628,12 @@ void Polihedron::initialize(const POLIHEDRON_DESC* pDesc)
 			break;
 		}
 
-		case POLIHEDRON_DESC::PER_VERTEX_COLORING:
+		case POLYHEDRON_DESC::PER_VERTEX_COLORING:
 		{
 			if (!data.desc.color_list)
-				throw INFO_EXCEPT("Found nullptr when trying to access a color list to create a vertex colored Polihedron.");
+				throw INFO_EXCEPT("Found nullptr when trying to access a color list to create a vertex colored Polyhedron.");
 
-			data.ColVertices = new PolihedronInternals::ColorVertex[3 * data.desc.triangle_count];
+			data.ColVertices = new PolyhedronInternals::ColorVertex[3 * data.desc.triangle_count];
 
 			for (unsigned i = 0u; i < data.desc.triangle_count; i++)
 			{
@@ -653,7 +653,7 @@ void Polihedron::initialize(const POLIHEDRON_DESC* pDesc)
 				{
 					switch (data.desc.normal_computation)
 					{
-						case POLIHEDRON_DESC::COMPUTED_TRIANGLE_NORMALS:
+						case POLYHEDRON_DESC::COMPUTED_TRIANGLE_NORMALS:
 						{
 							Vector3f norm = ((v1 - v0) * (v2 - v0)).normalize();
 
@@ -663,7 +663,7 @@ void Polihedron::initialize(const POLIHEDRON_DESC* pDesc)
 							break;
 						}
 
-						case POLIHEDRON_DESC::PER_TRIANGLE_LIST_NORMALS:
+						case POLYHEDRON_DESC::PER_TRIANGLE_LIST_NORMALS:
 						{
 							data.ColVertices[3 * i + 0].norm = data.desc.normal_vectors_list[3 * i + 0].getVector4();
 							data.ColVertices[3 * i + 1].norm = data.desc.normal_vectors_list[3 * i + 1].getVector4();
@@ -671,7 +671,7 @@ void Polihedron::initialize(const POLIHEDRON_DESC* pDesc)
 							break;
 						}
 
-						case POLIHEDRON_DESC::PER_VERTEX_LIST_NORMALS:
+						case POLYHEDRON_DESC::PER_VERTEX_LIST_NORMALS:
 						{
 							data.ColVertices[3 * i + 0].norm = data.desc.normal_vectors_list[data.desc.triangle_list[i].x].getVector4();
 							data.ColVertices[3 * i + 1].norm = data.desc.normal_vectors_list[data.desc.triangle_list[i].y].getVector4();
@@ -680,7 +680,7 @@ void Polihedron::initialize(const POLIHEDRON_DESC* pDesc)
 						}
 
 						default:
-							throw INFO_EXCEPT("Unknown normal computation mode found when trying to initialize a Polihedron.");
+							throw INFO_EXCEPT("Unknown normal computation mode found when trying to initialize a Polyhedron.");
 					}
 				}
 			}
@@ -734,15 +734,15 @@ void Polihedron::initialize(const POLIHEDRON_DESC* pDesc)
 			break;
 		}
 
-		case POLIHEDRON_DESC::TEXTURED_COLORING:
+		case POLYHEDRON_DESC::TEXTURED_COLORING:
 		{
 			if (!data.desc.texture_image)
-				throw INFO_EXCEPT("Found nullptr when trying to access an Image to create a textured Polihedron.");
+				throw INFO_EXCEPT("Found nullptr when trying to access an Image to create a textured Polyhedron.");
 
 			if (!data.desc.texture_coordinates_list)
-				throw INFO_EXCEPT("Found nullptr when trying to access a texture coordinate list to create a textured Polihedron.");
+				throw INFO_EXCEPT("Found nullptr when trying to access a texture coordinate list to create a textured Polyhedron.");
 
-			data.TexVertices = new PolihedronInternals::TextureVertex[3 * data.desc.triangle_count];
+			data.TexVertices = new PolyhedronInternals::TextureVertex[3 * data.desc.triangle_count];
 
 			data.image_height = data.desc.texture_image->height();
 			data.image_width = data.desc.texture_image->width();
@@ -776,7 +776,7 @@ void Polihedron::initialize(const POLIHEDRON_DESC* pDesc)
 				{
 					switch (data.desc.normal_computation)
 					{
-						case POLIHEDRON_DESC::COMPUTED_TRIANGLE_NORMALS:
+						case POLYHEDRON_DESC::COMPUTED_TRIANGLE_NORMALS:
 						{
 							Vector3f norm = ((v1 - v0) * (v2 - v0)).normalize();
 
@@ -786,7 +786,7 @@ void Polihedron::initialize(const POLIHEDRON_DESC* pDesc)
 							break;
 						}
 
-						case POLIHEDRON_DESC::PER_TRIANGLE_LIST_NORMALS:
+						case POLYHEDRON_DESC::PER_TRIANGLE_LIST_NORMALS:
 						{
 							data.TexVertices[3 * i + 0].norm = data.desc.normal_vectors_list[3 * i + 0].getVector4();
 							data.TexVertices[3 * i + 1].norm = data.desc.normal_vectors_list[3 * i + 1].getVector4();
@@ -794,7 +794,7 @@ void Polihedron::initialize(const POLIHEDRON_DESC* pDesc)
 							break;
 						}
 
-						case POLIHEDRON_DESC::PER_VERTEX_LIST_NORMALS:
+						case POLYHEDRON_DESC::PER_VERTEX_LIST_NORMALS:
 						{
 							data.TexVertices[3 * i + 0].norm = data.desc.normal_vectors_list[data.desc.triangle_list[i].x].getVector4();
 							data.TexVertices[3 * i + 1].norm = data.desc.normal_vectors_list[data.desc.triangle_list[i].y].getVector4();
@@ -803,7 +803,7 @@ void Polihedron::initialize(const POLIHEDRON_DESC* pDesc)
 						}
 
 						default:
-							throw INFO_EXCEPT("Unknown normal computation mode found when trying to initialize a Polihedron.");
+							throw INFO_EXCEPT("Unknown normal computation mode found when trying to initialize a Polyhedron.");
 					}
 				}
 
@@ -865,7 +865,7 @@ void Polihedron::initialize(const POLIHEDRON_DESC* pDesc)
 		}
 
 		default:
-			throw INFO_EXCEPT("Found an unrecognized coloring mode when trying to create a Polihedron.");
+			throw INFO_EXCEPT("Found an unrecognized coloring mode when trying to create a Polyhedron.");
 	}
 
 	// If update enabled save a copy to update vertices
@@ -929,22 +929,22 @@ void Polihedron::initialize(const POLIHEDRON_DESC* pDesc)
 // for the new ones specified. It expects a valid pointer with a list as long as the 
 // highest index found in the triangle list used for initialization.
 
-void Polihedron::updateVertices(const Vector3f* vertex_list)
+void Polyhedron::updateVertices(const Vector3f* vertex_list)
 {
 	if (!isInit)
-		throw INFO_EXCEPT("Trying to update the vertices on an uninitialized Polihedron.");
+		throw INFO_EXCEPT("Trying to update the vertices on an uninitialized Polyhedron.");
 
 	if (!vertex_list)
 		throw INFO_EXCEPT("Trying to update the vertices with an invalid vertex list.");
 
-	PolihedronInternals& data = *(PolihedronInternals*)polihedronData;
+	PolyhedronInternals& data = *(PolyhedronInternals*)polyhedronData;
 
 	if (!data.desc.enable_updates)
-		throw INFO_EXCEPT("Trying to update the vertices on a Polihedron with updates disabled.");
+		throw INFO_EXCEPT("Trying to update the vertices on a Polyhedron with updates disabled.");
 
 	switch (data.desc.coloring)
 	{
-		case POLIHEDRON_DESC::GLOBAL_COLORING:
+		case POLYHEDRON_DESC::GLOBAL_COLORING:
 		{
 			for (unsigned i = 0u; i < data.desc.triangle_count; i++)
 			{
@@ -956,7 +956,7 @@ void Polihedron::updateVertices(const Vector3f* vertex_list)
 				data.Vertices[3 * i + 1].vector = v1.getVector4();
 				data.Vertices[3 * i + 2].vector = v2.getVector4();
 
-				if (data.desc.normal_computation == POLIHEDRON_DESC::COMPUTED_TRIANGLE_NORMALS)
+				if (data.desc.normal_computation == POLYHEDRON_DESC::COMPUTED_TRIANGLE_NORMALS)
 				{
 					Vector3f norm = data.desc.enable_iluminated ? ((v1 - v0) * (v2 - v0)).normalize() : Vector3f();
 
@@ -969,7 +969,7 @@ void Polihedron::updateVertices(const Vector3f* vertex_list)
 			break;
 		}
 
-		case POLIHEDRON_DESC::PER_VERTEX_COLORING:
+		case POLYHEDRON_DESC::PER_VERTEX_COLORING:
 		{
 			for (unsigned i = 0u; i < data.desc.triangle_count; i++)
 			{
@@ -981,7 +981,7 @@ void Polihedron::updateVertices(const Vector3f* vertex_list)
 				data.ColVertices[3 * i + 1].vector = v1.getVector4();
 				data.ColVertices[3 * i + 2].vector = v2.getVector4();
 
-				if (data.desc.normal_computation == POLIHEDRON_DESC::COMPUTED_TRIANGLE_NORMALS)
+				if (data.desc.normal_computation == POLYHEDRON_DESC::COMPUTED_TRIANGLE_NORMALS)
 				{
 					Vector3f norm = data.desc.enable_iluminated ? ((v1 - v0) * (v2 - v0)).normalize() : Vector3f();
 
@@ -994,7 +994,7 @@ void Polihedron::updateVertices(const Vector3f* vertex_list)
 			break;
 		}
 
-		case POLIHEDRON_DESC::TEXTURED_COLORING:
+		case POLYHEDRON_DESC::TEXTURED_COLORING:
 		{
 			for (unsigned i = 0u; i < data.desc.triangle_count; i++)
 			{
@@ -1006,7 +1006,7 @@ void Polihedron::updateVertices(const Vector3f* vertex_list)
 				data.TexVertices[3 * i + 1].vector = v1.getVector4();
 				data.TexVertices[3 * i + 2].vector = v2.getVector4();
 
-				if (data.desc.normal_computation == POLIHEDRON_DESC::COMPUTED_TRIANGLE_NORMALS)
+				if (data.desc.normal_computation == POLYHEDRON_DESC::COMPUTED_TRIANGLE_NORMALS)
 				{
 					Vector3f norm = data.desc.enable_iluminated ? ((v1 - v0) * (v2 - v0)).normalize() : Vector3f();
 
@@ -1026,21 +1026,21 @@ void Polihedron::updateVertices(const Vector3f* vertex_list)
 // with a list of colors containing one color per every vertex of every triangle. 
 // Three times the triangle count.
 
-void Polihedron::updateColors(const Color* color_list)
+void Polyhedron::updateColors(const Color* color_list)
 {
 	if (!isInit)
-		throw INFO_EXCEPT("Trying to update the colors on an uninitialized Polihedron.");
+		throw INFO_EXCEPT("Trying to update the colors on an uninitialized Polyhedron.");
 
 	if (!color_list)
-		throw INFO_EXCEPT("Trying to update the colors on a Polihedron with an invalid color list.");
+		throw INFO_EXCEPT("Trying to update the colors on a Polyhedron with an invalid color list.");
 
-	PolihedronInternals& data = *(PolihedronInternals*)polihedronData;
+	PolyhedronInternals& data = *(PolyhedronInternals*)polyhedronData;
 
-	if (data.desc.coloring != POLIHEDRON_DESC::PER_VERTEX_COLORING)
-		throw INFO_EXCEPT("Trying to update the colors on a Polihedron with a different coloring.");
+	if (data.desc.coloring != POLYHEDRON_DESC::PER_VERTEX_COLORING)
+		throw INFO_EXCEPT("Trying to update the colors on a Polyhedron with a different coloring.");
 
 	if (!data.desc.enable_updates)
-		throw INFO_EXCEPT("Trying to update the colors on a Polihedron with updates disabled.");
+		throw INFO_EXCEPT("Trying to update the colors on a Polyhedron with updates disabled.");
 
 	for (unsigned i = 0u; i < 3u * data.desc.triangle_count; i++)
 		data.ColVertices[i].color = color_list[i].getColor4();
@@ -1049,41 +1049,41 @@ void Polihedron::updateColors(const Color* color_list)
 }
 
 // If normals are provided this function allows to update the normal vectors in the 
-// same satting that the Polihedron was initialized on. It expects a valid list of
+// same satting that the Polyhedron was initialized on. It expects a valid list of
 // normal vectors of the correspoding lenght.
 
-void Polihedron::updateNormals(const Vector3f* normal_vectors_list)
+void Polyhedron::updateNormals(const Vector3f* normal_vectors_list)
 {
 	if (!isInit)
-		throw INFO_EXCEPT("Trying to update the normal vectors on an uninitialized Polihedron.");
+		throw INFO_EXCEPT("Trying to update the normal vectors on an uninitialized Polyhedron.");
 
 	if (!normal_vectors_list)
-		throw INFO_EXCEPT("Trying to update the normal vectors on a Polihedron with an invalid normal vectors list.");
+		throw INFO_EXCEPT("Trying to update the normal vectors on a Polyhedron with an invalid normal vectors list.");
 
-	PolihedronInternals& data = *(PolihedronInternals*)polihedronData;
+	PolyhedronInternals& data = *(PolyhedronInternals*)polyhedronData;
 
-	if (data.desc.normal_computation == POLIHEDRON_DESC::COMPUTED_TRIANGLE_NORMALS)
+	if (data.desc.normal_computation == POLYHEDRON_DESC::COMPUTED_TRIANGLE_NORMALS)
 		throw INFO_EXCEPT(
-			"Trying to update the normal vectors on a Polihedron with a different normal vectors setting.\n"
+			"Trying to update the normal vectors on a Polyhedron with a different normal vectors setting.\n"
 			"When normals are on computed mode, they are recomputed automatically when vertices are updated."
 		);
 
 	if (!data.desc.enable_updates)
-		throw INFO_EXCEPT("Trying to update the normal vectors on a Polihedron with updates disabled.");
+		throw INFO_EXCEPT("Trying to update the normal vectors on a Polyhedron with updates disabled.");
 
 
 	switch (data.desc.coloring) 
 	{
-	case POLIHEDRON_DESC::GLOBAL_COLORING:
+	case POLYHEDRON_DESC::GLOBAL_COLORING:
 
 		switch (data.desc.normal_computation)
 		{
-		case POLIHEDRON_DESC::PER_TRIANGLE_LIST_NORMALS:
+		case POLYHEDRON_DESC::PER_TRIANGLE_LIST_NORMALS:
 			for (unsigned i = 0u; i < 3u * data.desc.triangle_count; i++)
 				data.Vertices[i].norm = normal_vectors_list[i].getVector4();
 			break;
 
-		case POLIHEDRON_DESC::PER_VERTEX_LIST_NORMALS:
+		case POLYHEDRON_DESC::PER_VERTEX_LIST_NORMALS:
 			for (unsigned i = 0u; i < data.desc.triangle_count; i++)
 			{
 				data.Vertices[3 * i + 0].norm = normal_vectors_list[data.desc.triangle_list[i].x].getVector4();
@@ -1096,16 +1096,16 @@ void Polihedron::updateNormals(const Vector3f* normal_vectors_list)
 		data.pUpdateVB->updateVertices(data.Vertices, 3u * data.desc.triangle_count);
 		break;
 
-	case POLIHEDRON_DESC::PER_VERTEX_COLORING:
+	case POLYHEDRON_DESC::PER_VERTEX_COLORING:
 
 		switch (data.desc.normal_computation)
 		{
-		case POLIHEDRON_DESC::PER_TRIANGLE_LIST_NORMALS:
+		case POLYHEDRON_DESC::PER_TRIANGLE_LIST_NORMALS:
 			for (unsigned i = 0u; i < 3u * data.desc.triangle_count; i++)
 				data.ColVertices[i].norm = normal_vectors_list[i].getVector4();
 			break;
 
-		case POLIHEDRON_DESC::PER_VERTEX_LIST_NORMALS:
+		case POLYHEDRON_DESC::PER_VERTEX_LIST_NORMALS:
 			for (unsigned i = 0u; i < data.desc.triangle_count; i++)
 			{
 				data.ColVertices[3 * i + 0].norm = normal_vectors_list[data.desc.triangle_list[i].x].getVector4();
@@ -1118,16 +1118,16 @@ void Polihedron::updateNormals(const Vector3f* normal_vectors_list)
 		data.pUpdateVB->updateVertices(data.ColVertices, 3u * data.desc.triangle_count);
 		break;
 
-	case POLIHEDRON_DESC::TEXTURED_COLORING:
+	case POLYHEDRON_DESC::TEXTURED_COLORING:
 
 		switch (data.desc.normal_computation)
 		{
-		case POLIHEDRON_DESC::PER_TRIANGLE_LIST_NORMALS:
+		case POLYHEDRON_DESC::PER_TRIANGLE_LIST_NORMALS:
 			for (unsigned i = 0u; i < 3u * data.desc.triangle_count; i++)
 				data.TexVertices[i].norm = normal_vectors_list[i].getVector4();
 			break;
 
-		case POLIHEDRON_DESC::PER_VERTEX_LIST_NORMALS:
+		case POLYHEDRON_DESC::PER_VERTEX_LIST_NORMALS:
 			for (unsigned i = 0u; i < data.desc.triangle_count; i++)
 			{
 				data.TexVertices[3 * i + 0].norm = normal_vectors_list[data.desc.triangle_list[i].x].getVector4();
@@ -1148,21 +1148,21 @@ void Polihedron::updateNormals(const Vector3f* normal_vectors_list)
 // pointer with a list of pixels containing one coordinates per every vertex of every
 // triangle. Three times the triangle count.
 
-void Polihedron::updateTextureCoordinates(const Vector2i* texture_coordinates_list)
+void Polyhedron::updateTextureCoordinates(const Vector2i* texture_coordinates_list)
 {
 	if (!isInit)
-		throw INFO_EXCEPT("Trying to update the texture coordinates on an uninitialized Polihedron.");
+		throw INFO_EXCEPT("Trying to update the texture coordinates on an uninitialized Polyhedron.");
 
 	if (!texture_coordinates_list)
 		throw INFO_EXCEPT("Trying to update the texture coordinates with an invalid texture coordinate list.");
 
-	PolihedronInternals& data = *(PolihedronInternals*)polihedronData;
+	PolyhedronInternals& data = *(PolyhedronInternals*)polyhedronData;
 
-	if (data.desc.coloring != POLIHEDRON_DESC::TEXTURED_COLORING)
-		throw INFO_EXCEPT("Trying to update the texture coordinates on a Polihedron with a different coloring.");
+	if (data.desc.coloring != POLYHEDRON_DESC::TEXTURED_COLORING)
+		throw INFO_EXCEPT("Trying to update the texture coordinates on a Polyhedron with a different coloring.");
 
 	if (!data.desc.enable_updates)
-		throw INFO_EXCEPT("Trying to update the texture coordinates on a Polihedron with updates disabled.");
+		throw INFO_EXCEPT("Trying to update the texture coordinates on a Polyhedron with updates disabled.");
 
 	for (unsigned i = 0u; i < 3u * data.desc.triangle_count; i++)
 		data.TexVertices[i].coord = {
@@ -1173,38 +1173,38 @@ void Polihedron::updateTextureCoordinates(const Vector2i* texture_coordinates_li
 	data.pUpdateVB->updateVertices(data.TexVertices, 3u * data.desc.triangle_count);
 }
 
-// If the coloring is set to global, updates the global Polihedron color.
+// If the coloring is set to global, updates the global Polyhedron color.
 
-void Polihedron::updateGlobalColor(Color color)
+void Polyhedron::updateGlobalColor(Color color)
 {
 	if (!isInit)
-		throw INFO_EXCEPT("Trying to update the global color on an uninitialized Polihedron.");
+		throw INFO_EXCEPT("Trying to update the global color on an uninitialized Polyhedron.");
 
-	PolihedronInternals& data = *(PolihedronInternals*)polihedronData;
+	PolyhedronInternals& data = *(PolyhedronInternals*)polyhedronData;
 
-	if (data.desc.coloring != POLIHEDRON_DESC::GLOBAL_COLORING)
-		throw INFO_EXCEPT("Trying to update the global color on a Polihedron with a different coloring.");
+	if (data.desc.coloring != POLYHEDRON_DESC::GLOBAL_COLORING)
+		throw INFO_EXCEPT("Trying to update the global color on a Polyhedron with a different coloring.");
 
 	_float4color col = color.getColor4();
 	data.pGlobalColorCB->update(&col);
 }
 
-// Updates the rotation quaternion of the Polihedron. If multiplicative it will apply
+// Updates the rotation quaternion of the Polyhedron. If multiplicative it will apply
 // the rotation on top of the current rotation. For more information on how to rotate
 // with quaternions check the Quaternion header file.
 
-void Polihedron::updateRotation(Quaternion rotation, bool multiplicative)
+void Polyhedron::updateRotation(Quaternion rotation, bool multiplicative)
 {
 	if (!isInit)
-		throw INFO_EXCEPT("Trying to update the rotation on an uninitialized Polihedron.");
+		throw INFO_EXCEPT("Trying to update the rotation on an uninitialized Polyhedron.");
 
 	if (!rotation)
 		throw INFO_EXCEPT(
-			"Invalid quaternion found when trying to update rotation on a Polihedron.\n"
+			"Invalid quaternion found when trying to update rotation on a Polyhedron.\n"
 			"Quaternion 0 can not be normalized and therefore can not describe an objects rotation."
 		);
 
-	PolihedronInternals& data = *(PolihedronInternals*)polihedronData;
+	PolyhedronInternals& data = *(PolyhedronInternals*)polyhedronData;
 
 	if (multiplicative)
 		data.rotation *= rotation.normal();
@@ -1222,14 +1222,14 @@ void Polihedron::updateRotation(Quaternion rotation, bool multiplicative)
 }
 
 // Updates the scene position of the Polihedrom. I additive it will add the vector
-// to the current position vector of the Polihedron.
+// to the current position vector of the Polyhedron.
 
-void Polihedron::updatePosition(Vector3f position, bool additive)
+void Polyhedron::updatePosition(Vector3f position, bool additive)
 {
 	if (!isInit)
-		throw INFO_EXCEPT("Trying to update the position on an uninitialized Polihedron.");
+		throw INFO_EXCEPT("Trying to update the position on an uninitialized Polyhedron.");
 
-	PolihedronInternals& data = *(PolihedronInternals*)polihedronData;
+	PolyhedronInternals& data = *(PolyhedronInternals*)polyhedronData;
 
 	if (additive)
 		data.position += position;
@@ -1248,12 +1248,12 @@ void Polihedron::updatePosition(Vector3f position, bool additive)
 // diagonal matrix. Check the Matrix header for helpers to create any arbitrary distortion. 
 // If multiplicative the distortion will be added to the current distortion.
 
-void Polihedron::updateDistortion(Matrix distortion, bool multiplicative)
+void Polyhedron::updateDistortion(Matrix distortion, bool multiplicative)
 {
 	if (!isInit)
-		throw INFO_EXCEPT("Trying to update the distortion on an uninitialized Polihedron.");
+		throw INFO_EXCEPT("Trying to update the distortion on an uninitialized Polyhedron.");
 
-	PolihedronInternals& data = *(PolihedronInternals*)polihedronData;
+	PolyhedronInternals& data = *(PolyhedronInternals*)polyhedronData;
 
 	if (multiplicative)
 		data.distortion = distortion * data.distortion;
@@ -1271,12 +1271,12 @@ void Polihedron::updateDistortion(Matrix distortion, bool multiplicative)
 // Updates the screen displacement of the figure. To be used if you intend to render 
 // multiple scenes/plots on the same render target.
 
-void Polihedron::updateScreenPosition(Vector2f screenDisplacement)
+void Polyhedron::updateScreenPosition(Vector2f screenDisplacement)
 {
 	if (!isInit)
-		throw INFO_EXCEPT("Trying to update the screen position on an uninitialized Polihedron.");
+		throw INFO_EXCEPT("Trying to update the screen position on an uninitialized Polyhedron.");
 
-	PolihedronInternals& data = *(PolihedronInternals*)polihedronData;
+	PolyhedronInternals& data = *(PolyhedronInternals*)polyhedronData;
 
 	data.vscBuff.displacement = screenDisplacement.getVector4();
 	data.pVSCB->update(&data.vscBuff);
@@ -1285,15 +1285,15 @@ void Polihedron::updateScreenPosition(Vector2f screenDisplacement)
 // If ilumination is enabled it sets the specified light to the specified parameters.
 // Eight lights are allowed. And the intensities are directional and diffused.
 
-void Polihedron::updateLight(unsigned id, Vector2f intensities, Color color, Vector3f position)
+void Polyhedron::updateLight(unsigned id, Vector2f intensities, Color color, Vector3f position)
 {
 	if (!isInit)
-		throw INFO_EXCEPT("Trying to update a light on an uninitialized Polihedron.");
+		throw INFO_EXCEPT("Trying to update a light on an uninitialized Polyhedron.");
 
-	PolihedronInternals& data = *(PolihedronInternals*)polihedronData;
+	PolyhedronInternals& data = *(PolyhedronInternals*)polyhedronData;
 
 	if (!data.desc.enable_iluminated)
-		throw INFO_EXCEPT("Trying to update a light on a Polihedron with ilumination disabled.");
+		throw INFO_EXCEPT("Trying to update a light on a Polyhedron with ilumination disabled.");
 
 	if (id >= 8)
 		throw INFO_EXCEPT("Trying to update a light with an invalid id (must be 0-7).");
@@ -1302,17 +1302,17 @@ void Polihedron::updateLight(unsigned id, Vector2f intensities, Color color, Vec
 	data.pPSCB->update(&data.pscBuff);
 }
 
-// If ilumination is enabled clears all lights for the Polihedron.
+// If ilumination is enabled clears all lights for the Polyhedron.
 
-void Polihedron::clearLights()
+void Polyhedron::clearLights()
 {
 	if (!isInit)
-		throw INFO_EXCEPT("Trying to clear the lights on an uninitialized Polihedron.");
+		throw INFO_EXCEPT("Trying to clear the lights on an uninitialized Polyhedron.");
 
-	PolihedronInternals& data = *(PolihedronInternals*)polihedronData;
+	PolyhedronInternals& data = *(PolyhedronInternals*)polyhedronData;
 
 	if (!data.desc.enable_iluminated)
-		throw INFO_EXCEPT("Trying to clear the lights on a Polihedron with ilumination disabled.");
+		throw INFO_EXCEPT("Trying to clear the lights on a Polyhedron with ilumination disabled.");
 
 	for (auto& light : data.pscBuff.lightsource)
 		light = {};
@@ -1329,15 +1329,15 @@ void Polihedron::clearLights()
 
 // If ilumination is enabled, to the valid pointers it writes the specified lights data.
 
-void Polihedron::getLight(unsigned id, Vector2f* intensities, Color* color, Vector3f* position)
+void Polyhedron::getLight(unsigned id, Vector2f* intensities, Color* color, Vector3f* position)
 {
 	if (!isInit)
-		throw INFO_EXCEPT("Trying to get a light of an uninitialized Polihedron.");
+		throw INFO_EXCEPT("Trying to get a light of an uninitialized Polyhedron.");
 
-	PolihedronInternals& data = *(PolihedronInternals*)polihedronData;
+	PolyhedronInternals& data = *(PolyhedronInternals*)polyhedronData;
 
 	if (!data.desc.enable_iluminated)
-		throw INFO_EXCEPT("Trying to get a light of a Polihedron with ilumination disabled.");
+		throw INFO_EXCEPT("Trying to get a light of a Polyhedron with ilumination disabled.");
 
 	if (id >= 8)
 		throw INFO_EXCEPT("Trying to get a light with an invalid id (must be 0-7).");
@@ -1358,48 +1358,48 @@ void Polihedron::getLight(unsigned id, Vector2f* intensities, Color* color, Vect
 
 // Returns the current rotation quaternion.
 
-Quaternion Polihedron::getRotation() const
+Quaternion Polyhedron::getRotation() const
 {
 	if (!isInit)
-		throw INFO_EXCEPT("Trying to get the rotation of an uninitialized Polihedron.");
+		throw INFO_EXCEPT("Trying to get the rotation of an uninitialized Polyhedron.");
 
-	PolihedronInternals& data = *(PolihedronInternals*)polihedronData;
+	PolyhedronInternals& data = *(PolyhedronInternals*)polyhedronData;
 
 	return data.rotation;
 }
 
 // Returns the current scene position.
 
-Vector3f Polihedron::getPosition() const
+Vector3f Polyhedron::getPosition() const
 {
 	if (!isInit)
-		throw INFO_EXCEPT("Trying to get the position of an uninitialized Polihedron.");
+		throw INFO_EXCEPT("Trying to get the position of an uninitialized Polyhedron.");
 
-	PolihedronInternals& data = *(PolihedronInternals*)polihedronData;
+	PolyhedronInternals& data = *(PolyhedronInternals*)polyhedronData;
 
 	return data.position;
 }
 
 // Returns the current distortion matrix.
 
-Matrix Polihedron::getDistortion() const
+Matrix Polyhedron::getDistortion() const
 {
 	if (!isInit)
-		throw INFO_EXCEPT("Trying to get the distortion matrix of an uninitialized Polihedron.");
+		throw INFO_EXCEPT("Trying to get the distortion matrix of an uninitialized Polyhedron.");
 
-	PolihedronInternals& data = *(PolihedronInternals*)polihedronData;
+	PolyhedronInternals& data = *(PolyhedronInternals*)polyhedronData;
 
 	return data.distortion;
 }
 
 // Returns the current screen position.
 
-Vector2f Polihedron::getScreenPosition() const
+Vector2f Polyhedron::getScreenPosition() const
 {
 	if (!isInit)
-		throw INFO_EXCEPT("Trying to get the screen position of an uninitialized Polihedron.");
+		throw INFO_EXCEPT("Trying to get the screen position of an uninitialized Polyhedron.");
 
-	PolihedronInternals& data = *(PolihedronInternals*)polihedronData;
+	PolyhedronInternals& data = *(PolyhedronInternals*)polyhedronData;
 
 	return { data.vscBuff.displacement.x, data.vscBuff.displacement.y };
 }

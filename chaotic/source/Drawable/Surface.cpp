@@ -75,6 +75,8 @@ struct SurfaceInternals
 	Vector3f* implicit_vertices = nullptr;
 	Vector3i* implicit_triangles = nullptr;
 
+	Vector3f* spherical_vertices = nullptr;
+
 	ConstantBuffer* pVSCB = nullptr;
 	ConstantBuffer* pPSCB = nullptr;
 
@@ -123,6 +125,9 @@ Surface::~Surface()
 
 	if (data.implicit_triangles)
 		delete[] data.implicit_triangles;
+
+	if (data.spherical_vertices)
+		delete[] data.spherical_vertices;
 
 	delete& data;
 }
@@ -1283,8 +1288,8 @@ void Surface::initialize(const SURFACE_DESC* pDesc)
 									Vector3f ei = vertices[n] * a;
 									Vector3f ej = vertices[n] * ei;
 
-									Quaternion rot_i = rotationQuaternion(ei, data.desc.delta_value);
-									Quaternion rot_j = rotationQuaternion(ej, data.desc.delta_value);
+									Quaternion rot_i = Quaternion::Rotation(ei, data.desc.delta_value);
+									Quaternion rot_j = Quaternion::Rotation(ej, data.desc.delta_value);
 
 									Vector3f plus_i = (rot_i * Quaternion(vertices[n]) * rot_i.inv()).getVector();
 									Vector3f minus_i = (rot_i.inv() * Quaternion(vertices[n]) * rot_i).getVector();
@@ -1412,8 +1417,8 @@ void Surface::initialize(const SURFACE_DESC* pDesc)
 								Vector3f ei = vertices[n] * a;
 								Vector3f ej = vertices[n] * ei;
 
-								Quaternion rot_i = rotationQuaternion(ei, data.desc.delta_value);
-								Quaternion rot_j = rotationQuaternion(ej, data.desc.delta_value);
+								Quaternion rot_i = Quaternion::Rotation(ei, data.desc.delta_value);
+								Quaternion rot_j = Quaternion::Rotation(ej, data.desc.delta_value);
 
 								Vector3f plus_i = (rot_i * Quaternion(vertices[n]) * rot_i.inv()).getVector();
 								Vector3f minus_i = (rot_i.inv() * Quaternion(vertices[n]) * rot_i).getVector();
@@ -1548,8 +1553,8 @@ void Surface::initialize(const SURFACE_DESC* pDesc)
 								Vector3f ei = vertices[n] * a;
 								Vector3f ej = vertices[n] * ei;
 
-								Quaternion rot_i = rotationQuaternion(ei, data.desc.delta_value);
-								Quaternion rot_j = rotationQuaternion(ej, data.desc.delta_value);
+								Quaternion rot_i = Quaternion::Rotation(ei, data.desc.delta_value);
+								Quaternion rot_j = Quaternion::Rotation(ej, data.desc.delta_value);
 
 								Vector3f plus_i = (rot_i * Quaternion(vertices[n]) * rot_i.inv()).getVector();
 								Vector3f minus_i = (rot_i.inv() * Quaternion(vertices[n]) * rot_i).getVector();
@@ -1628,7 +1633,10 @@ void Surface::initialize(const SURFACE_DESC* pDesc)
 					throw INFO_EXCEPT("Unknonw surface coloring type found when trying to initialize a Surface.");
 			}
 
-			delete[] vertices;
+			if (data.desc.enable_updates)
+				data.spherical_vertices = vertices;
+			else
+				delete[] vertices;
 			break;
 		}
 
@@ -3932,7 +3940,7 @@ void Surface::updateShape(Vector2f range_u, Vector2f range_v, Vector2f range_w)
 					// First assign a position to each vertex given the parametric function.
 					for (unsigned n = 0u; n < V; n++)
 					{
-						Vector3f vertex = Vector3f(data.Vertices[n].vector.x, data.Vertices[n].vector.y, data.Vertices[n].vector.z).normalize();
+						Vector3f vertex = data.spherical_vertices[n];
 
 						// Assign a radius for each point of the sphere.
 						data.Vertices[n].vector = (vertex * data.desc.spherical_func(vertex.x, vertex.y, vertex.z)).getVector4();
@@ -3947,15 +3955,15 @@ void Surface::updateShape(Vector2f range_u, Vector2f range_v, Vector2f range_w)
 							{
 								for (unsigned n = 0u; n < V; n++)
 								{
-									Vector3f vertex = Vector3f(data.Vertices[n].vector.x, data.Vertices[n].vector.y, data.Vertices[n].vector.z).normalize();
+									Vector3f vertex = data.spherical_vertices[n];
 
 									Vector3f a = (vertex.z < 0.999f && vertex.z > -0.999f) ? Vector3f(0.f, 0.f, 1.f) : Vector3f(0.f, 1.f, 0.f);
 
 									Vector3f ei = vertex * a;
 									Vector3f ej = vertex * ei;
 
-									Quaternion rot_i = rotationQuaternion(ei, data.desc.delta_value);
-									Quaternion rot_j = rotationQuaternion(ej, data.desc.delta_value);
+									Quaternion rot_i = Quaternion::Rotation(ei, data.desc.delta_value);
+									Quaternion rot_j = Quaternion::Rotation(ej, data.desc.delta_value);
 
 									Vector3f plus_i = (rot_i * Quaternion(vertex) * rot_i.inv()).getVector();
 									Vector3f minus_i = (rot_i.inv() * Quaternion(vertex) * rot_i).getVector();
@@ -3991,7 +3999,7 @@ void Surface::updateShape(Vector2f range_u, Vector2f range_v, Vector2f range_w)
 					// Assign a position to each vertex given the explicit function and a cube texture coordinate equal to the S2 position.
 					for (unsigned n = 0u; n < V; n++)
 					{
-						Vector3f vertex = Vector3f(data.TexVertices[n].vector.x, data.TexVertices[n].vector.y, data.TexVertices[n].vector.z).normalize();
+						Vector3f vertex = data.spherical_vertices[n];
 
 						// Assign a radius for each point of the sphere.
 						data.TexVertices[n].vector = (vertex * data.desc.spherical_func(vertex.x, vertex.y, vertex.z)).getVector4();
@@ -4006,15 +4014,15 @@ void Surface::updateShape(Vector2f range_u, Vector2f range_v, Vector2f range_w)
 							{
 								for (unsigned n = 0u; n < V; n++)
 								{
-									Vector3f vertex = Vector3f(data.TexVertices[n].vector.x, data.TexVertices[n].vector.y, data.TexVertices[n].vector.z).normalize();
+									Vector3f vertex = data.spherical_vertices[n];
 
 									Vector3f a = (vertex.z < 0.999f && vertex.z > -0.999f) ? Vector3f(0.f, 0.f, 1.f) : Vector3f(0.f, 1.f, 0.f);
 
 									Vector3f ei = vertex * a;
 									Vector3f ej = vertex * ei;
 
-									Quaternion rot_i = rotationQuaternion(ei, data.desc.delta_value);
-									Quaternion rot_j = rotationQuaternion(ej, data.desc.delta_value);
+									Quaternion rot_i = Quaternion::Rotation(ei, data.desc.delta_value);
+									Quaternion rot_j = Quaternion::Rotation(ej, data.desc.delta_value);
 
 									Vector3f plus_i = (rot_i * Quaternion(vertex) * rot_i.inv()).getVector();
 									Vector3f minus_i = (rot_i.inv() * Quaternion(vertex) * rot_i).getVector();
@@ -4050,7 +4058,7 @@ void Surface::updateShape(Vector2f range_u, Vector2f range_v, Vector2f range_w)
 					// Assign a position to each vertex given the explicit function and a color.
 					for (unsigned n = 0u; n < V; n++)
 					{
-						Vector3f vertex = Vector3f(data.ColVertices[n].vector.x, data.ColVertices[n].vector.y, data.ColVertices[n].vector.z).normalize();
+						Vector3f vertex = data.spherical_vertices[n];
 
 						// Assign a radius for each point of the sphere.
 						data.ColVertices[n].vector = (vertex * data.desc.spherical_func(vertex.x, vertex.y, vertex.z)).getVector4();
@@ -4068,15 +4076,15 @@ void Surface::updateShape(Vector2f range_u, Vector2f range_v, Vector2f range_w)
 							{
 								for (unsigned n = 0u; n < V; n++)
 								{
-									Vector3f vertex = Vector3f(data.ColVertices[n].vector.x, data.ColVertices[n].vector.y, data.ColVertices[n].vector.z).normalize();
+									Vector3f vertex = data.spherical_vertices[n];
 
 									Vector3f a = (vertex.z < 0.999f && vertex.z > -0.999f) ? Vector3f(0.f, 0.f, 1.f) : Vector3f(0.f, 1.f, 0.f);
 
 									Vector3f ei = vertex * a;
 									Vector3f ej = vertex * ei;
 
-									Quaternion rot_i = rotationQuaternion(ei, data.desc.delta_value);
-									Quaternion rot_j = rotationQuaternion(ej, data.desc.delta_value);
+									Quaternion rot_i = Quaternion::Rotation(ei, data.desc.delta_value);
+									Quaternion rot_j = Quaternion::Rotation(ej, data.desc.delta_value);
 
 									Vector3f plus_i = (rot_i * Quaternion(vertex) * rot_i.inv()).getVector();
 									Vector3f minus_i = (rot_i.inv() * Quaternion(vertex) * rot_i).getVector();

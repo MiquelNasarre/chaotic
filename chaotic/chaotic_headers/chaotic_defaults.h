@@ -9,6 +9,7 @@
  */
 
 // Default library dependencies.
+#define _INCLUDE_DEFAULT_EXCEPTION
 #include "chaotic.h"
 
 // Some std dependencies for easier user experience.
@@ -16,6 +17,9 @@
 #include <string>
 using std::vector;
 using std::string;
+
+// Toggle to enable or disable demo during build, for memory saving.
+#define _ENABLE_CHAOTIC_DEMO
 
 /* API DEFAULT HELPERS
 -------------------------------------------------------------------------------------------------------
@@ -50,7 +54,14 @@ But if you are just here to plot something cool feel free to use this header :)
 -------------------------------------------------------------------------------------------------------
 */
 
-// Both surfaces and polihedrons allow for ilumination, and both of them require
+#ifdef _ENABLE_CHAOTIC_DEMO
+// This function runs the library demo!! All the relevant information 
+// is provided inside the function itself, run it and enjoy!
+// Source code can be found at 'chaotic/source/chaotic_demo.cpp'.
+extern void chaotic_demo();
+#endif
+
+// Both surfaces and polyhedrons allow for ilumination, and both of them require
 // three parameters for every lightsource update, the position, the intensities
 // and the color. Therefore this struct is a compact way of representing a light
 // for both of those drawables.
@@ -109,24 +120,34 @@ struct EventData
 
 	// Scale that takes the current window scale and updates it with the
 	// mouse wheel if not dragging. You can use it by setting your default
-	// window scale to it, or by calling updatePerspective().
-	float scale = {};
+	// window scale to it, or by calling setPerspective()/setScale().
+	float scale = 250.f;
 };
 
 // Default event manager function, takes in a reference to an EventData object
 // with a valid window pointer and updates the data inside the struct accordingly.
 // It can be called every frame inside the Window::processEvents() loop.
 // If the window pointer is not valid it will early return.
-void defaultEventManager(EventData& data)
+static void defaultEventManager(EventData& data)
 {
-	// If the window is not provided there is not much we can do
+	// If the window is not provided there is not much we can do.
 	if (!data.window)
-		return;
+		throw INFO_EXCEPT(
+			"Called defaultEventManager on an EventData with an invalid window pointer.\n"
+			"A valid window pointer must exist for the default event manager to work."
+		);
 
 	// We get the scene perspective data from the window.
 	Quaternion observer = data.window->graphics().getObserver();
 	Vector2i dim = data.window->getDimensions() / 2;
 	data.scale = data.window->graphics().getScale();
+
+	// If no focus, accumulate rotation and leave.
+	if (!data.window->hasFocus())
+	{
+		data.rot_free *= data.d_rot_free;
+		return;
+	}
 
 	// Get the mouse wheel spin change
 	data.d_mouse_wheel = (float)Mouse::getWheel();
@@ -158,7 +179,7 @@ void defaultEventManager(EventData& data)
 		Quaternion rot = (Quaternion(data.S2_new_mouse * data.S2_last_mouse) + 1.f + (data.S2_last_mouse ^ data.S2_new_mouse)).normal();
 
 		// Add some wheel spin into the mix.
-		Quaternion wheel_spin = rotationQuaternion(data.S2_new_mouse, data.d_mouse_wheel / 18000.f);
+		Quaternion wheel_spin = Quaternion::Rotation(data.S2_new_mouse, data.d_mouse_wheel / 18000.f);
 
 		// Add some momentum into the mix based on how much the new mouse position would drag you down.
 		Quaternion momentum = fabsf(data.d_rot_free.r) < 1.f - 1e-6f ?
@@ -213,6 +234,30 @@ public:
 		slider_names.erase(slider_names.begin() + idx);
 	}
 
+	// You can add simple imgui integer sliders to the widgets. Just send the address of the
+	// integer you want to slide, the range, and the name of the slider. And it will be used
+	// during the render call. Make sure the integer life is as long as this objects.
+	void pushSliderInt(int* address, Vector2i range, const char* name)
+	{
+		if (!address)
+			return;
+
+		sliders_int.push_back(address);
+		slider_ranges_int.push_back(range);
+		slider_names_int.push_back(name);
+	}
+
+	// Erases the slider with the specified idx from the widgets if it exists.
+	void eraseSliderInt(unsigned idx)
+	{
+		if (sliders_int.size() <= idx)
+			return;
+
+		sliders_int.erase(sliders_int.begin() + idx);
+		slider_ranges_int.erase(slider_ranges_int.begin() + idx);
+		slider_names_int.erase(slider_names_int.begin() + idx);
+	}
+
 	// You can add different menu bar selections to the widgets. For that you will need to 
 	// provide the name of the selector, the range of integers it will select from (including 
 	// start and end), the integer address where it will write its selections, and the names 
@@ -261,26 +306,58 @@ public:
 		light = address;
 	}
 
+	// If it is holding a lightsource pointer it releases it and stops running the editor.
+	void popLightSource()
+	{
+		light = nullptr;
+	}
+
+	// Color editor. Send in a color address and during rendering it will pop  a color editor 
+	// widget. The widget will stay there until the edition is finished by the user, modifying 
+	// the color as specified. When finished it will release the pointer from its storage. 
+	// Make sure the lifetime of the pointer is as long as the editor.
+	void editColor(Color* address)
+	{
+		if (!address || color)
+			return;
+
+		color_storage = *address;
+		color = address;
+	}
+
+	// If it is holding a lightsource pointer it releases it and stops running the editor.
+	void popColor()
+	{
+		color = nullptr;
+	}
+
+	// Stores an ImGui user function to be added to the basic render call.
+	void inject(void(*your_imgui)()) { injected = your_imgui; }
+
 	// Rendering function override. This function will be called automatically by the bind 
 	// window during push frame calls and will render and run all the imGui widgets as built 
 	// by the user. You do not have to call this function yourself.
 	void render() override 
 	{
-		// If not visible return before drawing.
-		if (!visible)
-			return;
-
 		// iGManager function that declares a new imGui draw. Has to be called at the 
 		// beggining of iGManagers rendering functions.
 		newFrame();
 
+		// If not visible return before drawing.
+		if (!visible)
+		{
+			// Still you want to drawFrame() so that imgui releases focus.
+			drawFrame();
+			return;
+		}
+
 		// We now render the main widgets window.
-		if (ImGui::Begin("Settings", NULL, ImGuiWindowFlags_MenuBar))
+		if (ImGui::Begin(title, NULL, ImGuiWindowFlags_MenuBar))
 		{
 			// If it is the first call of this imgui context it will set some defaults.
 			ImGui::SetWindowPos(ImVec2(2, 2), ImGuiCond_Once);
 			ImGui::SetWindowCollapsed(true, ImGuiCond_Once);
-			ImGui::SetWindowSize(ImVec2(315, 120), ImGuiCond_Once);
+			ImGui::SetWindowSize(ImVec2((float)initial_size.x, (float)initial_size.y), ImGuiCond_Once);
 
 			// Render the selectors if they exist.
 			if (sel_integers.size())
@@ -299,9 +376,15 @@ public:
 					ImGui::EndMenuBar();
 				}
 
+			// Render the integer sliders if they exist.
+			for (unsigned s = 0u; s < sliders_int.size(); s++)
+				ImGui::SliderInt(slider_names_int[s].c_str(), sliders_int[s], slider_ranges_int[s].x, slider_ranges_int[s].y);
+
 			// Render the sliders if they exits.
 			for (unsigned s = 0u; s < sliders.size(); s++)
 				ImGui::SliderFloat(slider_names[s].c_str(), sliders[s], slider_ranges[s].x, slider_ranges[s].y);
+
+			
 		}
 		ImGui::End();
 
@@ -351,6 +434,41 @@ public:
 			ImGui::End();
 		}
 
+		// If we are holding a color in the pointer run the color editor for that color.
+		if (color)
+		{
+			if (ImGui::Begin(" Color editor", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse))
+			{
+				ImGui::SetWindowSize(ImVec2(350, 340), ImGuiCond_Once);
+
+				ImGui::Text("Color:");
+
+				// First do one of the default ImGui color pickers.
+				_float4color col = color->getColor4();
+				// The reason why we can send &col as a float*, is because _float4 and Vector*f 
+				// structs are tightly packed and can be interpreted as float*.
+				ImGui::ColorPicker4("", (float*)&col);
+				*color = Color(col);
+
+				// Cancel buttor returns to the buffer and exits edition.
+				ImGui::SetCursorPos(ImVec2(250, 220));
+				if (ImGui::Button("Cancel", ImVec2(80, 45)))
+				{
+					*color = color_storage;
+					color = nullptr;
+				}
+				// Apply button, exits edition.
+				ImGui::SetCursorPos(ImVec2(250, 272));
+				if (ImGui::Button("Apply", ImVec2(80, 45)))
+					color = nullptr;
+			}
+			ImGui::End();
+		}
+
+		// If a user extension has been provided do it here.
+		if (injected != nullptr)
+			injected();
+
 		// iGManager function that pushes an imGui draw. Has to be called at the 
 		// end of iGManagers rendering functions.
 		drawFrame();
@@ -358,7 +476,14 @@ public:
 
 	// Toggle to control whether the imGui is rendered ot not.
 	bool visible = true;
+
+	char title[64] = "Settings";		  // Stores the imgui window title
+	Vector2i initial_size = { 315, 120 }; // Stores the imgui window initial size
 protected:
+	vector<int*> sliders_int;			// Stores the addresses of the floats it slides.
+	vector<Vector2i> slider_ranges_int;	// Stores the ranges of the sliders displayed.
+	vector<string> slider_names_int;	// Stores the names of the sliders displayed.
+
 	vector<float*> sliders;			// Stores the addresses of the floats it slides.
 	vector<Vector2f> slider_ranges;	// Stores the ranges of the sliders displayed.
 	vector<string> slider_names;	// Stores the names of the sliders displayed.
@@ -370,6 +495,10 @@ protected:
 
 	LightSource storage = {};		// Stores the previous light state before editing.
 	LightSource* light = nullptr;	// Pointer to the currently editing lightSource.
+	Color color_storage = {};		// Stores the previous color before editing.
+	Color* color = nullptr;			// Pointer to the currently editing color.
+
+	void(*injected)() = nullptr;	// Stores your injected imgui code.
 };
 #endif
 
@@ -475,15 +604,15 @@ public:
 	void drawFrame(Color background = Color::Black)
 	{
 		// Set this window as the render target and clear the buffer.
-		graphics().setRenderTarget();
-		graphics().clearBuffer(background);
+		setRenderTarget();
+		clearBuffer(background);
 
 		// Draw all drawables by order.
 		for (Drawable* d : drawables)
 			d->Draw();
 
 		// Push the frame to the window.
-		graphics().pushFrame();
+		pushFrame();
 
 		// We process events after drawing so that what ImGui says 
 		// does not get overwritten by the user. That causes our events
@@ -511,7 +640,7 @@ public:
 		Quaternion rotPhi   = { cosf(  phi / 2.f),-sinf(  phi / 2.f), 0.f, 0.f };
 
 		Quaternion observer = (rotPhi * rotTheta * rotUp).normal();
-		graphics().updatePerspective(observer, center, scale);
+		setPerspective(observer, center, scale);
 	}
 
 public:

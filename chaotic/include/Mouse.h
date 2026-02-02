@@ -89,7 +89,7 @@ public:
 	// Sets the wheel movement back to 0. To be called after reading the wheel value.
 	static void resetWheel();
 
-	// Returns the current mouse wheel movement value. Does not reset it.
+	// Returns the current mouse wheel movement value. Does reset it.
 	static int getWheel();
 
 	// Returns the current mouse position in pixels relative to the window.

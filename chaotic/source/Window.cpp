@@ -363,6 +363,15 @@ Graphics& Window::graphics()
 	return *data.graphics;
 }
 
+// Returns a reference to the window internal Graphics object.
+
+const Graphics& Window::graphics() const
+{
+	WindowInternals& data = *((WindowInternals*)WindowData);
+
+	return *data.graphics;
+}
+
 // Loops throgh the messages, pushes them to the queue and translates them.
 // It reuturns 0 unless a window close button is pressed, in that case it 
 // returns the window ID of that specific window.
@@ -395,7 +404,7 @@ void Window::close()
 // Creates the window and its associated Graphics, expects a valid descriptor 
 // pointer, if not provided it chooses the default descriptor settings.
 
-Window::Window(WINDOW_DESC* pDesc): w_id { next_id++ }
+Window::Window(const WINDOW_DESC* pDesc): w_id { next_id++ }
 {
 	//  If descriptor not provided, default
 	WINDOW_DESC desc = {};
@@ -585,10 +594,24 @@ bool Window::hasFocus() const
 	return (GetForegroundWindow() == data.hWnd);
 }
 
+// Sets the focus to the current window.
+
+void Window::requestFocus()
+{
+	WindowInternals& data = *((WindowInternals*)WindowData);
+	SetFocus(data.hWnd);
+}
+
 // Set the title of the window, allows for formatted strings.
 
 void Window::setTitle(const char* fmt_name, ...)
 {
+	if (!fmt_name)
+		throw INFO_EXCEPT(
+			"Found nullptr when trying to access the name to set the window title.\n"
+			"Please send a valid const char* when setting the window title."
+		);
+
 	va_list ap;
 
 	WindowInternals& data = *((WindowInternals*)WindowData);
@@ -608,6 +631,12 @@ void Window::setTitle(const char* fmt_name, ...)
 
 void Window::setIcon(const char* filename)
 {
+	if (!filename)
+		throw INFO_EXCEPT(
+			"Found nullptr when trying to access the filename to set the window icon.\n"
+			"Please send a valid file path when setting the window icon."
+		);
+
 	WindowInternals& data = *((WindowInternals*)WindowData);
 
 	HANDLE hIcon = LoadImageA(0, filename, IMAGE_ICON, 0, 0, LR_DEFAULTSIZE | LR_LOADFROMFILE | LR_SHARED);
@@ -738,6 +767,20 @@ void Window::setWallpaperMonitor(int monitor_idx)
 	DwmFlush();
 	SystemParametersInfoW(SPI_SETDESKWALLPAPER, 0, nullptr, SPIF_SENDCHANGE);
 	SetParent(data.hWnd, workerw);
+}
+
+// For the wallpaper mode, it tells you if a specific monitor 
+// exists or not. Expand option, -1, is not considered a monitor.
+
+bool Window::hasMonitor(int monitor_idx)
+{
+	MonitorPick mp = {};
+	mp.indexWanted = monitor_idx;
+	mp.indexNow = 0;
+	mp.found = false;
+
+	EnumDisplayMonitors(nullptr, nullptr, EnumMonProc, (LPARAM)&mp);
+	return mp.found;
 }
 
 // Sets the maximum framerate of the widow to the one specified.

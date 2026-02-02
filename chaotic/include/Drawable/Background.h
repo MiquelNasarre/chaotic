@@ -88,7 +88,8 @@ public:
 
 	// If the background is static it updates the rectangle of Image pixels drawn. By 
 	// default it draws the entire image: min->(0,0) max->(width,height).
-	void updateRectangle(Vector2i min_coords, Vector2i max_coords);
+	// The dimensions are in image pixels, intermediate positions are allowed.
+	void updateRectangle(Vector2f min_coords, Vector2f max_coords);
 
 	// Returns the Texture image dimensions.
 	Vector2i getImageDim() const;

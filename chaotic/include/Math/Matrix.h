@@ -55,9 +55,6 @@ struct Matrix
         a20 = _a20; a21 = _a21; a22 = _a22;
     }
 
-    // Returns identity matrix.
-    static constexpr Matrix Identity() { return Matrix(1.f); }
-
     // Matrix addition operator.
     constexpr Matrix operator+(const Matrix& o) const
     {
@@ -205,6 +202,51 @@ struct Matrix
             t.x, t.y, t.z, 1.f,
         };
     }
+
+    // --- Static Constructors ---
+
+    // Returns identity matrix.
+    static constexpr Matrix Identity() { return Matrix(1.f); }
+
+    // stretch in each cardinal direction, returns the diagonal matrix.
+    static constexpr Matrix Diagonal(float x, float y, float z)
+    {
+        return {
+            x, 0.f, 0.f,
+            0.f, y, 0.f,
+            0.f, 0.f, z
+        };
+    }
+
+    // Stretch along direction 'axis' by 'factor' (factor=1 => no change).
+    static inline Matrix Stretch(const Vector3f axis, float factor)
+    {
+        if (!axis)
+            return Matrix::Identity();
+
+        const float a = (factor - 1.0f);
+        const Vector3f u = axis.normal();
+
+        // I + a*u*u^T
+        return {
+            1.f + a * u.x * u.x,       a * u.x * u.y,       a * u.x * u.z,
+                  a * u.y * u.x, 1.f + a * u.y * u.y,       a * u.y * u.z,
+                  a * u.z * u.x,       a * u.z * u.y, 1.f + a * u.z * u.z
+        };
+    }
+
+    // Shear that pushes along 'dir' proportionally to projection on 'ref'.
+    static constexpr Matrix Shear(const Vector3f dir, const Vector3f ref, float k)
+    {
+        // A = I + k * dir * ref^T   (dir/ref need not be orthogonal; ref is "measured axis")
+        const Vector3f d = dir;
+        const Vector3f r = ref;
+        return {
+            1.f + k * d.x * r.x,       k * d.x * r.y,       k * d.x * r.z,
+                  k * d.y * r.x, 1.f + k * d.y * r.y,       k * d.y * r.z,
+                  k * d.z * r.x,       k * d.z * r.y, 1.f + k * d.z * r.z
+        };
+    }
 };
 
 // Reversed scalar multiplication operator.
@@ -218,45 +260,5 @@ constexpr Vector3f operator*(const Vector3f& v, const Matrix& M)
         v.x * M.a00 + v.y * M.a10 + v.z * M.a20,
         v.x * M.a01 + v.y * M.a11 + v.z * M.a21,
         v.x * M.a02 + v.y * M.a12 + v.z * M.a22
-    };
-}
-
-// Ctretch in each cardinal direction, returns the diagonal matrix.
-constexpr Matrix ScalingMatrix(float x, float y, float z)
-{
-    return {
-        x, 0.f, 0.f,
-        0.f, y, 0.f,
-        0.f, 0.f, z
-    };
-}
-
-// Stretch along direction 'axis' by 'factor' (factor=1 => no change).
-inline Matrix StretchMatrix(const Vector3f axis, float factor)
-{
-    if (!axis)
-        return Matrix::Identity();
-
-    const float a = (factor - 1.0f);
-    const Vector3f u = axis.normal();
-
-    // I + a*u*u^T
-    return {
-        1.f + a * u.x * u.x,       a * u.x * u.y,       a * u.x * u.z,
-              a * u.y * u.x, 1.f + a * u.y * u.y,       a * u.y * u.z,
-              a * u.z * u.x,       a * u.z * u.y, 1.f + a * u.z * u.z
-    };
-}
-
-// Shear that pushes along 'dir' proportionally to projection on 'ref'.
-constexpr Matrix ShearMatrix(const Vector3f dir, const Vector3f ref, float k)
-{
-    // A = I + k * dir * ref^T   (dir/ref need not be orthogonal; ref is "measured axis")
-    const Vector3f d = dir;
-    const Vector3f r = ref;
-    return {
-        1.f + k * d.x * r.x,       k * d.x * r.y,       k * d.x * r.z,
-              k * d.y * r.x, 1.f + k * d.y * r.y,       k * d.y * r.z,
-              k * d.z * r.x,       k * d.z * r.y, 1.f + k * d.z * r.z
     };
 }

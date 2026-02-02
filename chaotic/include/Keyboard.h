@@ -62,10 +62,10 @@ private:
 	static inline event* keyBuffer[maxBuffer] = { nullptr };	// Buffer of the events pushed to the keyboard.
 
 	// Internal function triggered by the MSG Handle to set a key as pressed.
-	static void setKeyPressed(char keycode);
+	static void setKeyPressed(unsigned char keycode);
 
 	// Internal function triggered by the MSG Handle to set a key as released.
-	static void setKeyReleased(char keycode);
+	static void setKeyReleased(unsigned char keycode);
 
 	// Internal function triggered by the MSG Handle to clear all key states.
 	static void clearKeyStates();
@@ -74,7 +74,7 @@ private:
 	static void pushChar(char character);
 
 	// Internal function triggered by the MSG Handle to push an event to the buffer.
-	static void pushEvent(event::Type type, char keycode);
+	static void pushEvent(event::Type type, unsigned char keycode);
 
 public:
 	// Toggles the autorepeat behavior on or off as specified.
@@ -87,7 +87,7 @@ public:
 	static void clearBuffers();
 
 	// Checks whether a key is being pressed.
-	static bool isKeyPressed(char keycode);
+	static bool isKeyPressed(unsigned char keycode);
 
 	// Checks whether the char buffer is empty.
 	static bool charIsEmpty();

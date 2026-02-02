@@ -44,14 +44,15 @@ The classes included are the following:
   * Background					— Drawable to create fixed and dynamic backgrounds.
   * Curve						— Drawable to create thin curves in 3D space.
   * Light						— Drawable to represent light sources.
-  * Polihedron					— Drawable to plot any polihedron or triangle mesh.
+  * Polyhedron					— Drawable to plot any polyhedron or triangle mesh.
   * Scatter						— Drawable to create point and line scatters.
   * Surface						— Drawable to plot all kinds of mathematical defined surfaces.
  
  Other library classes:
   * iGManager					— Support class to incorporate ImGui into the windows (optional).
   * Timer						— Timer class used by the internals added for convenience (optional).
-  * Exception					— Exception class used by the library for any error occurred.
+  * Exception					— Exception base class used by the library for any error occurred.
+  * Exception default class		— Exception type to be used by the user (INFO_EXCEPT).
 
 The classes are copied as they are in their original header files. For further reading
 each class has its own description and all functions are explained. I suggest reading the 
@@ -87,6 +88,9 @@ the DirectX11 and Win32 dependencies used to create the internals of the library
 
 // Toggle to enable and disable Timer class inside the header.
 #define _INCLUDE_TIMER
+
+// Toggle to enable and disable InfoException class inside the header.
+#define _INCLUDE_DEFAULT_EXCEPTION
 
 
 /* VECTOR STRUCTURES HEADER
@@ -656,9 +660,6 @@ struct Matrix
 		a20 = _a20; a21 = _a21; a22 = _a22;
 	}
 
-	// Returns identity matrix.
-	static constexpr Matrix Identity() { return Matrix(1.f); }
-
 	// Matrix addition operator.
 	constexpr Matrix operator+(const Matrix& o) const
 	{
@@ -806,6 +807,51 @@ struct Matrix
 			t.x, t.y, t.z, 1.f,
 		};
 	}
+
+	// --- Static Constructors ---
+
+	// Returns identity matrix.
+	static constexpr Matrix Identity() { return Matrix(1.f); }
+
+	// stretch in each cardinal direction, returns the diagonal matrix.
+	static constexpr Matrix Diagonal(float x, float y, float z)
+	{
+		return {
+			x, 0.f, 0.f,
+			0.f, y, 0.f,
+			0.f, 0.f, z
+		};
+	}
+
+	// Stretch along direction 'axis' by 'factor' (factor=1 => no change).
+	static inline Matrix Stretch(const Vector3f axis, float factor)
+	{
+		if (!axis)
+			return Matrix::Identity();
+
+		const float a = (factor - 1.0f);
+		const Vector3f u = axis.normal();
+
+		// I + a*u*u^T
+		return {
+			1.f + a * u.x * u.x,       a * u.x * u.y,       a * u.x * u.z,
+				  a * u.y * u.x, 1.f + a * u.y * u.y,       a * u.y * u.z,
+				  a * u.z * u.x,       a * u.z * u.y, 1.f + a * u.z * u.z
+		};
+	}
+
+	// Shear that pushes along 'dir' proportionally to projection on 'ref'.
+	static constexpr Matrix Shear(const Vector3f dir, const Vector3f ref, float k)
+	{
+		// A = I + k * dir * ref^T   (dir/ref need not be orthogonal; ref is "measured axis")
+		const Vector3f d = dir;
+		const Vector3f r = ref;
+		return {
+			1.f + k * d.x * r.x,       k * d.x * r.y,       k * d.x * r.z,
+				  k * d.y * r.x, 1.f + k * d.y * r.y,       k * d.y * r.z,
+				  k * d.z * r.x,       k * d.z * r.y, 1.f + k * d.z * r.z
+		};
+	}
 };
 
 // Reversed scalar multiplication operator.
@@ -822,45 +868,6 @@ constexpr Vector3f operator*(const Vector3f& v, const Matrix& M)
 	};
 }
 
-// Ctretch in each cardinal direction, returns the diagonal matrix.
-constexpr Matrix ScalingMatrix(float x, float y, float z)
-{
-	return {
-		x, 0.f, 0.f,
-		0.f, y, 0.f,
-		0.f, 0.f, z
-	};
-}
-
-// Stretch along direction 'axis' by 'factor' (factor=1 => no change).
-inline Matrix StretchMatrix(const Vector3f axis, float factor)
-{
-	if (!axis)
-		return Matrix::Identity();
-
-	const float a = (factor - 1.0f);
-	const Vector3f u = axis.normal();
-
-	// I + a*u*u^T
-	return {
-		1.f + a * u.x * u.x,       a * u.x * u.y,       a * u.x * u.z,
-			  a * u.y * u.x, 1.f + a * u.y * u.y,       a * u.y * u.z,
-			  a * u.z * u.x,       a * u.z * u.y, 1.f + a * u.z * u.z
-	};
-}
-
-// Shear that pushes along 'dir' proportionally to projection on 'ref'.
-constexpr Matrix ShearMatrix(const Vector3f dir, const Vector3f ref, float k)
-{
-	// A = I + k * dir * ref^T   (dir/ref need not be orthogonal; ref is "measured axis")
-	const Vector3f d = dir;
-	const Vector3f r = ref;
-	return {
-		1.f + k * d.x * r.x,       k * d.x * r.y,       k * d.x * r.z,
-			  k * d.y * r.x, 1.f + k * d.y * r.y,       k * d.y * r.z,
-			  k * d.z * r.x,       k * d.z * r.y, 1.f + k * d.z * r.z
-	};
-}
 
 
 /* QUATERNION STRUCTURE HEADER
@@ -998,7 +1005,7 @@ struct alignas(16) Quaternion
 		const float rj = r * j;
 		const float rk = r * k;
 
-		return
+		return 
 		{
 			1.f - 2.f * (jj + kk),       2.f * (ij - rk),       2.f * (ik + rj),
 				  2.f * (ij + rk), 1.f - 2.f * (ii + kk),       2.f * (jk - ri),
@@ -1012,6 +1019,12 @@ struct alignas(16) Quaternion
 	// Comparisson operators.
 	constexpr bool operator!=(const Quaternion& other) const { return (r != other.r) || (i != other.i) || (j != other.j) || (k != other.k); }
 	constexpr bool operator==(const Quaternion& other) const { return (r == other.r) && (i == other.i) && (j == other.j) && (k == other.k); }
+
+	// -- STATIC CONSTRUCTOR FOR ROTATION ---
+
+	// Returns the quaternion needed to rotate a the provided axis the specified angle. To rotate 
+	// a figure with this quaternion you do "P_rot = q * P * q.inv" for every point P in the figure.
+	static Quaternion Rotation(Vector3f axis, float angle);
 };
 
 // Reversed order multiplication.
@@ -1025,10 +1038,6 @@ constexpr Quaternion operator/(const float& lhs, const Quaternion& rhs) { return
 
 // Reversed order subtraction.
 constexpr Quaternion operator-(const float& lhs, const Quaternion& rhs) { return -rhs + lhs; }
-
-// Returns the quaternion needed to rotate a the provided axis the specified angle. To rotate 
-// a figure with this quaternion you do "P_rot = q * P * q.inv" for every point P in the figure.
-extern Quaternion rotationQuaternion(Vector3f axis, float angle);
 
 #ifdef _INCLUDE_CONSTANTS
 
@@ -1359,7 +1368,7 @@ public:
 	bool save(const char* fmt_filename, Arg0 arg0, Args... args) const { return save(internal_formatting(fmt_filename, arg0, args...)); }
 
 	// Saves the image to the specified file path.
-	bool save(const char* fmt_filename) const;
+	bool save(const char* filename) const;
 
 	// Getters
 
@@ -1489,10 +1498,10 @@ private:
 	static inline event* keyBuffer[maxBuffer] = { nullptr };	// Buffer of the events pushed to the keyboard.
 
 	// Internal function triggered by the MSG Handle to set a key as pressed.
-	static void setKeyPressed(char keycode);
+	static void setKeyPressed(unsigned char keycode);
 
 	// Internal function triggered by the MSG Handle to set a key as released.
-	static void setKeyReleased(char keycode);
+	static void setKeyReleased(unsigned char keycode);
 
 	// Internal function triggered by the MSG Handle to clear all key states.
 	static void clearKeyStates();
@@ -1501,7 +1510,7 @@ private:
 	static void pushChar(char character);
 
 	// Internal function triggered by the MSG Handle to push an event to the buffer.
-	static void pushEvent(event::Type type, char keycode);
+	static void pushEvent(event::Type type, unsigned char keycode);
 
 public:
 	// Toggles the autorepeat behavior on or off as specified.
@@ -1514,7 +1523,7 @@ public:
 	static void clearBuffers();
 
 	// Checks whether a key is being pressed.
-	static bool isKeyPressed(char keycode);
+	static bool isKeyPressed(unsigned char keycode);
 
 	// Checks whether the char buffer is empty.
 	static bool charIsEmpty();
@@ -1618,7 +1627,7 @@ public:
 	// Sets the wheel movement back to 0. To be called after reading the wheel value.
 	static void resetWheel();
 
-	// Returns the current mouse wheel movement value. Does not reset it.
+	// Returns the current mouse wheel movement value. Does reset it.
 	static int getWheel();
 
 	// Returns the current mouse position in pixels relative to the window.
@@ -1715,7 +1724,7 @@ public:
 
 	// Clears the buffer with the specified color. If all buffers is false it will only clear
 	// the screen color. the depth buffer and the transparency buffers will stay the same.
-	void clearBuffer(Color color, bool all_buffers = true);
+	void clearBuffer(Color color = Color::Black, bool all_buffers = true);
 
 	// Clears the depth buffer so that all objects painted are moved to the back.
 	// The last frame pixels are still on the render target.
@@ -1725,26 +1734,36 @@ public:
 	// IF it is not enabled it does nothing.
 	void clearTransparencyBuffers();
 
-	// Updates the perspective on the window, by changing the observer direction, 
+	// Sets the perspective on the window, by changing the observer direction, 
 	// the center of the POV and the scale of the object looked at.
-	void updatePerspective(Quaternion obs, Vector3f center, float scale);
+	void setPerspective(Quaternion obs, Vector3f center, float scale);
+
+	// Sets the observer quaternion that defines the POV on the window.
+	void setObserver(Quaternion obs);
+
+	// Sets the center of the window perspective.
+	void setCenter(Vector3f center);
+
+	// Sets the scale of the objects, defined as pixels per unit distance.
+	void setScale(float scale);
 
 	// Schedules a frame capture to be done during the next pushFrame() call. It expects 
 	// a valid pointer to an Image where the capture will be stored. The image dimensions 
 	// will be adjusted automatically. Pointer must be valid during next push call.
-	void scheduleFrameCapture(Image* image);
+	// If ui_visible is set to false the capture will be taken before rendering imGui.
+	void scheduleFrameCapture(Image* image, bool ui_visible = true);
 
 	// To draw transparent objects this setting needs to be toggled on, it causes extra 
 	// conputation due to other buffers being used for rendering, so only turn on if needed.
 	// It uses the McGuire/Bavoli OIT approach. For more information you can check the 
 	// original paper at: https://jcgt.org/published/0002/02/09/
-	void enableOITransparency();
+	void enableTransparency();
 
 	// Deletes the extra buffers and disables the extra steps when pushing frames.
-	void disableOITransparency();
+	void disableTransparency();
 
 	// Returns whether OITransparency is enabled on this Graphics object.
-	bool isOITransparencyEnabled() const;
+	bool isTransparencyEnabled() const;
 
 	// Returns the current observer quaternion.
 	inline Quaternion getObserver() const { return cbuff.observer; }
@@ -1774,10 +1793,10 @@ private:
 	void setWindowDimensions(const Vector2i Dim);
 
 	// No copies of a graphics instance are allowed.
-	Graphics(Graphics&&)					= delete;
-	Graphics& operator=(Graphics&&)			= delete;
-	Graphics(const Graphics&)				= delete;
-	Graphics& operator=(const Graphics&)	= delete;
+	Graphics(Graphics&&) = delete;
+	Graphics& operator=(Graphics&&) = delete;
+	Graphics(const Graphics&) = delete;
+	Graphics& operator=(const Graphics&) = delete;
 
 private:
 	void* GraphicsData = nullptr; // Stores the graphics object internal data.
@@ -1789,7 +1808,7 @@ private:
 		Quaternion observer = 1.f;	// Stores the current observer direction.
 		_float4vector center = {};	// Stores the current center of the POV.
 		_float4vector scaling = {};	// Scaling values for the shader
-	}cbuff;		
+	}cbuff;
 
 	Vector2i WindowDim;			// Stores the current window dimensions.
 	float Scale = 250.f;		// Stores the current view scale.
@@ -1881,6 +1900,8 @@ private:
 public:
 	// Returns a reference to the window internal Graphics object.
 	Graphics& graphics();
+	// Returns a constant reference to the window internal Graphics object.
+	const Graphics& graphics() const;
 
 	// Function that may be called every frame during the App runtime. It manages the
 	// message pipeline, pushing events to the Mouse and Keboard for user interaction,
@@ -1903,7 +1924,7 @@ public:
 
 	// Creates the window and its associated Graphics, expects a valid descriptor 
 	// pointer, if not provided it chooses the default descriptor settings.
-	Window(WINDOW_DESC* pDesc = nullptr);
+	Window(const WINDOW_DESC* pDesc = nullptr);
 
 	// Handles the proper deletion of the window data after its closing.
 	~Window();
@@ -1916,6 +1937,9 @@ public:
 
 	// Checks whether the window has focus.
 	bool hasFocus() const;
+
+	// Sets the focus to the current window.
+	void requestFocus();
 
 	// Set the title of the window, allows for formatted strings.
 	void setTitle(const char* name, ...);
@@ -1932,6 +1956,10 @@ public:
 	// Selects the monitor where the wallpaper will be shown. If -1
 	// then the wallpaper window will expand to all monitors in use.
 	void setWallpaperMonitor(int monitor_idx);
+
+	// For the wallpaper mode, it tells you if a specific monitor 
+	// exists or not. Expand option, -1, is not considered a monitor.
+	static bool hasMonitor(int monitor_idx);
 
 	// Toggles the dark theme of the window on or off as specified.
 	void setDarkTheme(bool DARK_THEME);
@@ -1956,6 +1984,43 @@ public:
 
 	// Returs the current framerate of the process.
 	static float getFramerate();
+
+public:
+	// --- GRAPHICS OVERLOADED CALLS FOR SIMPLICITY ---
+
+	// Original method on the graphics class. Sets this window as render target.
+	inline void setRenderTarget()													{ graphics().setRenderTarget(); }
+	// Original method on the graphics class. Shows the new frame to the window.
+	inline void pushFrame()															{ graphics().pushFrame(); }
+	// Original method on the graphics class. Clears the buffer with the specified color.
+	inline void clearBuffer(Color color = Color::Black, bool all_buffers = true)	{ graphics().clearBuffer(color, all_buffers); }
+	// Original method on the graphics class. Clears the depth buffer.
+	inline void clearDepthBuffer()													{ graphics().clearDepthBuffer(); }
+	// Original method on the graphics class. Clears the buffers used for transparencies.
+	inline void clearTransparencyBuffers()											{ graphics().clearTransparencyBuffers(); }
+	// Original method on the graphics class. Updates the perspective on the window.
+	inline void setPerspective(Quaternion obs, Vector3f center, float scale)		{ graphics().setPerspective(obs, center, scale); }
+	// Original method on the graphics class. Sets the observer quaternion.
+	inline void setObserver(Quaternion obs)											{ graphics().setObserver(obs); }
+	// Original method on the graphics class. Sets the center of the window perspective.
+	inline void setCenter(Vector3f center)											{ graphics().setCenter(center); }
+	// Original method on the graphics class. Sets the scale of the objects.
+	inline void setScale(float scale)												{ graphics().setScale(scale); }
+	// Original method on the graphics class. Schedules a frame capture to be done.
+	inline void scheduleFrameCapture(Image* image, bool ui_visible = true)			{ graphics().scheduleFrameCapture(image, ui_visible); }
+	// Original method on the graphics class. Allows transparent drawables.
+	inline void enableTransparency()												{ graphics().enableTransparency(); }
+	// Original method on the graphics class. Disallows transparent drawables.
+	inline void disableTransparency()												{ graphics().disableTransparency(); }
+	// Original method on the graphics class. Tells you whether transparenzy is allowed.
+	inline bool isTransparencyEnabled() const										{ return graphics().isTransparencyEnabled(); }
+	// Original method on the graphics class. Returns the current observer quaternion.
+	inline Quaternion getObserver() const											{ return graphics().getObserver(); }
+	// Original method on the graphics class. Returns the current Center POV.
+	inline Vector3f getCenter() const												{ return graphics().getCenter(); }
+	// Original method on the graphics class. Returns the current scals.
+	inline float getScale() const													{ return graphics().getScale(); }
+
 private:
 	// --- INTERNALS ---
 
@@ -2186,7 +2251,8 @@ public:
 
 	// If the background is static it updates the rectangle of Image pixels drawn. By 
 	// default it draws the entire image: min->(0,0) max->(width,height).
-	void updateRectangle(Vector2i min_coords, Vector2i max_coords);
+	// The dimensions are in image pixels, intermediate positions are allowed.
+	void updateRectangle(Vector2f min_coords, Vector2f max_coords);
 
 	// Returns the Texture image dimensions.
 	Vector2i getImageDim() const;
@@ -2288,7 +2354,7 @@ public:
 	// expects the initial function pointer to still be callable, it will evaluate it on the new 
 	// range and send the vertices to the GPU. If coloring is functional it also expects the color 
 	// function to still be callable, if coloring is not functional it will reuse the old colors.
-	void updateRange(Vector2f range);
+	void updateRange(Vector2f range = {});
 
 	// If updates are enabled, and coloring is with a list, this function allows to change 
 	// the current vertex colors for the new ones specified. It expects a valid pointer 
@@ -2424,7 +2490,7 @@ private:
 };
 
 
-/* POLIHEDRON DRAWABLE CLASS
+/* POLYHEDRON DRAWABLE CLASS
 -----------------------------------------------------------------------------------------------------------
 -----------------------------------------------------------------------------------------------------------
 Drawable class to draw triangle meshes, it is a must for any rendering library and in
@@ -2442,11 +2508,11 @@ to create images for the texture you can check the Image class header.
 -----------------------------------------------------------------------------------------------------------
 */
 
-// Polihedron descriptor struct, to be created and passed as a pointer to initialize
-// a polihedron, it allows for different coloring and rendering settings. The 
+// Polyhedron descriptor struct, to be created and passed as a pointer to initialize
+// a polyhedron, it allows for different coloring and rendering settings. The 
 // pointers memory is to be managed by the user, the creation function will not 
 // modify or store any of the original pointers in the descriptor.
-struct POLIHEDRON_DESC
+struct POLYHEDRON_DESC
 {
 	// Expects a valid pointer to a list of vertices. The list must be 
 	// as long as the highest index found in the triangle list.
@@ -2457,11 +2523,11 @@ struct POLIHEDRON_DESC
 	// long as three intergers times the triangle count.
 	Vector3i* triangle_list = nullptr;
 
-	// Number of triangles that form the Polihedron.
+	// Number of triangles that form the Polyhedron.
 	unsigned triangle_count = 0u;
 
-	// Specifies how the coloring will be done for the Polihedron.
-	enum POLIHEDRON_COLORING
+	// Specifies how the coloring will be done for the Polyhedron.
+	enum POLYHEDRON_COLORING
 	{
 		TEXTURED_COLORING,
 		PER_VERTEX_COLORING,
@@ -2478,7 +2544,7 @@ struct POLIHEDRON_DESC
 	Color* color_list = nullptr;
 
 	// If coloring is set to textured it expects a valid pointer to 
-	// an image containing the texture to be used by the Polihedron.
+	// an image containing the texture to be used by the Polyhedron.
 	Image* texture_image = nullptr;
 
 	// If coloring is set to textured it expects a valid pointer to 
@@ -2486,8 +2552,8 @@ struct POLIHEDRON_DESC
 	// vertex of every triangle. Three times the traiangle count.
 	Vector2i* texture_coordinates_list = nullptr;
 
-	// If the Polihedron is iluminated it specifies how the normal vectors will be obtained.
-	enum POLIHEDRON_NORMALS
+	// If the Polyhedron is iluminated it specifies how the normal vectors will be obtained.
+	enum POLYHEDRON_NORMALS
 	{
 		// The normal vectors will be computed by triagle and assigned to each vertex 
 		// accordingly, grid pattern is clearly visible unless the grid is very thin.
@@ -2510,34 +2576,34 @@ struct POLIHEDRON_DESC
 	// Whether both sides of each triangle are rendered or not.
 	bool double_sided_rendering = true;
 
-	// Whether the polihedron uses ilumination or not.
+	// Whether the polyhedron uses ilumination or not.
 	bool enable_iluminated = true;
 
 	// Sets Order Indepentdent Transparency for the Polihedrom. Check 
 	// Graphics.h or Blender.h for more information on how to use it.
 	bool enable_transparency = false;
 
-	// Whether the polihedron allows for shape updates, leave at false if 
-	// you don't intend to update the shape of the Polihedron. Only the functions 
+	// Whether the polyhedron allows for shape updates, leave at false if 
+	// you don't intend to update the shape of the Polyhedron. Only the functions 
 	// updateVertices(), updateColors(), updateTextureCoordinates() require it.
 	bool enable_updates	= false;
 
-	// IF true renders only the aristas of the Polihedron.
+	// IF true renders only the aristas of the Polyhedron.
 	bool wire_frame_topology = false;
 
 	// Uses a nearest point sampler instead of a linear one.
 	bool pixelated_texture = false;
 
-	// By default polihedrons and surfaces are lit by four different color lights
+	// By default polyhedrons and surfaces are lit by four different color lights
 	// around the center of coordinates, allows for a nice default that iluminates
 	// everything and distiguishes different areas, disable to set all to black.
 	bool default_initial_lights = true;
 };
 
-// Polihedron drawable class, used for drawing and interacting with user defined triangle 
+// Polyhedron drawable class, used for drawing and interacting with user defined triangle 
 // meshes on a Graphics instance. Allows for different rendering settings including but not 
 // limited to textures, ilumination, transparencies. Check the descriptor to see all options.
-class Polihedron : public Drawable
+class Polyhedron : public Drawable
 {
 public:
 	// To facilitate the loading of triangle meshes, this function is a parser for 
@@ -2546,18 +2612,18 @@ public:
 	// NOTE: All data is allocated by (new) and its deletion must be handled by the 
 	// user. The image pointer used is the same as provided.
 	// If any error occurs, including missing file, it will throw.
-	static POLIHEDRON_DESC getDescFromObj(const char* obj_file_path, Image* texture = nullptr);
+	static POLYHEDRON_DESC getDescFromObj(const char* obj_file_path, Image* texture = nullptr);
 
 public:
-	// Polihedron constructor, if the pointer is valid it will call the initializer.
-	Polihedron(const POLIHEDRON_DESC* pDesc = nullptr);
+	// Polyhedron constructor, if the pointer is valid it will call the initializer.
+	Polyhedron(const POLYHEDRON_DESC* pDesc = nullptr);
 
 	// Frees the GPU pointers and all the stored data.
-	~Polihedron();
+	~Polyhedron();
 
-	// Initializes the Polihedron object, it expects a valid pointer to a descriptor
+	// Initializes the Polyhedron object, it expects a valid pointer to a descriptor
 	// and will initialize everything as specified, can only be called once per object.
-	void initialize(const POLIHEDRON_DESC* pDesc);
+	void initialize(const POLYHEDRON_DESC* pDesc);
 
 	// If updates are enabled this function allows to change the current vertex positions
 	// for the new ones specified. It expects a valid pointer with a list as long as the 
@@ -2571,7 +2637,7 @@ public:
 	void updateColors(const Color* color_list);
 
 	// If normals are provided this function allows to update the normal vectors in the 
-	// same satting that the Polihedron was initialized on. It expects a valid list of
+	// same satting that the Polyhedron was initialized on. It expects a valid list of
 	// normal vectors of the correspoding lenght.
 	void updateNormals(const Vector3f* normal_vectors_list);
 
@@ -2581,16 +2647,16 @@ public:
 	// triangle. Three times the triangle count.
 	void updateTextureCoordinates(const Vector2i* texture_coordinates_list);
 
-	// If the coloring is set to global, updates the global Polihedron color.
+	// If the coloring is set to global, updates the global Polyhedron color.
 	void updateGlobalColor(Color color);
 
-	// Updates the rotation quaternion of the Polihedron. If multiplicative it will apply
+	// Updates the rotation quaternion of the Polyhedron. If multiplicative it will apply
 	// the rotation on top of the current rotation. For more information on how to rotate
 	// with quaternions check the Quaternion header file.
 	void updateRotation(Quaternion rotation, bool multiplicative = false);
 
 	// Updates the scene position of the Polihedrom. If additive it will add the vector
-	// to the current position vector of the Polihedron.
+	// to the current position vector of the Polyhedron.
 	void updatePosition(Vector3f position, bool additive = false);
 
 	// Updates the matrix multiplied to the Polihedrom, adding any arbitrary linear distortion 
@@ -2607,7 +2673,7 @@ public:
 	// Eight lights are allowed. And the intensities are directional and diffused.
 	void updateLight(unsigned id, Vector2f intensities, Color color, Vector3f position);
 
-	// If ilumination is enabled clears all lights for the Polihedron.
+	// If ilumination is enabled clears all lights for the Polyhedron.
 	void clearLights();
 
 	// If ilumination is enabled, to the valid pointers it writes the specified lights data.
@@ -2627,7 +2693,7 @@ public:
 	
 private:
 	// Pointer to the internal class storage.
-	void* polihedronData = nullptr;
+	void* polyhedronData = nullptr;
 };
 
 
@@ -2947,7 +3013,7 @@ struct SURFACE_DESC
 	// Whether the edge values of the range are included in the set.
 	bool border_points_included = true;
 
-	// By default polihedrons and surfaces are lit by four different color lights
+	// By default polyhedrons and surfaces are lit by four different color lights
 	// around the center of coordinates, allows for a nice default that iluminates
 	// everything and distiguishes different areas, disable to set all to black.
 	bool default_initial_lights = true;
@@ -3296,3 +3362,96 @@ protected:
 	// Pointer to the what buffer to be used by the inheritance.
 	char info[2048] = {};
 };
+
+#ifdef _INCLUDE_DEFAULT_EXCEPTION
+
+/* DEFAULT EXCEPTION CLASS
+-----------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------------
+This header contains the default exception class thrown by the
+library when no specific exception is being thrown.
+
+Contains the line and file and a description of the excetion that
+can be entered as a single string or as a list of strings.
+For user created exceptions please use this one.
+-----------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------------
+*/
+
+#define INFO_EXCEPT(info)	InfoException(__LINE__, __FILE__, (info))
+
+// Basic Exception class, stores the given information and adds it
+// to the whatBuffer when the what() function is called.
+class InfoException : public Exception
+{
+public:
+	// Single message constructor, the message is stored in the info.
+	InfoException(int line, const char* file, const char* msg) noexcept
+		: Exception(line, file)
+	{
+		unsigned c = 0u;
+
+		// Add intro to information.
+		const char* intro = "\n[Error Info]\n";
+		unsigned i = 0u;
+		while (intro[i])
+			info[c++] = intro[i++];
+
+		// join all info messages with newlines into single string.
+		i = 0u;
+		while (msg[i] && c < 2047)
+			info[c++] = msg[i++];
+
+		if (c < 2047)
+			info[c++] = '\n';
+
+		// Add origin location.
+		const char* origin = GetOriginString();
+		i = 0u;
+		while (origin[i] && c < 2047)
+			info[c++] = origin[i++];
+
+		// Add final EOS
+		info[c] = '\0';
+	}
+
+	// Multiple messages constructor, the messages are stored in the info.
+	InfoException(int line, const char* file, const char** infoMsgs = nullptr) noexcept
+		:Exception(line, file)
+	{
+		unsigned i, j, c = 0u;
+
+		// Add intro to information.
+		const char* intro = "\n[Error Info]\n";
+		i = 0u;
+		while (intro[i] && c < 2047)
+			info[c++] = intro[i++];
+
+		// join all info messages with newlines into single string.
+		i = 0u;
+		while (infoMsgs[i])
+		{
+			j = 0u;
+			while (infoMsgs[i][j] && c < 2047)
+				info[c++] = infoMsgs[i][j++];
+
+			if (c < 2047)
+				info[c++] = '\n';
+		}
+
+		// Add origin location.
+		const char* origin = GetOriginString();
+		i = 0u;
+		while (origin[i] && c < 2047)
+			info[c++] = origin[i++];
+
+		// Add final EOS
+		info[c] = '\0';
+	}
+
+	// Info Exception type override.
+	const char* GetType() const noexcept override { return "Graphics Info Exception"; }
+};
+
+#undef _INCLUDE_DEFAULT_EXCEPTION
+#endif // _INCLUDE_DEFAULT_EXCEPTION

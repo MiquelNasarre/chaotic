@@ -8,14 +8,14 @@
 
 // Internal function triggered by the MSG Handle to set a key as pressed.
 
-void Keyboard::setKeyPressed(char keycode)
+void Keyboard::setKeyPressed(unsigned char keycode)
 {
 	keyStates[keycode] = true;
 }
 
 // Internal function triggered by the MSG Handle to set a key as released.
 
-void Keyboard::setKeyReleased(char keycode)
+void Keyboard::setKeyReleased(unsigned char keycode)
 {
 	keyStates[keycode] = false;
 }
@@ -54,7 +54,7 @@ void Keyboard::pushChar(char character)
 
 // Internal function triggered by the MSG Handle to push an event to the buffer.
 
-void Keyboard::pushEvent(event::Type type, char keycode)
+void Keyboard::pushEvent(event::Type type, unsigned char keycode)
 {
 	unsigned int n = maxBuffer - 1u;
 	for (unsigned int i = 0; i < maxBuffer; i++)
@@ -119,7 +119,7 @@ void Keyboard::clearBuffers()
 
 // Checks whether a key is being pressed.
 
-bool Keyboard::isKeyPressed(char keycode)
+bool Keyboard::isKeyPressed(unsigned char keycode)
 {
 	return keyStates[keycode];
 }
@@ -147,7 +147,7 @@ bool Keyboard::eventIsEmpty()
 char Keyboard::popChar()
 {
 	if (!charBuffer[0])
-		return 0;
+		return '\0';
 
 	char ev = *charBuffer[0];
 	delete charBuffer[0];
