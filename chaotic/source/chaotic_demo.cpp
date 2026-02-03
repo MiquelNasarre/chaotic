@@ -20,7 +20,7 @@ public:
 	// To be called before event_and_draw(). If imgui changed add_new_window 
 	// from the selector it creates the specified new window.
 	// It also controls the full screen events.
-	void new_window_event();
+	bool new_window_event();
 
 	// Virtual destructor, erases itself from the active windows list.
 	virtual ~demoWindow() { std::erase(active_windows, this); }
@@ -3201,7 +3201,7 @@ public:
 // To be called before event_and_draw(). If imgui changed add_new_window 
 // from the selector it creates the specified new window.
 // It also controls the full screen events.
-void demoWindow::new_window_event()
+bool demoWindow::new_window_event()
 {
 	// Check for screenshots.
 	if (capture_scheduled)
@@ -3281,7 +3281,7 @@ void demoWindow::new_window_event()
 
 	// Now do the new window event.
 	if (add_new_window == NONE)
-		return;
+		return false;
 
 	switch (add_new_window)
 	{
@@ -3322,7 +3322,7 @@ void demoWindow::new_window_event()
 	}
 
 	add_new_window = NONE;
-	return;
+	return true;
 }
 
 // This function runs the library demo!! All the relevant information 
@@ -3343,9 +3343,14 @@ void chaotic_demo()
 			for (unsigned i = 0; i < demoWindow::active_windows.size(); i++)
 				if (demoWindow::active_windows[i]->getID() == id) { delete demoWindow::active_windows[i]; break; }
 
-		// Do step and draw all windows.
+		// Check for new window events and other universal checks.
 		for (demoWindow* w : demoWindow::active_windows)
-			w->new_window_event(), w->event_and_draw();
+			if (w->new_window_event())
+				break;
+
+		// Do step and draw each windows.
+		for (demoWindow* w : demoWindow::active_windows)
+			w->event_and_draw();
 	}
 }
 #endif
