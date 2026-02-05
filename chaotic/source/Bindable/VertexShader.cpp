@@ -27,8 +27,8 @@ VertexShader::VertexShader(const wchar_t* path)
 	BindableData = new VertexShaderInternals;
 	VertexShaderInternals& data = *(VertexShaderInternals*)BindableData;
 
-	GFX_THROW_INFO( D3DReadFileToBlob(path,data.pBytecodeBlob.GetAddressOf()));
-	GFX_THROW_INFO( _device->CreateVertexShader( 
+	GRAPHICS_HR_CHECK( D3DReadFileToBlob(path,data.pBytecodeBlob.GetAddressOf()));
+	GRAPHICS_HR_CHECK( _device->CreateVertexShader(
 		data.pBytecodeBlob->GetBufferPointer(),
 		data.pBytecodeBlob->GetBufferSize(),
 		NULL,
@@ -43,11 +43,11 @@ VertexShader::VertexShader(const void* bytecode, unsigned long long size)
 	BindableData = new VertexShaderInternals;
 	VertexShaderInternals& data = *(VertexShaderInternals*)BindableData;
 
-	GFX_THROW_INFO(D3DCreateBlob(static_cast<SIZE_T>(size), data.pBytecodeBlob.GetAddressOf()));
+	GRAPHICS_HR_CHECK(D3DCreateBlob(static_cast<SIZE_T>(size), data.pBytecodeBlob.GetAddressOf()));
 
 	memcpy(data.pBytecodeBlob->GetBufferPointer(), bytecode, size);
 
-	GFX_THROW_INFO(_device->CreateVertexShader(
+	GRAPHICS_HR_CHECK(_device->CreateVertexShader(
 		data.pBytecodeBlob->GetBufferPointer(),
 		data.pBytecodeBlob->GetBufferSize(),
 		NULL,
@@ -68,7 +68,7 @@ void VertexShader::Bind()
 {
 	VertexShaderInternals& data = *(VertexShaderInternals*)BindableData;
 
-	GFX_THROW_INFO_ONLY(_context->VSSetShader(data.pVertexShader.Get(), NULL, 0u));
+	GRAPHICS_INFO_CHECK(_context->VSSetShader(data.pVertexShader.Get(), NULL, 0u));
 }
 
 // To be used by InputLayout. Returns the shader ID3DBlob* masked as a void*.

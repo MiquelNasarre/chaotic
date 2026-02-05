@@ -3,8 +3,16 @@ Texture2D OITAccum : register(t0);
 Texture2D OITReveal : register(t1);
 SamplerState Nearest : register(s0);
 
-float4 main(float2 pos : TexPos) : SV_Target
+struct VSOut
 {
+    float4 TXpos : TEXCOORD0;
+    float4 SCpos : SV_Position;
+};
+
+float4 main(VSOut vso) : SV_Target
+{
+    float2 pos = vso.TXpos.xy;
+    
     float4 accum = OITAccum.Sample(Nearest, pos); // (rgbAccum, alphaAccum)
     float reveal = OITReveal.Sample(Nearest, pos).r;
     

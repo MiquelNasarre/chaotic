@@ -22,5 +22,5 @@ Topology::Topology(TOPOLOGY_TYPE type)
 
 void Topology::Bind()
 {
-	GFX_THROW_INFO_ONLY(_context->IASetPrimitiveTopology((D3D11_PRIMITIVE_TOPOLOGY)type));
+	GRAPHICS_INFO_CHECK(_context->IASetPrimitiveTopology((D3D11_PRIMITIVE_TOPOLOGY)type));
 }

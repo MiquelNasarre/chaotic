@@ -25,8 +25,18 @@ struct PSOut
     float reveal : SV_Target1; // alpha for revealage product
 };
 
-PSOut main(float3 pos : PointPos, float3 norm : Norm, float4 scPos : SV_Position, bool front : SV_IsFrontFace)
+struct VSOut
 {
+    float4 R3pos : TEXCOORD0;
+    float4 norm : NORMAL;
+    float4 SCpos : SV_Position;
+};
+
+PSOut main(VSOut vso, bool front : SV_IsFrontFace)
+{
+    float3 pos = vso.R3pos.xyz;
+    float3 norm = vso.norm.xyz;
+    
     // Handle backfaces: flip normal if fragment is from back side
     if (!front)
         norm = -norm;
@@ -70,7 +80,7 @@ PSOut main(float3 pos : PointPos, float3 norm : Norm, float4 scPos : SV_Position
     PSOut outp;
     
     // Z dependent weight
-    float w = depth_weight(scPos);
+    float w = depth_weight(vso.SCpos);
     
     // Accumulation target: premultiplied color + alpha (C_src * C_dst, A_src + A_dst)
     outp.accum = float4(lit.rgb * alpha * w, alpha * w);

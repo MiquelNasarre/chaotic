@@ -26,8 +26,9 @@ struct TextureInternals
 
 Texture::Texture(const Image* image, TEXTURE_USAGE usage, TEXTURE_TYPE type, unsigned slot)
 {
-	if (!image)
-		throw INFO_EXCEPT("Found nullptr when expecting an Image to create a Texture.");
+	USER_CHECK(image,
+		"Found nullptr when expecting an Image to create a Texture."
+	);
 
 	BindableData = new TextureInternals;
 	TextureInternals& data = *(TextureInternals*)BindableData;
@@ -58,7 +59,7 @@ Texture::Texture(const Image* image, TEXTURE_USAGE usage, TEXTURE_TYPE type, uns
 		sd.pSysMem = image->pixels();
 		sd.SysMemPitch = image->width() * sizeof(Color);
 
-		GFX_THROW_INFO(_device->CreateTexture2D(&textureDesc, &sd, data.pTexture.GetAddressOf()));
+		GRAPHICS_HR_CHECK(_device->CreateTexture2D(&textureDesc, &sd, data.pTexture.GetAddressOf()));
 
 		// Create the resource view on the texture
 
@@ -68,18 +69,17 @@ Texture::Texture(const Image* image, TEXTURE_USAGE usage, TEXTURE_TYPE type, uns
 		srvDesc.Texture2D.MostDetailedMip = 0u;
 		srvDesc.Texture2D.MipLevels = 1u;
 
-		GFX_THROW_INFO(_device->CreateShaderResourceView(data.pTexture.Get(), &srvDesc, data.pTextureView.GetAddressOf()));
+		GRAPHICS_HR_CHECK(_device->CreateShaderResourceView(data.pTexture.Get(), &srvDesc, data.pTextureView.GetAddressOf()));
 		break;
 	}
 
 	case TEXTURE_TYPE_CUBEMAP:
 	{
-		if (image->width() * 6u != image->height())
-			throw INFO_EXCEPT(
-				"Invalid image dimensions found when trying to create a cubemap Texture.\n"
-				"To create a cubemap Texture the 6 sides must be stacked on top of each other.\n"
-				"Image dimensions must be (width, height = 6 * width)."
-			);
+		USER_CHECK(image->width() * 6u == image->height(),
+			"Invalid image dimensions found when trying to create a cubemap Texture.\n"
+			"To create a cubemap Texture the 6 sides must be stacked on top of each other.\n"
+			"Image dimensions must be (width, height = 6 * width)."
+		);
 
 		// Create cubemap texture resource
 
@@ -103,7 +103,7 @@ Texture::Texture(const Image* image, TEXTURE_USAGE usage, TEXTURE_TYPE type, uns
 			psd[face].pSysMem = (byte*)image->pixels() + face * faceBytes;
 			psd[face].SysMemPitch = image->width() * sizeof(Color);
 		}
-		GFX_THROW_INFO(_device->CreateTexture2D(&textureDesc, psd, data.pTexture.GetAddressOf()));
+		GRAPHICS_HR_CHECK(_device->CreateTexture2D(&textureDesc, psd, data.pTexture.GetAddressOf()));
 
 		// Create the resource view on the texture
 
@@ -113,12 +113,12 @@ Texture::Texture(const Image* image, TEXTURE_USAGE usage, TEXTURE_TYPE type, uns
 		srvDesc.TextureCube.MostDetailedMip = 0u;
 		srvDesc.TextureCube.MipLevels = 1u;
 
-		GFX_THROW_INFO(_device->CreateShaderResourceView(data.pTexture.Get(), &srvDesc, data.pTextureView.GetAddressOf()));
+		GRAPHICS_HR_CHECK(_device->CreateShaderResourceView(data.pTexture.Get(), &srvDesc, data.pTextureView.GetAddressOf()));
 		break;
 	}
 
 	default:
-		throw INFO_EXCEPT("Unknown texture type found when trying to create a Texture.");
+		USER_ERROR("Unknown texture type found when trying to create a Texture.");
 	}
 
 }
@@ -136,7 +136,7 @@ void Texture::Bind()
 {
 	TextureInternals& data = *(TextureInternals*)BindableData;
 
-	GFX_THROW_INFO_ONLY(_context->PSSetShaderResources(data.slot, 1u, data.pTextureView.GetAddressOf()));
+	GRAPHICS_INFO_CHECK(_context->PSSetShaderResources(data.slot, 1u, data.pTextureView.GetAddressOf()));
 }
 
 // Sets the slot at which the Texture will be bound.
@@ -153,19 +153,20 @@ void Texture::setSlot(unsigned slot)
 
 void Texture::update(const Image* image)
 {
-	if (!image)
-		throw INFO_EXCEPT("Found nullptr when expecting an Image to update a Texture.");
+	USER_CHECK(image,
+		"Found nullptr when expecting an Image to update a Texture."
+	);
 
 	TextureInternals& data = *(TextureInternals*)BindableData;
 
-	if (data.usage != TEXTURE_USAGE_DYNAMIC)
-		throw INFO_EXCEPT(
-			"Trying to update a texture without dynamic usage.\n"
-			"To use the update function on a Texture you should set TEXTURE_USAGE_DYNAMIC on the constructor."
-		);
+	USER_CHECK(data.usage == TEXTURE_USAGE_DYNAMIC,
+		"Trying to update a texture without dynamic usage.\n"
+		"To use the update function on a Texture you should set TEXTURE_USAGE_DYNAMIC on the constructor."
+	);
 
-	if (data.dimensions != Vector2i{ image->width(), image->height() })
-		throw INFO_EXCEPT("Trying to update a texture with an image of different dimensions to the one used in the constructor.");
+	USER_CHECK(data.dimensions == Vector2i(image->width(), image->height()),
+		"Trying to update a texture with an image of different dimensions to the one used in the constructor."
+	);
 
 	switch (data.type)
 	{
@@ -173,7 +174,7 @@ void Texture::update(const Image* image)
 		{
 			// Create the mapping to the image data
 			D3D11_MAPPED_SUBRESOURCE msr;
-			GFX_THROW_INFO(_context->Map(data.pTexture.Get(), 0u, D3D11_MAP_WRITE_DISCARD, 0u, &msr));
+			GRAPHICS_HR_CHECK(_context->Map(data.pTexture.Get(), 0u, D3D11_MAP_WRITE_DISCARD, 0u, &msr));
 
 			// Copy the new image pixels
 			const unsigned rowBytes = image->width() * sizeof(Color);
@@ -181,7 +182,7 @@ void Texture::update(const Image* image)
 				memcpy((byte*)msr.pData + y * msr.RowPitch, (byte*)image->pixels() + y * rowBytes, rowBytes);
 
 			// Unmap the data
-			GFX_THROW_INFO_ONLY(_context->Unmap(data.pTexture.Get(), 0u));
+			GRAPHICS_INFO_CHECK(_context->Unmap(data.pTexture.Get(), 0u));
 			break;
 		}
 
@@ -193,14 +194,14 @@ void Texture::update(const Image* image)
 			{
 				// Create the mapping to the face data
 				D3D11_MAPPED_SUBRESOURCE msr;
-				GFX_THROW_INFO(_context->Map(data.pTexture.Get(), face, D3D11_MAP_WRITE_DISCARD, 0u, &msr));
+				GRAPHICS_HR_CHECK(_context->Map(data.pTexture.Get(), face, D3D11_MAP_WRITE_DISCARD, 0u, &msr));
 
 				// Copy the new cube face pixels
 				for (unsigned y = 0; y < image->height() / 6u; y++)
 					memcpy((byte*)msr.pData + y * msr.RowPitch, (byte*)image->pixels() + face * faceBytes + y * rowBytes, rowBytes);
 
 				// Unmap the data
-				GFX_THROW_INFO_ONLY(_context->Unmap(data.pTexture.Get(), face));
+				GRAPHICS_INFO_CHECK(_context->Unmap(data.pTexture.Get(), face));
 			}
 			break;
 		}

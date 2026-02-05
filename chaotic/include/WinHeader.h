@@ -71,9 +71,10 @@ built time, if those dependencies are needed just comment them from the list.
 #include <dwmapi.h>
 #include <dxgi1_6.h> // For GPU selection
 
-// Win32 and DX11 Exception Classes
-#include "Exception/_exWindow.h"
-#include "Exception/_exGraphics.h"
+// Win32 and DX11 Error Classes
+#include "Error/_erDefault.h"
+#include "Error/_erWindow.h"
+#include "Error/_erGraphics.h"
 
 // Using Com pointers
 using Microsoft::WRL::ComPtr;

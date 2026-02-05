@@ -122,7 +122,6 @@ public:
 	// supports texturing, optionally accepts an image to be used as texture_image.
 	// NOTE: All data is allocated by (new) and its deletion must be handled by the 
 	// user. The image pointer used is the same as provided.
-	// If any error occurs, including missing file, it will throw.
 	static POLYHEDRON_DESC getDescFromObj(const char* obj_file_path, Image* texture = nullptr);
 
 public:

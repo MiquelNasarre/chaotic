@@ -22,6 +22,14 @@ struct InputLayoutInternals
 
 InputLayout::InputLayout(const INPUT_ELEMENT_DESC* layout, unsigned size, const VertexShader* pVS)
 {
+	USER_CHECK(layout,
+		"Found nullptr when trying to accesss an INPUT_ELEMENT_DESC* to create an InputLayout."
+	);
+
+	USER_CHECK(pVS,
+		"Found nullptr when trying to accesss a VertexShader* to create an InputLayout."
+	);
+
 	BindableData = new InputLayoutInternals;
 	InputLayoutInternals& data = *(InputLayoutInternals*)BindableData;
 
@@ -34,7 +42,7 @@ InputLayout::InputLayout(const INPUT_ELEMENT_DESC* layout, unsigned size, const 
 	ID3DBlob* pBytecode = (ID3DBlob*)pVS->GetBytecode();
 
 	// Create the input layout on the device
-	GFX_THROW_INFO(_device->CreateInputLayout(
+	GRAPHICS_HR_CHECK(_device->CreateInputLayout(
 		ied, size,
 		pBytecode->GetBufferPointer(),
 		pBytecode->GetBufferSize(),
@@ -50,6 +58,14 @@ InputLayout::InputLayout(const INPUT_ELEMENT_DESC* layout, unsigned size, const 
 
 InputLayout::InputLayout(const void* layout, unsigned size, const VertexShader* pVS)
 {
+	USER_CHECK(layout,
+		"Found nullptr when trying to accesss a D3D11_INPUT_ELEMENT_DESC* to create an InputLayout."
+	);
+
+	USER_CHECK(pVS,
+		"Found nullptr when trying to accesss a VertexShader* to create an InputLayout."
+	);
+
 	BindableData = new InputLayoutInternals;
 	InputLayoutInternals& data = *(InputLayoutInternals*)BindableData;
 
@@ -57,7 +73,7 @@ InputLayout::InputLayout(const void* layout, unsigned size, const VertexShader* 
 	ID3DBlob* pBytecode = (ID3DBlob*)pVS->GetBytecode();
 
 	// Create the input layout on the device (Assuming the input data is a valid D3D11_INPUT_ELEMENT_DESC*)
-	GFX_THROW_INFO(_device->CreateInputLayout(
+	GRAPHICS_HR_CHECK(_device->CreateInputLayout(
 		(D3D11_INPUT_ELEMENT_DESC*)layout, size,
 		pBytecode->GetBufferPointer(),
 		pBytecode->GetBufferSize(),
@@ -78,5 +94,5 @@ void InputLayout::Bind()
 {
 	InputLayoutInternals& data = *(InputLayoutInternals*)BindableData;
 
-	GFX_THROW_INFO_ONLY(_context->IASetInputLayout(data.pInputLayout.Get()));
+	GRAPHICS_INFO_CHECK(_context->IASetInputLayout(data.pInputLayout.Get()));
 }

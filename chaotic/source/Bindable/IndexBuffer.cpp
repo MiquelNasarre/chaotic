@@ -36,7 +36,7 @@ IndexBuffer::IndexBuffer(const unsigned* indices, unsigned count)
 	ibd.StructureByteStride = sizeof(unsigned);
 	D3D11_SUBRESOURCE_DATA isd = {};
 	isd.pSysMem = indices;
-	GFX_THROW_INFO(_device->CreateBuffer(&ibd, &isd, data.pIndexBuffer.GetAddressOf()));
+	GRAPHICS_HR_CHECK(_device->CreateBuffer(&ibd, &isd, data.pIndexBuffer.GetAddressOf()));
 }
 
 // Releases the GPU pointer and deletes the data.
@@ -52,7 +52,7 @@ void IndexBuffer::Bind()
 {
 	IndexBufferInternals& data = *(IndexBufferInternals*)BindableData;
 
-	GFX_THROW_INFO_ONLY(_context->IASetIndexBuffer(data.pIndexBuffer.Get(),DXGI_FORMAT_R32_UINT,0u));
+	GRAPHICS_INFO_CHECK(_context->IASetIndexBuffer(data.pIndexBuffer.Get(),DXGI_FORMAT_R32_UINT,0u));
 }
 
 // To be accessed during the draw call to retriece the index count.

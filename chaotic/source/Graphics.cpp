@@ -45,35 +45,47 @@ void GlobalDevice::set_global_device(GPU_PREFERENCE preference)
 
 	//  Create Factory
 
+	UINT factoryFlags = 0u;
+#ifdef _DEBUG
+	factoryFlags |= DXGI_CREATE_FACTORY_DEBUG;
+#endif
+
 	ComPtr<IDXGIFactory> dxgiFactory;
-	GFX_THROW_INFO(CreateDXGIFactory(__uuidof(IDXGIFactory), &dxgiFactory));
+	GRAPHICS_HR_CHECK(CreateDXGIFactory2(factoryFlags, __uuidof(IDXGIFactory), &dxgiFactory));
+
+	// Create device based on preference
+
+	UINT createFlags = 0u;
+#ifdef _DEBUG
+	createFlags |= D3D11_CREATE_DEVICE_DEBUG;
+#endif
 
 #ifndef GRAPHICS_DEBUGGING
 	//  Find adapter by GPU preference
 	ComPtr<IDXGIAdapter> bestAdapter = nullptr;
 
 	ComPtr<IDXGIFactory6> Factory6;
-	GFX_THROW_INFO(dxgiFactory.As(&Factory6));
+	GRAPHICS_HR_CHECK(dxgiFactory.As(&Factory6));
 
 	switch (preference)
 	{
 	case GPU_HIGH_PERFORMANCE:
-		GFX_THROW_INFO(Factory6->EnumAdapterByGpuPreference(0, DXGI_GPU_PREFERENCE_HIGH_PERFORMANCE, IID_PPV_ARGS(&bestAdapter)));
+		GRAPHICS_HR_CHECK(Factory6->EnumAdapterByGpuPreference(0, DXGI_GPU_PREFERENCE_HIGH_PERFORMANCE, IID_PPV_ARGS(&bestAdapter)));
 		break;
 	case GPU_MINIMUM_POWER:
-		GFX_THROW_INFO(Factory6->EnumAdapterByGpuPreference(0, DXGI_GPU_PREFERENCE_MINIMUM_POWER, IID_PPV_ARGS(&bestAdapter)));
+		GRAPHICS_HR_CHECK(Factory6->EnumAdapterByGpuPreference(0, DXGI_GPU_PREFERENCE_MINIMUM_POWER, IID_PPV_ARGS(&bestAdapter)));
 		break;
 	case GPU_UNSPECIFIED:
-		GFX_THROW_INFO(Factory6->EnumAdapterByGpuPreference(0, DXGI_GPU_PREFERENCE_UNSPECIFIED, IID_PPV_ARGS(&bestAdapter)));
+		GRAPHICS_HR_CHECK(Factory6->EnumAdapterByGpuPreference(0, DXGI_GPU_PREFERENCE_UNSPECIFIED, IID_PPV_ARGS(&bestAdapter)));
 		break;
 	}
 
 	//  Create D3D11 device and context with the chosen adapter
-	GFX_THROW_INFO(D3D11CreateDevice(
+	GRAPHICS_HR_CHECK(D3D11CreateDevice(
 		bestAdapter.Get(),
 		D3D_DRIVER_TYPE_UNKNOWN,
 		nullptr,
-		0u,
+		createFlags,
 		nullptr,
 		0u,
 		D3D11_SDK_VERSION,
@@ -83,11 +95,11 @@ void GlobalDevice::set_global_device(GPU_PREFERENCE preference)
 	));
 #else
 	// Use the debuggers choice
-	GFX_THROW_INFO(D3D11CreateDevice(
+	GRAPHICS_HR_CHECK(D3D11CreateDevice(
 		nullptr,
 		D3D_DRIVER_TYPE_HARDWARE,
 		nullptr,
-		0u,
+		createFlags,
 		nullptr,
 		0u,
 		D3D11_SDK_VERSION,
@@ -205,15 +217,15 @@ Graphics::Graphics(void* hWnd)
 	sd.Flags = 0;
 
 	ComPtr<IDXGIFactory> dxgiFactory;
-	GFX_THROW_INFO(CreateDXGIFactory(__uuidof(IDXGIFactory), &dxgiFactory));
+	GRAPHICS_HR_CHECK(CreateDXGIFactory(__uuidof(IDXGIFactory), &dxgiFactory));
 
 	//  Create swap chain
-	GFX_THROW_INFO(dxgiFactory->CreateSwapChain(_device, &sd, data.pSwap.GetAddressOf()));
+	GRAPHICS_HR_CHECK(dxgiFactory->CreateSwapChain(_device, &sd, data.pSwap.GetAddressOf()));
 
 	//	Gain access to render target through shinnanigins
 	ComPtr<ID3D11Resource> pBackBuffer;
-	GFX_THROW_INFO(data.pSwap->GetBuffer(0, __uuidof(ID3D11Resource), &pBackBuffer));
-	GFX_THROW_INFO(_device->CreateRenderTargetView(pBackBuffer.Get(), nullptr, data.pTarget.GetAddressOf()));
+	GRAPHICS_HR_CHECK(data.pSwap->GetBuffer(0, __uuidof(ID3D11Resource), &pBackBuffer));
+	GRAPHICS_HR_CHECK(_device->CreateRenderTargetView(pBackBuffer.Get(), nullptr, data.pTarget.GetAddressOf()));
 
 	//	Create Perspective constant buffer
 	data.Perspective = new ConstantBuffer(&cbuff, VERTEX_CONSTANT_BUFFER, 0u);
@@ -260,21 +272,19 @@ Graphics::~Graphics()
 
 void Graphics::drawIndexed(unsigned IndexCount, bool isOIT)
 {
-	if (!currentRenderTarget)
-		throw INFO_EXCEPT(
-			"Trying to issue a draw call when no render target has been assigned. \n"
-			"Create a window object or call setRenderTarget on your desired window object before calling Drawable::Draw()"
-		);
+	USER_CHECK(currentRenderTarget,
+		"Trying to issue a draw call when no render target has been assigned. \n"
+		"Create a window object or call setRenderTarget on your desired window object before calling Drawable::Draw()"
+	);
 
 	GraphicsInternals& data = *((GraphicsInternals*)currentRenderTarget->GraphicsData);
 
 	if (isOIT)
 	{
-		if (!data.oitEnabled)
-			throw INFO_EXCEPT(
-				"Trying to draw a OITransparency Drawable on a Window that does not support it.\n"
-				"If you want to draw transparent objects on a window you first have to call Graphics::enableOITransparency()"
-			);
+		USER_CHECK(data.oitEnabled,
+			"Trying to draw a Transparency Drawable on a Window that does not support it.\n"
+			"If you want to draw transparent objects on a window you first have to call Graphics::enableTransparency()"
+		);
 
 		OITransparencyInternals& oit = *data.OIT;
 
@@ -284,20 +294,20 @@ void Graphics::drawIndexed(unsigned IndexCount, bool isOIT)
 			oit.pOITAccumRTV.Get(),
 			oit.pOITRevealRTV.Get()
 		};
-		GFX_THROW_INFO_ONLY(_context->OMSetRenderTargets(2u, rtvs, data.pDSV.Get()));
+		GRAPHICS_INFO_CHECK(_context->OMSetRenderTargets(2u, rtvs, data.pDSV.Get()));
 
 		// 2) Depth read-only + OIT blend state
-		GFX_THROW_INFO_ONLY(_context->OMSetDepthStencilState(oit.pOITDepthReadOnly.Get(), 0u));
-		GFX_THROW_INFO_ONLY(_context->OMSetBlendState(oit.pOITBlendState.Get(), nullptr, 0xFFFFFFFFu));
+		GRAPHICS_INFO_CHECK(_context->OMSetDepthStencilState(oit.pOITDepthReadOnly.Get(), 0u));
+		GRAPHICS_INFO_CHECK(_context->OMSetBlendState(oit.pOITBlendState.Get(), nullptr, 0xFFFFFFFFu));
 
 		// 3) Draw into OIT buffers
-		GFX_THROW_INFO_ONLY(_context->DrawIndexed(IndexCount, 0u, 0u));
+		GRAPHICS_INFO_CHECK(_context->DrawIndexed(IndexCount, 0u, 0u));
 
 		// 4) Restore backbuffer as RT and default depth/blend state
-		GFX_THROW_INFO_ONLY(_context->OMSetRenderTargets(1u, data.pTarget.GetAddressOf(), data.pDSV.Get()));
+		GRAPHICS_INFO_CHECK(_context->OMSetRenderTargets(1u, data.pTarget.GetAddressOf(), data.pDSV.Get()));
 	}
 
-	else GFX_THROW_INFO_ONLY(_context->DrawIndexed(IndexCount, 0u, 0u));
+	else GRAPHICS_INFO_CHECK(_context->DrawIndexed(IndexCount, 0u, 0u));
 
 	// Back to default Depth Stencil State and Blender.
 	data.defaultDephtStencil->Bind();
@@ -323,13 +333,13 @@ void Graphics::setWindowDimensions(const Vector2i Dim)
 	// Preserve the existing buffer count and format.
 	// Automatically choose the width and height to match the client rect for HWNDs.
 
-	GFX_THROW_INFO(data.pSwap->ResizeBuffers(0u, (UINT)Dim.x, (UINT)Dim.y, DXGI_FORMAT_UNKNOWN, 0u));
+	GRAPHICS_HR_CHECK(data.pSwap->ResizeBuffers(0u, (UINT)Dim.x, (UINT)Dim.y, DXGI_FORMAT_UNKNOWN, 0u));
 
 	// Get buffer and create a render-target-view.
 
 	ComPtr<ID3D11Resource> pBackBuffer;
-	GFX_THROW_INFO(data.pSwap->GetBuffer(0, __uuidof(ID3D11Resource), &pBackBuffer));
-	GFX_THROW_INFO(_device->CreateRenderTargetView(pBackBuffer.Get(), NULL, data.pTarget.GetAddressOf()));
+	GRAPHICS_HR_CHECK(data.pSwap->GetBuffer(0, __uuidof(ID3D11Resource), &pBackBuffer));
+	GRAPHICS_HR_CHECK(_device->CreateRenderTargetView(pBackBuffer.Get(), NULL, data.pTarget.GetAddressOf()));
 
 	//	Create depth stencil texture
 
@@ -344,13 +354,13 @@ void Graphics::setWindowDimensions(const Vector2i Dim)
 	descDepth.SampleDesc.Quality = 0u;
 	descDepth.Usage = D3D11_USAGE_DEFAULT;
 	descDepth.BindFlags = D3D11_BIND_DEPTH_STENCIL;
-	GFX_THROW_INFO(_device->CreateTexture2D(&descDepth, NULL, &pDepthStencil));
+	GRAPHICS_HR_CHECK(_device->CreateTexture2D(&descDepth, NULL, &pDepthStencil));
 
 	D3D11_DEPTH_STENCIL_VIEW_DESC descDSV = {};
 	descDSV.Format = DXGI_FORMAT_D32_FLOAT;
 	descDSV.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
 	descDSV.Texture2D.MipSlice = 0u;
-	GFX_THROW_INFO(_device->CreateDepthStencilView(pDepthStencil.Get(), &descDSV, data.pDSV.GetAddressOf()));
+	GRAPHICS_HR_CHECK(_device->CreateDepthStencilView(pDepthStencil.Get(), &descDSV, data.pDSV.GetAddressOf()));
 
 	//	Update perspective to match scaling
 
@@ -384,8 +394,8 @@ void Graphics::setWindowDimensions(const Vector2i Dim)
 		accumDesc.Usage = D3D11_USAGE_DEFAULT;
 		accumDesc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
 
-		GFX_THROW_INFO(_device->CreateTexture2D(&accumDesc, nullptr, oit.pOITAccumTex.GetAddressOf()));
-		GFX_THROW_INFO(_device->CreateRenderTargetView(oit.pOITAccumTex.Get(), nullptr, oit.pOITAccumRTV.GetAddressOf()));
+		GRAPHICS_HR_CHECK(_device->CreateTexture2D(&accumDesc, nullptr, oit.pOITAccumTex.GetAddressOf()));
+		GRAPHICS_HR_CHECK(_device->CreateRenderTargetView(oit.pOITAccumTex.Get(), nullptr, oit.pOITAccumRTV.GetAddressOf()));
 
 		D3D11_SHADER_RESOURCE_VIEW_DESC accumSRVDesc = {};
 		accumSRVDesc.Format = accumDesc.Format;
@@ -393,13 +403,13 @@ void Graphics::setWindowDimensions(const Vector2i Dim)
 		accumSRVDesc.Texture2D.MostDetailedMip = 0;
 		accumSRVDesc.Texture2D.MipLevels = 1;
 
-		GFX_THROW_INFO(_device->CreateShaderResourceView(oit.pOITAccumTex.Get(), &accumSRVDesc, oit.pOITAccumSRV.GetAddressOf()));
+		GRAPHICS_HR_CHECK(_device->CreateShaderResourceView(oit.pOITAccumTex.Get(), &accumSRVDesc, oit.pOITAccumSRV.GetAddressOf()));
 
 		D3D11_TEXTURE2D_DESC revealDesc = accumDesc;
 		revealDesc.Format = DXGI_FORMAT_R8_UNORM;
 
-		GFX_THROW_INFO(_device->CreateTexture2D(&revealDesc, nullptr, oit.pOITRevealTex.GetAddressOf()));
-		GFX_THROW_INFO(_device->CreateRenderTargetView(oit.pOITRevealTex.Get(), nullptr, oit.pOITRevealRTV.GetAddressOf()));
+		GRAPHICS_HR_CHECK(_device->CreateTexture2D(&revealDesc, nullptr, oit.pOITRevealTex.GetAddressOf()));
+		GRAPHICS_HR_CHECK(_device->CreateRenderTargetView(oit.pOITRevealTex.Get(), nullptr, oit.pOITRevealRTV.GetAddressOf()));
 
 		D3D11_SHADER_RESOURCE_VIEW_DESC revealSRVDesc = {};
 		revealSRVDesc.Format = revealDesc.Format;
@@ -407,7 +417,7 @@ void Graphics::setWindowDimensions(const Vector2i Dim)
 		revealSRVDesc.Texture2D.MostDetailedMip = 0;
 		revealSRVDesc.Texture2D.MipLevels = 1;
 
-		GFX_THROW_INFO(_device->CreateShaderResourceView(oit.pOITRevealTex.Get(), &revealSRVDesc, oit.pOITRevealSRV.GetAddressOf()));
+		GRAPHICS_HR_CHECK(_device->CreateShaderResourceView(oit.pOITRevealTex.Get(), &revealSRVDesc, oit.pOITRevealSRV.GetAddressOf()));
 	}
 
 	// If I was the render target reset me.
@@ -432,7 +442,7 @@ void Graphics::setRenderTarget()
 	currentRenderTarget = this;
 
 	// Bind the render target
-	GFX_THROW_INFO_ONLY(_context->OMSetRenderTargets(1u, data.pTarget.GetAddressOf(), data.pDSV.Get()));
+	GRAPHICS_INFO_CHECK(_context->OMSetRenderTargets(1u, data.pTarget.GetAddressOf(), data.pDSV.Get()));
 
 	// Bind the viewport
 	CD3D11_VIEWPORT vp;
@@ -442,7 +452,7 @@ void Graphics::setRenderTarget()
 	vp.MaxDepth = 1.f;
 	vp.TopLeftX = 0.f;
 	vp.TopLeftY = 0.f;
-	GFX_THROW_INFO_ONLY(_context->RSSetViewports(1u, &vp));
+	GRAPHICS_INFO_CHECK(_context->RSSetViewports(1u, &vp));
 
 	// Bind the perspective
 	data.Perspective->Bind();
@@ -466,10 +476,10 @@ void Graphics::pushFrame()
 		OITransparencyInternals& oit = *data.OIT;
 
 		// Bind backbuffer as RT, no depth
-		GFX_THROW_INFO_ONLY(_context->OMSetRenderTargets(1u, data.pTarget.GetAddressOf(), nullptr));
+		GRAPHICS_INFO_CHECK(_context->OMSetRenderTargets(1u, data.pTarget.GetAddressOf(), nullptr));
 
 		// Bind resolve blend state
-		GFX_THROW_INFO_ONLY(_context->OMSetBlendState(oit.pOITResolveBlendState.Get(), nullptr, 0xFFFFFFFFu));
+		GRAPHICS_INFO_CHECK(_context->OMSetBlendState(oit.pOITResolveBlendState.Get(), nullptr, 0xFFFFFFFFu));
 
 		// Bind accum + reveal SRVs to PS
 		ID3D11ShaderResourceView* srvs[2] = { oit.pOITAccumSRV.Get(), oit.pOITRevealSRV.Get() };
@@ -480,14 +490,14 @@ void Graphics::pushFrame()
 			b->Bind();
 
 		// Draw fullscreen merge
-		GFX_THROW_INFO_ONLY(_context->Draw(4u, 0u));
+		GRAPHICS_INFO_CHECK(_context->Draw(4u, 0u));
 
 		// Unbind SRVs to avoid Render Target binding conflicts next frame
 		ID3D11ShaderResourceView* nullSrvs[2] = { nullptr, nullptr };
-		GFX_THROW_INFO_ONLY(_context->PSSetShaderResources(0u, 2u, nullSrvs));
+		GRAPHICS_INFO_CHECK(_context->PSSetShaderResources(0u, 2u, nullSrvs));
 
 		// Restore backbuffer as RT
-		GFX_THROW_INFO_ONLY(_context->OMSetRenderTargets(1u, data.pTarget.GetAddressOf(), data.pDSV.Get()));
+		GRAPHICS_INFO_CHECK(_context->OMSetRenderTargets(1u, data.pTarget.GetAddressOf(), data.pDSV.Get()));
 
 		// Restore default blend/depth state
 		data.defaultDephtStencil->Bind();
@@ -499,11 +509,11 @@ void Graphics::pushFrame()
 		{
 			// Access the back buffer
 			ComPtr<ID3D11Resource> pBackBuffer;
-			GFX_THROW_INFO(data.pSwap->GetBuffer(0, __uuidof(ID3D11Resource), &pBackBuffer));
+			GRAPHICS_HR_CHECK(data.pSwap->GetBuffer(0, __uuidof(ID3D11Resource), &pBackBuffer));
 
 			// View it as a texture
 			ComPtr<ID3D11Texture2D> pBackBufferTex;
-			GFX_THROW_INFO(pBackBuffer.As(&pBackBufferTex));
+			GRAPHICS_HR_CHECK(pBackBuffer.As(&pBackBufferTex));
 
 			// If the copy buffer is not created, create it.
 			if (!data.pCaptureStaging)
@@ -522,7 +532,7 @@ void Graphics::pushFrame()
 				stDesc.SampleDesc.Count = 1;
 				stDesc.SampleDesc.Quality = 0;
 
-				GFX_THROW_INFO(_device->CreateTexture2D(&stDesc, nullptr, &data.pCaptureStaging));
+				GRAPHICS_HR_CHECK(_device->CreateTexture2D(&stDesc, nullptr, &data.pCaptureStaging));
 			}
 
 			// Copy data from the back buffer to the copy buffer.
@@ -530,7 +540,7 @@ void Graphics::pushFrame()
 
 			// Map staging resource to CPU pointer.
 			D3D11_MAPPED_SUBRESOURCE msr = {};
-			GFX_THROW_INFO(_context->Map(data.pCaptureStaging.Get(), 0, D3D11_MAP_READ, 0, &msr));
+			GRAPHICS_HR_CHECK(_context->Map(data.pCaptureStaging.Get(), 0, D3D11_MAP_READ, 0, &msr));
 
 			// Create the image with the desired dimensions.
 			if (data.captureImage->width() != WindowDim.x || data.captureImage->height() != WindowDim.y)
@@ -556,7 +566,13 @@ void Graphics::pushFrame()
 	// If the window has an imGui instance call the render function before swapping.
 	Window* pWnd = reinterpret_cast<Window*>(GetWindowLongPtr(data.HWnd, GWLP_USERDATA));
 	if (pWnd && *pWnd->imGuiPtrAdress())
-		((iGManager*)(*pWnd->imGuiPtrAdress()))->render();
+		if (iGManager* imgui = (iGManager*)(*pWnd->imGuiPtrAdress()))
+		{
+			imgui->newFrame();
+			imgui->render();
+			imgui->drawFrame();
+		}
+
 #endif
 
 	// If a frame capture is scheduled with UI capture here.
@@ -568,9 +584,9 @@ void Graphics::pushFrame()
 	if (FAILED(hr = data.pSwap->Present(1u, 0u))) 
 	{
 		if (hr == DXGI_ERROR_DEVICE_REMOVED)
-			throw GFX_DEVICE_REMOVED_EXCEPT(_device->GetDeviceRemovedReason());
+			GRAPHICS_HR_DEVICE_REMOVED_ERROR(_device->GetDeviceRemovedReason());
 		else
-			throw GFX_EXCEPT(hr);
+			GRAPHICS_HR_ERROR(hr);
 	}
 
 	// Reset to old render target if was another.
@@ -586,7 +602,7 @@ void Graphics::clearBuffer(Color color, bool all_buffers)
 	GraphicsInternals& data = *((GraphicsInternals*)GraphicsData);
 
 	_float4color col = color.getColor4();
-	GFX_THROW_INFO_ONLY(_context->ClearRenderTargetView(data.pTarget.Get(), &col.r));
+	GRAPHICS_INFO_CHECK(_context->ClearRenderTargetView(data.pTarget.Get(), &col.r));
 
 	if (all_buffers)
 		clearDepthBuffer(), clearTransparencyBuffers();
@@ -599,7 +615,7 @@ void Graphics::clearDepthBuffer()
 {
 	GraphicsInternals& data = *((GraphicsInternals*)GraphicsData);
 
-	GFX_THROW_INFO_ONLY(_context->ClearDepthStencilView(data.pDSV.Get(), D3D11_CLEAR_DEPTH, 1.f, 0u));
+	GRAPHICS_INFO_CHECK(_context->ClearDepthStencilView(data.pDSV.Get(), D3D11_CLEAR_DEPTH, 1.f, 0u));
 }
 
 // If OITransparency is enabled clears the two buffers related to OIT plotting.
@@ -616,8 +632,8 @@ void Graphics::clearTransparencyBuffers()
 		const float clearAccum[4] = { 0.f, 0.f, 0.f, 0.f };
 		const float clearReveal[4] = { 1.f, 1.f, 1.f, 1.f };
 
-		GFX_THROW_INFO_ONLY(_context->ClearRenderTargetView(oit.pOITAccumRTV.Get(), clearAccum));
-		GFX_THROW_INFO_ONLY(_context->ClearRenderTargetView(oit.pOITRevealRTV.Get(), clearReveal));
+		GRAPHICS_INFO_CHECK(_context->ClearRenderTargetView(oit.pOITAccumRTV.Get(), clearAccum));
+		GRAPHICS_INFO_CHECK(_context->ClearRenderTargetView(oit.pOITRevealRTV.Get(), clearReveal));
 	}
 }
 
@@ -628,8 +644,7 @@ void Graphics::setPerspective(Quaternion obs, Vector3f center, float scale)
 {
 	GraphicsInternals& data = *((GraphicsInternals*)GraphicsData);
 
-	if (!obs)
-		throw INFO_EXCEPT("The observer must be a quaternion diferent than zero");
+	USER_CHECK(obs, "The observer must be a quaternion diferent than zero.");
 
 	Scale = scale;
 
@@ -646,8 +661,7 @@ void Graphics::setObserver(Quaternion obs)
 {
 	GraphicsInternals& data = *((GraphicsInternals*)GraphicsData);
 
-	if (!obs)
-		throw INFO_EXCEPT("The observer must be a quaternion diferent than zero");
+	USER_CHECK(obs, "The observer must be a quaternion diferent than zero.");
 
 	cbuff.observer = obs.normalize();
 	data.Perspective->update(&cbuff);
@@ -684,14 +698,12 @@ void Graphics::scheduleFrameCapture(Image* image, bool ui_visible)
 {
 	GraphicsInternals& data = *((GraphicsInternals*)GraphicsData);
 
-	if (data.captureImage)
-		throw INFO_EXCEPT(
-			"ScheduleFrameCapture should not be called twice on the same frame.\n"
-			"The capture is not stored on the Image until the next pushFrame() call is issued."
-		);
+	USER_CHECK(!data.captureImage,
+		"ScheduleFrameCapture should not be called twice on the same frame.\n"
+		"The capture is not stored on the Image until the next pushFrame() call is issued."
+	);
 
-	if (!image)
-		throw INFO_EXCEPT("Expected to find a valid image pointer on scheduleFrameCapture but found nullptr.");
+	USER_CHECK(image, "Expected to find a valid image pointer on scheduleFrameCapture but found nullptr.");
 
 	data.captureImage = image;
 	data.capture_ui_visible = ui_visible;
@@ -738,17 +750,17 @@ void Graphics::enableTransparency()
 		texDesc.Format = DXGI_FORMAT_R16G16B16A16_FLOAT;
 		SRVDesc.Format = DXGI_FORMAT_R16G16B16A16_FLOAT;
 
-		GFX_THROW_INFO(_device->CreateTexture2D(&texDesc, nullptr, oit.pOITAccumTex.GetAddressOf()));
-		GFX_THROW_INFO(_device->CreateRenderTargetView(oit.pOITAccumTex.Get(), nullptr, oit.pOITAccumRTV.GetAddressOf()));
-		GFX_THROW_INFO(_device->CreateShaderResourceView(oit.pOITAccumTex.Get(), &SRVDesc, oit.pOITAccumSRV.GetAddressOf()));
+		GRAPHICS_HR_CHECK(_device->CreateTexture2D(&texDesc, nullptr, oit.pOITAccumTex.GetAddressOf()));
+		GRAPHICS_HR_CHECK(_device->CreateRenderTargetView(oit.pOITAccumTex.Get(), nullptr, oit.pOITAccumRTV.GetAddressOf()));
+		GRAPHICS_HR_CHECK(_device->CreateShaderResourceView(oit.pOITAccumTex.Get(), &SRVDesc, oit.pOITAccumSRV.GetAddressOf()));
 
 		// Create Revealage: Texture, Render Target View and Shader Resource View (R8)
 		texDesc.Format = DXGI_FORMAT_R8_UNORM;
 		SRVDesc.Format = DXGI_FORMAT_R8_UNORM;
 
-		GFX_THROW_INFO(_device->CreateTexture2D(&texDesc, nullptr, oit.pOITRevealTex.GetAddressOf()));
-		GFX_THROW_INFO(_device->CreateRenderTargetView(oit.pOITRevealTex.Get(), nullptr, oit.pOITRevealRTV.GetAddressOf()));
-		GFX_THROW_INFO(_device->CreateShaderResourceView(oit.pOITRevealTex.Get(), &SRVDesc, oit.pOITRevealSRV.GetAddressOf()));
+		GRAPHICS_HR_CHECK(_device->CreateTexture2D(&texDesc, nullptr, oit.pOITRevealTex.GetAddressOf()));
+		GRAPHICS_HR_CHECK(_device->CreateRenderTargetView(oit.pOITRevealTex.Get(), nullptr, oit.pOITRevealRTV.GetAddressOf()));
+		GRAPHICS_HR_CHECK(_device->CreateShaderResourceView(oit.pOITRevealTex.Get(), &SRVDesc, oit.pOITRevealSRV.GetAddressOf()));
 	}
 
 	// --- 2) Create OIT accumulation blend state (2 MRTs) ---
@@ -780,7 +792,7 @@ void Graphics::enableTransparency()
 		r1.BlendOpAlpha = D3D11_BLEND_OP_ADD;
 		r1.RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
 
-		GFX_THROW_INFO(_device->CreateBlendState(&bd, oit.pOITBlendState.GetAddressOf()));
+		GRAPHICS_HR_CHECK(_device->CreateBlendState(&bd, oit.pOITBlendState.GetAddressOf()));
 	}
 
 	// --- 3) Create depth read-only state for OIT draw calls ---
@@ -792,7 +804,7 @@ void Graphics::enableTransparency()
 		dsd.DepthFunc = D3D11_COMPARISON_LESS_EQUAL;
 		dsd.StencilEnable = FALSE;
 
-		GFX_THROW_INFO(_device->CreateDepthStencilState(&dsd, oit.pOITDepthReadOnly.GetAddressOf()));
+		GRAPHICS_HR_CHECK(_device->CreateDepthStencilState(&dsd, oit.pOITDepthReadOnly.GetAddressOf()));
 	}
 
 	// --- 4) Create resolve blend state for fullscreen composite ---
@@ -812,7 +824,7 @@ void Graphics::enableTransparency()
 		rr.BlendOpAlpha = D3D11_BLEND_OP_ADD;
 		rr.RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
 
-		GFX_THROW_INFO(_device->CreateBlendState(&rbd, oit.pOITResolveBlendState.GetAddressOf()));
+		GRAPHICS_HR_CHECK(_device->CreateBlendState(&rbd, oit.pOITResolveBlendState.GetAddressOf()));
 	}
 
 	// --- 5) Create fullscreen quad/triangle resources and resolve shaders ---

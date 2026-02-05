@@ -1,7 +1,7 @@
 #include "Drawable/Background.h"
 #include "Bindable/BindableBase.h"
 
-#include "Exception/_exDefault.h"
+#include "Error/_erDefault.h"
 
 #ifdef _DEPLOYMENT
 #include "embedded_resources.h"
@@ -61,21 +61,24 @@ Background::~Background()
 
 void Background::initialize(const BACKGROUND_DESC* pDesc)
 {
-	if (!pDesc)
-		throw INFO_EXCEPT("Trying to initialize a Background with an invalid descriptor pointer.");
+	USER_CHECK(pDesc,
+		"Trying to initialize a Background with an invalid descriptor pointer."
+	);
 
-	if (isInit)
-		throw INFO_EXCEPT("Trying to initialize a Background that has already been initialized.");
-	else
-		isInit = true;
+	USER_CHECK(isInit == false,
+		"Trying to initialize a Background that has already been initialized."
+	);
+
+	isInit = true;
 
 	backgroundData = new BackgroundInternals;
 	BackgroundInternals& data = *(BackgroundInternals*)backgroundData;
 
 	data.desc = *pDesc;
 
-	if (!data.desc.image)
-		throw INFO_EXCEPT("Found nullptr when trying to access an Image to create a Background.");
+	USER_CHECK(data.desc.image,
+		"Found nullptr when trying to access an Image to create a Background."
+	);
 
 	data.imageDim = { data.desc.image->width(), data.desc.image->height() };
 
@@ -116,7 +119,7 @@ void Background::initialize(const BACKGROUND_DESC* pDesc)
 	}
 
 	default:
-		throw INFO_EXCEPT("Unknown background type found when trying to initialize a Background.");
+		USER_ERROR("Unknown background type found when trying to initialize a Background.");
 	}
 
 
@@ -158,19 +161,20 @@ void Background::initialize(const BACKGROUND_DESC* pDesc)
 
 void Background::updateTexture(const Image* image)
 {
-	if (!isInit)
-		throw INFO_EXCEPT("Trying to update the texture on an uninitialized Background.");
+	USER_CHECK(isInit,
+		"Trying to update the texture on an uninitialized Background."
+	);
 
 	BackgroundInternals& data = *(BackgroundInternals*)backgroundData;
 
-	if (!image)
-		throw INFO_EXCEPT("Found nullptr when trying to access an Image to update a Background.");
+	USER_CHECK(image,
+		"Found nullptr when trying to access an Image to update a Background."
+	);
 
-	if (!data.desc.texture_updates)
-		throw INFO_EXCEPT(
-			"Trying to update the texture on a Background without updates enabled.\n"
-			"To update the texture on a background set texture_updates on the descriptor to true."
-		);
+	USER_CHECK(data.desc.texture_updates,
+		"Trying to update the texture on a Background without updates enabled.\n"
+		"To update the texture on a background set texture_updates on the descriptor to true."
+	);
 
 	data.textureUpdates->update(image);
 }
@@ -181,22 +185,21 @@ void Background::updateTexture(const Image* image)
 
 void Background::updateRotation(Quaternion rotation, bool multiplicative)
 {
-	if (!isInit)
-		throw INFO_EXCEPT("Trying to update the rotation on an uninitialized Background.");
+	USER_CHECK(isInit,
+		"Trying to update the rotation on an uninitialized Background."
+	);
 
 	BackgroundInternals& data = *(BackgroundInternals*)backgroundData;
 
-	if (data.desc.type != BACKGROUND_DESC::DYNAMIC_BACKGROUND)
-		throw INFO_EXCEPT(
-			"Trying to update the rotation on a non-dynamic Background. \n"
-			"To update the Texture visualization on a non-dynamic Backgroud you can use updateRectangle."
-		);
+	USER_CHECK(data.desc.type == BACKGROUND_DESC::DYNAMIC_BACKGROUND,
+		"Trying to update the rotation on a non-dynamic Background. \n"
+		"To update the Texture visualization on a non-dynamic Backgroud you can use updateRectangle."
+	);
 
-	if (!rotation)
-		throw INFO_EXCEPT(
-			"Invalid quaternion found when trying to update the rotation on a Background.\n"
-			"Quaternion 0 can not be normalized and therefore can not describe a rotation."
-		);
+	USER_CHECK(rotation,
+		"Invalid quaternion found when trying to update the rotation on a Background.\n"
+		"Quaternion 0 can not be normalized and therefore can not describe a rotation."
+	);
 
 	if (multiplicative)
 		data.projection.rot *= rotation.normalize();
@@ -212,16 +215,16 @@ void Background::updateRotation(Quaternion rotation, bool multiplicative)
 
 void Background::updateFieldOfView(Vector2f FOV)
 {
-	if (!isInit)
-		throw INFO_EXCEPT("Trying to update the wideness on an uninitialized Background.");
+	USER_CHECK(isInit,
+		"Trying to update the wideness on an uninitialized Background."
+	);
 
 	BackgroundInternals& data = *(BackgroundInternals*)backgroundData;
 
-	if (data.desc.type != BACKGROUND_DESC::DYNAMIC_BACKGROUND)
-		throw INFO_EXCEPT(
-			"Trying to update the field of view on a non-dynamic Background. \n"
-			"To update the Texture visualization on a non-dynamic Backgroud you can use updateRectangle."
-		);
+	USER_CHECK(data.desc.type == BACKGROUND_DESC::DYNAMIC_BACKGROUND,
+		"Trying to update the field of view on a non-dynamic Background. \n"
+		"To update the Texture visualization on a non-dynamic Backgroud you can use updateRectangle."
+	);
 
 	data.projection.fov = FOV;
 	data.pCBuff->update(&data.projection);
@@ -233,16 +236,16 @@ void Background::updateFieldOfView(Vector2f FOV)
 
 void Background::updateRectangle(Vector2f min_coords, Vector2f max_coords)
 {
-	if (!isInit)
-		throw INFO_EXCEPT("Trying to update the rectangle view on an uninitialized Background.");
+	USER_CHECK(isInit,
+		"Trying to update the rectangle view on an uninitialized Background."
+	);
 
 	BackgroundInternals& data = *(BackgroundInternals*)backgroundData;
 
-	if (data.desc.type != BACKGROUND_DESC::STATIC_BACKGROUND)
-		throw INFO_EXCEPT(
-			"Trying to update the rectangle view on a dynamic Background. \n"
-			"To update the view on a dynamic Background the functions to call are updateRotation and updateFieldOfView."
-		);
+	USER_CHECK(data.desc.type == BACKGROUND_DESC::STATIC_BACKGROUND,
+		"Trying to update the rectangle view on a dynamic Background. \n"
+		"To update the view on a dynamic Background the functions to call are updateRotation and updateFieldOfView."	
+	);
 
 	_float4vector rectangle =
 	{
@@ -264,8 +267,9 @@ void Background::updateRectangle(Vector2f min_coords, Vector2f max_coords)
 
 Vector2i Background::getImageDim() const
 {
-	if (!isInit)
-		throw INFO_EXCEPT("Trying to get the image dimensions of an uninitialized Background.");
+	USER_CHECK(isInit,
+		"Trying to get the image dimensions of an uninitialized Background."
+	);
 
 	BackgroundInternals& data = *(BackgroundInternals*)backgroundData;
 
@@ -276,13 +280,15 @@ Vector2i Background::getImageDim() const
 
 Quaternion Background::getRotation() const
 {
-	if (!isInit)
-		throw INFO_EXCEPT("Trying to get the rotation of an uninitialized Background");
+	USER_CHECK(isInit,
+		"Trying to get the rotation of an uninitialized Background"
+	);
 
 	BackgroundInternals& data = *(BackgroundInternals*)backgroundData;
 
-	if (data.desc.type != BACKGROUND_DESC::DYNAMIC_BACKGROUND)
-		throw INFO_EXCEPT("Trying to get the rotation of a non-dynamic Background.");
+	USER_CHECK(data.desc.type == BACKGROUND_DESC::DYNAMIC_BACKGROUND,
+		"Trying to get the rotation of a non-dynamic Background."
+	);
 
 	return data.projection.rot;
 }
@@ -291,13 +297,15 @@ Quaternion Background::getRotation() const
 
 Vector2f Background::getFieldOfView() const
 {
-	if (!isInit)
-		throw INFO_EXCEPT("Trying to get the field of view of an uninitialized Background");
+	USER_CHECK(isInit,
+		"Trying to get the field of view of an uninitialized Background"
+	);
 
 	BackgroundInternals& data = *(BackgroundInternals*)backgroundData;
 
-	if (data.desc.type != BACKGROUND_DESC::DYNAMIC_BACKGROUND)
-		throw INFO_EXCEPT("Trying to get the field of view of a non-dynamic Background.");
+	USER_CHECK(data.desc.type == BACKGROUND_DESC::DYNAMIC_BACKGROUND,
+		"Trying to get the field of view of a non-dynamic Background."
+	);
 
 	return data.projection.fov;
 }

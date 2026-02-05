@@ -65,8 +65,31 @@ Index of this file:
 #ifdef IMGUI_USER_CONFIG
 #include IMGUI_USER_CONFIG
 #endif
-// Only modification from Chaotic to avoid carrying additional files. Users choice.
-//#include "imconfig.h"
+
+// CHAOTIC INJECTED CODE FOR IMGUI CONFIG
+// --------------------------------------------------------------------------------------------------------------------------------------------------------------
+// --------------------------------------------------------------------------------------------------------------------------------------------------------------
+// To avoid carrying additional files the custom assertion path for chaotic is injected
+// directly into the main header, this is the only modification made to the original file.
+// 
+// If a common approach is preferred the user can move this code into imconfig and add 
+// the deleted line:
+// #include "imconfig.h"
+// --------------------------------------------------------------------------------------------------------------------------------------------------------------
+// --------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+// External method that funnels assertions through the default Chaotic path.
+[[noreturn]] extern void handleImGuiAssertion(int line, const char* file, const char* msg) noexcept;
+
+// Funnel IM_ASSERT through default Chaotic error handle.
+#define IM_ASSERT(_EXPR)  do { if (!(_EXPR)) handleImGuiAssertion(__LINE__, __FILE__, #_EXPR); } while(0)
+
+
+// END OF CHAOTIC INJECTED CODE
+// --------------------------------------------------------------------------------------------------------------------------------------------------------------
+// --------------------------------------------------------------------------------------------------------------------------------------------------------------
+// --------------------------------------------------------------------------------------------------------------------------------------------------------------
+// --------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 #ifndef IMGUI_DISABLE
 

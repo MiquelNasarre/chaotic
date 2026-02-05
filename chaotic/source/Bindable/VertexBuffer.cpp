@@ -45,7 +45,7 @@ VertexBuffer::VertexBuffer(const void* vertices, unsigned stride, unsigned count
 	sd.pSysMem = vertices;
 
 	// Create the vertex buffer
-	GFX_THROW_INFO(_device->CreateBuffer(&bd, &sd, data.pVertexBuffer.GetAddressOf()));
+	GRAPHICS_HR_CHECK(_device->CreateBuffer(&bd, &sd, data.pVertexBuffer.GetAddressOf()));
 }
 
 // Releases the GPU pointer and deletes the data.
@@ -62,25 +62,25 @@ void VertexBuffer::updateVertices(const void* vertices, unsigned stride, unsigne
 {
 	VertexBufferInternals& data = *(VertexBufferInternals*)BindableData;
 
-	if (data.usage != VB_USAGE_DYNAMIC)
-		throw INFO_EXCEPT(
-			"Trying to update vertices on a non-dynamic Vertex Buffer is not allowed. \n"
-			"Set the VERTEX_BUFFER_USAGE in the constructor to VB_USAGE_DYNAMIC if you intend to use this function.\n"
-			"Or alternatively replace the Vertex Buffer entirely by calling Drawable::changeBind()."
-		);
+	USER_CHECK(data.usage == VB_USAGE_DYNAMIC,
+		"Trying to update vertices on a non-dynamic Vertex Buffer is not allowed. \n"
+		"Set the VERTEX_BUFFER_USAGE in the constructor to VB_USAGE_DYNAMIC if you intend to use this function.\n"
+		"Or alternatively replace the Vertex Buffer entirely by calling Drawable::changeBind()."
+	);
 
-	if (stride * count > data.byteWidth)
-		throw INFO_EXCEPT("Trying to update vertices with a higher byteWidth than the one created in the constructor is not allowed.");
+	USER_CHECK(stride * count <= data.byteWidth,
+		"Trying to update vertices with a higher byteWidth than the one created in the constructor is not allowed."
+	);
 
 	// Create the mapping
 	D3D11_MAPPED_SUBRESOURCE msr;
-	GFX_THROW_INFO(_context->Map(data.pVertexBuffer.Get(), 0u, D3D11_MAP_WRITE_DISCARD, 0u, &msr));
+	GRAPHICS_HR_CHECK(_context->Map(data.pVertexBuffer.Get(), 0u, D3D11_MAP_WRITE_DISCARD, 0u, &msr));
 
 	// Copy the data
 	memcpy(msr.pData, vertices, count * stride);
 
 	// Unmap the data
-	GFX_THROW_INFO_ONLY(_context->Unmap(data.pVertexBuffer.Get(), 0u));
+	GRAPHICS_INFO_CHECK(_context->Unmap(data.pVertexBuffer.Get(), 0u));
 
 	// Store the new stride for binding calls
 	data.stride = stride;
@@ -93,5 +93,5 @@ void VertexBuffer::Bind()
 	VertexBufferInternals& data = *(VertexBufferInternals*)BindableData;
 
 	const UINT offset = 0u;
-	GFX_THROW_INFO_ONLY(_context->IASetVertexBuffers(0u, 1u, data.pVertexBuffer.GetAddressOf(), &data.stride, &offset));
+	GRAPHICS_INFO_CHECK(_context->IASetVertexBuffers(0u, 1u, data.pVertexBuffer.GetAddressOf(), &data.stride, &offset));
 }

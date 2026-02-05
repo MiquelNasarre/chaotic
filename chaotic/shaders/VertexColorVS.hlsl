@@ -9,9 +9,9 @@ cbuffer Cbuff1 : register(b1)
 
 struct VSOut
 {
-	float4 color : Color;
-    float4 R3pos : PointPos;
-    float4 norm : Norm;
+	float4 color : COLOR0;
+    float4 R3pos : TEXCOORD0;
+    float4 norm : NORMAL;
 	float4 SCpos : SV_Position;
 };
 

@@ -6,7 +6,7 @@ cbuffer cBuff : register(b1)
 
 struct VSOut
 {
-    float2 tex : TexCoord;
+    float2 tex : TEXCOORD0;
     float4 pos : SV_Position;
 };
 

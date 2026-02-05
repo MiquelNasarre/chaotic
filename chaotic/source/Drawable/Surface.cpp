@@ -1,7 +1,7 @@
 #include "Drawable/Surface.h"
 #include "Bindable/BindableBase.h"
 
-#include "Exception/_exDefault.h"
+#include "Error/_erDefault.h"
 
 #ifdef _DEPLOYMENT
 #include "embedded_resources.h"
@@ -137,12 +137,14 @@ Surface::~Surface()
 
 void Surface::initialize(const SURFACE_DESC* pDesc)
 {
-	if (!pDesc)
-		throw INFO_EXCEPT("Trying to initialize a Surface with an invalid descriptor pointer.");
+	USER_CHECK(pDesc,
+		"Trying to initialize a Surface with an invalid descriptor pointer."
+	);
 
-	if (isInit)
-		throw INFO_EXCEPT("Trying to initialize a Surface that has already been initialized.");
-	else
+	USER_CHECK(isInit == false,
+		"Trying to initialize a Surface that has already been initialized."
+	);
+
 		isInit = true;
 
 	surfaceData = new SurfaceInternals;
@@ -150,23 +152,23 @@ void Surface::initialize(const SURFACE_DESC* pDesc)
 
 	data.desc = *pDesc;
 
-	if (data.desc.normal_computation == SURFACE_DESC::INPUT_FUNCTION_NORMALS && !data.desc.input_normal_func)
-		throw INFO_EXCEPT("Found nullptr when trying to access a normal vector function to generate the normal vectors on a Surface.");
+	USER_CHECK(data.desc.normal_computation != SURFACE_DESC::INPUT_FUNCTION_NORMALS || data.desc.input_normal_func,
+		"Found nullptr when trying to access a normal vector function to generate the normal vectors on a Surface."
+	);
 
-	if (data.desc.normal_computation == SURFACE_DESC::OUTPUT_FUNCTION_NORMALS && !data.desc.output_normal_func)
-		throw INFO_EXCEPT("Found nullptr when trying to access a normal vector function to generate the normal vectors on a Surface.");
+	USER_CHECK(data.desc.normal_computation != SURFACE_DESC::OUTPUT_FUNCTION_NORMALS || data.desc.output_normal_func,
+		"Found nullptr when trying to access a normal vector function to generate the normal vectors on a Surface."
+	);
 
-	if (data.desc.normal_computation == SURFACE_DESC::DERIVATE_NORMALS && !data.desc.delta_value)
-		throw INFO_EXCEPT(
-			"Invalid delta value found when trying to derivate the normal vectors on a Surface.\n"
-			"Zero is not a valid delta since the function will be evaluated on the same point, therefore not giving any spatial information."
-		);
+	USER_CHECK(data.desc.normal_computation != SURFACE_DESC::DERIVATE_NORMALS || data.desc.delta_value,
+		"Invalid delta value found when trying to derivate the normal vectors on a Surface.\n"
+		"Zero is not a valid delta since the function will be evaluated on the same point, therefore not giving any spatial information."
+	);
 
-	if (data.desc.num_u < 2u || data.desc.num_v < 2u)
-		throw INFO_EXCEPT(
-			"Invalid number of vertex found when trying to initialize a Surface.\n"
-			"At least two vertices in each dimension are needed to generate a grid."
-		);
+	USER_CHECK(data.desc.num_u >= 2u && data.desc.num_v >= 2u,
+		"Invalid number of vertex found when trying to initialize a Surface.\n"
+		"At least two vertices in each dimension are needed to generate a grid."
+	);
 
 	// Calculate initial values and deltas of both coordinates.
 
@@ -187,8 +189,9 @@ void Surface::initialize(const SURFACE_DESC* pDesc)
 	{
 		case SURFACE_DESC::EXPLICIT_SURFACE:
 		{
-			if (!data.desc.explicit_func)
-				throw INFO_EXCEPT("Found nullptr when trying to access an explicit function to generate a Surface.");
+			USER_CHECK(data.desc.explicit_func,
+				"Found nullptr when trying to access an explicit function to generate a Surface."
+			);
 
 			switch (data.desc.coloring)
 			{
@@ -305,7 +308,7 @@ void Surface::initialize(const SURFACE_DESC* pDesc)
 							}
 
 							default:
-								throw INFO_EXCEPT("Unknonw surface normal computation type found when trying to initialize a Surface.");
+								USER_ERROR("Unknonw surface normal computation type found when trying to initialize a Surface.");
 						}
 					}
 
@@ -358,8 +361,9 @@ void Surface::initialize(const SURFACE_DESC* pDesc)
 
 				case SURFACE_DESC::TEXTURED_COLORING:
 				{
-					if (!data.desc.texture_image)
-						throw INFO_EXCEPT("Found nullptr when trying to acces an image to create a texture for a textured Surface.");
+					USER_CHECK(data.desc.texture_image,
+						"Found nullptr when trying to acces an image to create a texture for a textured Surface."
+					);
 
 					// Create the texture from the input image.
 					data.pUpdateTexture = AddBind(new Texture(data.desc.texture_image, data.desc.enable_updates ? TEXTURE_USAGE_DYNAMIC : TEXTURE_USAGE_DEFAULT));
@@ -481,7 +485,7 @@ void Surface::initialize(const SURFACE_DESC* pDesc)
 							}
 
 							default:
-								throw INFO_EXCEPT("Unknonw surface normal computation type found when trying to initialize a Surface.");
+								USER_ERROR("Unknonw surface normal computation type found when trying to initialize a Surface.");
 						}
 					}
 
@@ -535,8 +539,9 @@ void Surface::initialize(const SURFACE_DESC* pDesc)
 
 				case SURFACE_DESC::ARRAY_COLORING:
 				{
-					if (!data.desc.color_array)
-						throw INFO_EXCEPT("Found nullptr when trying to acces a color array to color an array colored Surface.");
+					USER_CHECK(data.desc.color_array,
+						"Found nullptr when trying to acces a color array to color an array colored Surface."
+					);
 					
 					data.ColVertices = new SurfaceInternals::ColorVertex[data.desc.num_u * data.desc.num_v];
 
@@ -652,7 +657,7 @@ void Surface::initialize(const SURFACE_DESC* pDesc)
 							}
 
 							default:
-								throw INFO_EXCEPT("Unknonw surface normal computation type found when trying to initialize a Surface.");
+								USER_ERROR("Unknonw surface normal computation type found when trying to initialize a Surface.");
 						}
 					}
 
@@ -706,8 +711,9 @@ void Surface::initialize(const SURFACE_DESC* pDesc)
 
 				case SURFACE_DESC::INPUT_FUNCTION_COLORING:
 				{
-					if (!data.desc.input_color_func)
-						throw INFO_EXCEPT("Found nullptr when trying to acces a color function to color an input function colored Surface.");
+					USER_CHECK(data.desc.input_color_func,
+						"Found nullptr when trying to acces a color function to color an input function colored Surface."
+					);
 
 					data.ColVertices = new SurfaceInternals::ColorVertex[data.desc.num_u * data.desc.num_v];
 
@@ -823,7 +829,7 @@ void Surface::initialize(const SURFACE_DESC* pDesc)
 							}
 
 							default:
-								throw INFO_EXCEPT("Unknonw surface normal computation type found when trying to initialize a Surface.");
+								USER_ERROR("Unknonw surface normal computation type found when trying to initialize a Surface.");
 						}
 					}
 
@@ -877,8 +883,9 @@ void Surface::initialize(const SURFACE_DESC* pDesc)
 
 				case SURFACE_DESC::OUTPUT_FUNCTION_COLORING:
 				{
-					if (!data.desc.output_color_func)
-						throw INFO_EXCEPT("Found nullptr when trying to acces a color function to color an output function colored Surface.");
+					USER_CHECK(data.desc.output_color_func,
+						"Found nullptr when trying to acces a color function to color an output function colored Surface."
+					);
 
 					data.ColVertices = new SurfaceInternals::ColorVertex[data.desc.num_u * data.desc.num_v];
 
@@ -994,7 +1001,7 @@ void Surface::initialize(const SURFACE_DESC* pDesc)
 							}
 
 							default:
-								throw INFO_EXCEPT("Unknonw surface normal computation type found when trying to initialize a Surface.");
+								USER_ERROR("Unknonw surface normal computation type found when trying to initialize a Surface.");
 						}
 					}
 
@@ -1047,7 +1054,7 @@ void Surface::initialize(const SURFACE_DESC* pDesc)
 				}
 
 				default:
-					throw INFO_EXCEPT("Unknonw surface coloring type found when trying to initialize a Surface.");
+					USER_ERROR("Unknonw surface coloring type found when trying to initialize a Surface.");
 			}
 
 			// Create the index buffer for the surface.
@@ -1077,8 +1084,9 @@ void Surface::initialize(const SURFACE_DESC* pDesc)
 
 		case SURFACE_DESC::SPHERICAL_SURFACE:
 		{
-			if (!data.desc.spherical_func)
-				throw INFO_EXCEPT("Found nullptr when trying to access an spherical function to generate a Surface.");
+			USER_CHECK(data.desc.spherical_func,
+				"Found nullptr when trying to access an spherical function to generate a Surface."
+			);
 
 			unsigned V = 12u;
 			unsigned C = 20u;
@@ -1265,10 +1273,10 @@ void Surface::initialize(const SURFACE_DESC* pDesc)
 						switch (data.desc.normal_computation)
 						{
 							case SURFACE_DESC::INPUT_FUNCTION_NORMALS:
-								throw INFO_EXCEPT(
+								USER_ERROR(
 									"Input function normals is not allowed for a spherical surface beacause the input is a 3D normalized vector.\n"
 									"If you want to implement the normal vectors of a spherical function you have to use output function normals."
-									);
+								);
 
 							case SURFACE_DESC::OUTPUT_FUNCTION_NORMALS:
 							{
@@ -1306,13 +1314,13 @@ void Surface::initialize(const SURFACE_DESC* pDesc)
 							}
 
 							case SURFACE_DESC::CLOSEST_NEIGHBORS:
-								throw INFO_EXCEPT(
+								USER_ERROR(
 									"Closest neighbor normal derivation is not allowed for a spherical surface beacause the input is a 3D normalized vector.\n"
 									"If you want to implement the normal vectors of a spherical function you have to use output function normals."
 								);
 
 							default:
-								throw INFO_EXCEPT("Unknonw surface normal computation type found when trying to initialize a Surface.");
+								USER_ERROR("Unknonw surface normal computation type found when trying to initialize a Surface.");
 						}
 					}
 
@@ -1365,8 +1373,9 @@ void Surface::initialize(const SURFACE_DESC* pDesc)
 
 				case SURFACE_DESC::TEXTURED_COLORING:
 				{
-					if (!data.desc.texture_image)
-						throw INFO_EXCEPT("Found nullptr when trying to acces an image to create a texture for a textured Surface.");
+					USER_CHECK(data.desc.texture_image,
+						"Found nullptr when trying to acces an image to create a texture for a textured Surface."
+					);
 
 					// Create the texture from the input image. Since it is an icosphere the texture must be a cube-map.
 					data.pUpdateTexture = AddBind(new Texture(data.desc.texture_image, data.desc.enable_updates ? TEXTURE_USAGE_DYNAMIC : TEXTURE_USAGE_DEFAULT, TEXTURE_TYPE_CUBEMAP));
@@ -1394,7 +1403,7 @@ void Surface::initialize(const SURFACE_DESC* pDesc)
 						switch (data.desc.normal_computation)
 						{
 						case SURFACE_DESC::INPUT_FUNCTION_NORMALS:
-							throw INFO_EXCEPT(
+							USER_ERROR(
 								"Input function normals is not allowed for a spherical surface beacause the input is a 3D normalized vector.\n"
 								"If you want to implement the normal vectors of a spherical function you have to use output function normals."
 							);
@@ -1435,13 +1444,13 @@ void Surface::initialize(const SURFACE_DESC* pDesc)
 						}
 
 						case SURFACE_DESC::CLOSEST_NEIGHBORS:
-							throw INFO_EXCEPT(
+							USER_ERROR(
 								"Closest neighbor normal derivation is not allowed for a spherical surface beacause the input is a 3D normalized vector.\n"
 								"If you want to implement the normal vectors of a spherical function you have to use output function normals."
 							);
 
 						default:
-							throw INFO_EXCEPT("Unknonw surface normal computation type found when trying to initialize a Surface.");
+							USER_ERROR("Unknonw surface normal computation type found when trying to initialize a Surface.");
 						}
 					}
 
@@ -1494,21 +1503,22 @@ void Surface::initialize(const SURFACE_DESC* pDesc)
 				}
 
 				case SURFACE_DESC::ARRAY_COLORING:
-					throw INFO_EXCEPT(
+					USER_ERROR(
 						"Array coloring is not supported for a spherical function Surface.\n"
 						"Since the function input is an unordered spherical vector the only colorings allowed are global, output function and cube-map textured."
 					);
 
 				case SURFACE_DESC::INPUT_FUNCTION_COLORING:
-					throw INFO_EXCEPT(
+					USER_ERROR(
 						"Input function coloring is not supported for a spherical function Surface.\n"
 						"Since the function input is an unordered spherical vector the only colorings allowed are global, output function and cube-map textured."
 					);
 
 				case SURFACE_DESC::OUTPUT_FUNCTION_COLORING:
 				{
-					if (!data.desc.output_color_func)
-						throw INFO_EXCEPT("Found nullptr when trying to acces a color function to color an output function colored Surface.");
+					USER_CHECK(data.desc.output_color_func,
+						"Found nullptr when trying to acces a color function to color an output function colored Surface."
+					);
 
 					data.ColVertices = new SurfaceInternals::ColorVertex[V];
 
@@ -1530,7 +1540,7 @@ void Surface::initialize(const SURFACE_DESC* pDesc)
 						switch (data.desc.normal_computation)
 						{
 						case SURFACE_DESC::INPUT_FUNCTION_NORMALS:
-							throw INFO_EXCEPT(
+							USER_ERROR(
 								"Input function normals is not allowed for a spherical surface beacause the input is a 3D normalized vector.\n"
 								"If you want to implement the normal vectors of a spherical function you have to use output function normals."
 							);
@@ -1571,13 +1581,13 @@ void Surface::initialize(const SURFACE_DESC* pDesc)
 						}
 
 						case SURFACE_DESC::CLOSEST_NEIGHBORS:
-							throw INFO_EXCEPT(
+							USER_ERROR(
 								"Closest neighbor normal derivation is not allowed for a spherical surface beacause the input is a 3D normalized vector.\n"
 								"If you want to implement the normal vectors of a spherical function you have to use output function normals."
 							);
 
 						default:
-							throw INFO_EXCEPT("Unknonw surface normal computation type found when trying to initialize a Surface.");
+							USER_ERROR("Unknonw surface normal computation type found when trying to initialize a Surface.");
 						}
 					}
 
@@ -1630,7 +1640,7 @@ void Surface::initialize(const SURFACE_DESC* pDesc)
 				}
 
 				default:
-					throw INFO_EXCEPT("Unknonw surface coloring type found when trying to initialize a Surface.");
+					USER_ERROR("Unknonw surface coloring type found when trying to initialize a Surface.");
 			}
 
 			if (data.desc.enable_updates)
@@ -1642,8 +1652,9 @@ void Surface::initialize(const SURFACE_DESC* pDesc)
 
 		case SURFACE_DESC::PARAMETRIC_SURFACE:
 		{
-			if (!data.desc.parametric_func)
-				throw INFO_EXCEPT("Found nullptr when trying to access a parametric function to generate a Surface.");
+			USER_CHECK(data.desc.parametric_func,
+				"Found nullptr when trying to access a parametric function to generate a Surface."
+			);
 
 			switch (data.desc.coloring)
 			{
@@ -1760,7 +1771,7 @@ void Surface::initialize(const SURFACE_DESC* pDesc)
 							}
 
 							default:
-								throw INFO_EXCEPT("Unknonw surface normal computation type found when trying to initialize a Surface.");
+								USER_ERROR("Unknonw surface normal computation type found when trying to initialize a Surface.");
 						}
 					}
 
@@ -1813,8 +1824,9 @@ void Surface::initialize(const SURFACE_DESC* pDesc)
 
 				case SURFACE_DESC::TEXTURED_COLORING:
 				{
-					if (!data.desc.texture_image)
-						throw INFO_EXCEPT("Found nullptr when trying to acces an image to create a texture for a textured Surface.");
+					USER_CHECK(data.desc.texture_image,
+						"Found nullptr when trying to acces an image to create a texture for a textured Surface."
+					);
 
 					// Create the texture from the input image.
 					data.pUpdateTexture = AddBind(new Texture(data.desc.texture_image, data.desc.enable_updates ? TEXTURE_USAGE_DYNAMIC : TEXTURE_USAGE_DEFAULT));
@@ -1936,7 +1948,7 @@ void Surface::initialize(const SURFACE_DESC* pDesc)
 							}
 
 							default:
-								throw INFO_EXCEPT("Unknonw surface normal computation type found when trying to initialize a Surface.");
+								USER_ERROR("Unknonw surface normal computation type found when trying to initialize a Surface.");
 						}
 					}
 
@@ -1990,8 +2002,9 @@ void Surface::initialize(const SURFACE_DESC* pDesc)
 
 				case SURFACE_DESC::ARRAY_COLORING:
 				{
-					if (!data.desc.color_array)
-						throw INFO_EXCEPT("Found nullptr when trying to acces a color array to color an array colored Surface.");
+					USER_CHECK(data.desc.color_array,
+						"Found nullptr when trying to acces a color array to color an array colored Surface."
+					);
 
 					data.ColVertices = new SurfaceInternals::ColorVertex[data.desc.num_u * data.desc.num_v];
 
@@ -2107,7 +2120,7 @@ void Surface::initialize(const SURFACE_DESC* pDesc)
 							}
 
 							default:
-								throw INFO_EXCEPT("Unknonw surface normal computation type found when trying to initialize a Surface.");
+								USER_ERROR("Unknonw surface normal computation type found when trying to initialize a Surface.");
 						}
 					}
 
@@ -2161,8 +2174,9 @@ void Surface::initialize(const SURFACE_DESC* pDesc)
 
 				case SURFACE_DESC::INPUT_FUNCTION_COLORING:
 				{
-					if (!data.desc.input_color_func)
-						throw INFO_EXCEPT("Found nullptr when trying to acces a color function to color an input function colored Surface.");
+					USER_CHECK(data.desc.input_color_func,
+						"Found nullptr when trying to acces a color function to color an input function colored Surface."
+					);
 
 					data.ColVertices = new SurfaceInternals::ColorVertex[data.desc.num_u * data.desc.num_v];
 
@@ -2278,7 +2292,7 @@ void Surface::initialize(const SURFACE_DESC* pDesc)
 							}
 
 							default:
-								throw INFO_EXCEPT("Unknonw surface normal computation type found when trying to initialize a Surface.");
+								USER_ERROR("Unknonw surface normal computation type found when trying to initialize a Surface.");
 						}
 					}
 
@@ -2332,8 +2346,9 @@ void Surface::initialize(const SURFACE_DESC* pDesc)
 
 				case SURFACE_DESC::OUTPUT_FUNCTION_COLORING:
 				{
-					if (!data.desc.output_color_func)
-						throw INFO_EXCEPT("Found nullptr when trying to acces a color function to color an output function colored Surface.");
+					USER_CHECK(data.desc.output_color_func,
+						"Found nullptr when trying to acces a color function to color an output function colored Surface."
+					);
 
 					data.ColVertices = new SurfaceInternals::ColorVertex[data.desc.num_u * data.desc.num_v];
 
@@ -2449,7 +2464,7 @@ void Surface::initialize(const SURFACE_DESC* pDesc)
 							}
 
 							default:
-								throw INFO_EXCEPT("Unknonw surface normal computation type found when trying to initialize a Surface.");
+								USER_ERROR("Unknonw surface normal computation type found when trying to initialize a Surface.");
 						}
 					}
 
@@ -2502,7 +2517,7 @@ void Surface::initialize(const SURFACE_DESC* pDesc)
 				}
 
 				default:
-					throw INFO_EXCEPT("Unknonw surface coloring type found when trying to initialize a Surface.");
+					USER_ERROR("Unknonw surface coloring type found when trying to initialize a Surface.");
 			}
 
 			// Create the index buffer for the surface.
@@ -2532,22 +2547,21 @@ void Surface::initialize(const SURFACE_DESC* pDesc)
 
 		case SURFACE_DESC::IMPLICIT_SURFACE:
 		{
-			if (!data.desc.implicit_func)
-				throw INFO_EXCEPT("Found nullptr when trying to access an implicit function to generate a Surface.");
+			USER_CHECK(data.desc.implicit_func,
+				"Found nullptr when trying to access an implicit function to generate a Surface."
+			);
 
-			if (!data.desc.max_refinements)
-				throw INFO_EXCEPT(
-					"Found no refinements when trying to initialize and implicit Surface.\n"
-					"The initial range cube needs to be subdivided at least once to generate an implicit Surface"
-				);
+			USER_CHECK(data.desc.max_refinements,
+				"Found no refinements when trying to initialize and implicit Surface.\n"
+				"The initial range cube needs to be subdivided at least once to generate an implicit Surface"
+			);
 
 			for (unsigned i = 0u; i < data.desc.max_refinements; i++)
-				if (!data.desc.refinements[i])
-					throw INFO_EXCEPT(
-						"Found zero when trying to get a refinement for an implicit Surface.\n"
-						"You cannot subdivide the cube in zero pieces, refinement values must be at least one.\n"
-						"If you increased the maximum refinements you also have to specify what those new refinements will be."
-					);
+				USER_CHECK(data.desc.refinements[i],
+					"Found zero when trying to get a refinement for an implicit Surface.\n"
+					"You cannot subdivide the cube in zero pieces, refinement values must be at least one.\n"
+					"If you increased the maximum refinements you also have to specify what those new refinements will be."
+				);
 
 			struct cube_search
 			{
@@ -2940,13 +2954,12 @@ void Surface::initialize(const SURFACE_DESC* pDesc)
 								{
 									if (depth + 1u == data.desc.max_refinements)
 									{
-										if (num_triangles + 5u >= data.desc.max_implicit_triangles)
-											throw INFO_EXCEPT(
-												"Maximum amount of triangles reached when generating an implicit surface.\n"
-												"If you want to generate this implicit surface you will have to increase the number of triangles.\n"
-												"Icrease with caution because the entire length will be stored on CPU and on GPU if updates are enabled.\n"
-												"Function constant zero is invalid and will quickly crash the implicit generation."
-											);
+										USER_CHECK(num_triangles + 5u < data.desc.max_implicit_triangles,
+											"Maximum amount of triangles reached when generating an implicit surface.\n"
+											"If you want to generate this implicit surface you will have to increase the number of triangles.\n"
+											"Icrease with caution because the entire length will be stored on CPU and on GPU if updates are enabled.\n"
+											"Function constant zero is invalid and will quickly crash the implicit generation."
+										);
 
 										float values[8] = 
 										{
@@ -2998,7 +3011,7 @@ void Surface::initialize(const SURFACE_DESC* pDesc)
 						switch (data.desc.normal_computation)
 						{
 							case SURFACE_DESC::INPUT_FUNCTION_NORMALS:
-								throw INFO_EXCEPT(
+								USER_ERROR(
 									"Input function normal computation is not allowed for an implicit surface.\n"
 									"Given the nature of the surface only output function and derivation are allowed for normal computation."
 								);
@@ -3028,13 +3041,13 @@ void Surface::initialize(const SURFACE_DESC* pDesc)
 							}
 
 							case SURFACE_DESC::CLOSEST_NEIGHBORS:
-								throw INFO_EXCEPT(
+								USER_ERROR(
 									"Closest neighbors normal computation is not allowed for an implicit surface.\n"
 									"Given the nature of the surface only output function and derivation are allowed for normal computation."
 								);
 
 							default:
-								throw INFO_EXCEPT("Unknonw surface normal computation type found when trying to initialize a Surface.");
+								USER_ERROR("Unknonw surface normal computation type found when trying to initialize a Surface.");
 						}
 					}
 
@@ -3093,27 +3106,28 @@ void Surface::initialize(const SURFACE_DESC* pDesc)
 				}
 
 				case SURFACE_DESC::TEXTURED_COLORING:
-					throw INFO_EXCEPT(
+					USER_ERROR(
 						"Textured coloring is not supported for an implicit Surface.\n"
 						"Given the nature of the function the only colorings allowed are global and output function."
 					);
 
 				case SURFACE_DESC::ARRAY_COLORING:
-					throw INFO_EXCEPT(
+					USER_ERROR(
 						"Array coloring is not supported for an implicit Surface.\n"
 						"Given the nature of the function the only colorings allowed are global and output function."
 					);
 
 				case SURFACE_DESC::INPUT_FUNCTION_COLORING:
-					throw INFO_EXCEPT(
+					USER_ERROR(
 						"Input function coloring is not supported for an implicit Surface.\n"
 						"Given the nature of the function the only colorings allowed are global and output function."
 					);
 
 				case SURFACE_DESC::OUTPUT_FUNCTION_COLORING:
 				{
-					if (!data.desc.output_color_func)
-						throw INFO_EXCEPT("Found nullptr when trying to acces a color function to color an output function colored Surface.");
+					USER_CHECK(data.desc.output_color_func,
+						"Found nullptr when trying to acces a color function to color an output function colored Surface."
+					);
 
 					data.ColVertices = new SurfaceInternals::ColorVertex[data.desc.enable_updates ? 3u * data.desc.max_implicit_triangles : n_vertices];
 
@@ -3131,7 +3145,7 @@ void Surface::initialize(const SURFACE_DESC* pDesc)
 						switch (data.desc.normal_computation)
 						{
 						case SURFACE_DESC::INPUT_FUNCTION_NORMALS:
-							throw INFO_EXCEPT(
+							USER_ERROR(
 								"Input function normal computation is not allowed for an implicit surface.\n"
 								"Given the nature of the surface only output function and derivation are allowed for normal computation."
 							);
@@ -3161,13 +3175,13 @@ void Surface::initialize(const SURFACE_DESC* pDesc)
 						}
 
 						case SURFACE_DESC::CLOSEST_NEIGHBORS:
-							throw INFO_EXCEPT(
+							USER_ERROR(
 								"Closest neighbors normal computation is not allowed for an implicit surface.\n"
 								"Given the nature of the surface only output function and derivation are allowed for normal computation."
 							);
 
 						default:
-							throw INFO_EXCEPT("Unknonw surface normal computation type found when trying to initialize a Surface.");
+							USER_ERROR("Unknonw surface normal computation type found when trying to initialize a Surface.");
 						}
 					}
 
@@ -3227,13 +3241,13 @@ void Surface::initialize(const SURFACE_DESC* pDesc)
 				}
 
 				default:
-					throw INFO_EXCEPT("Unknonw surface coloring type found when trying to initialize a Surface.");
+					USER_ERROR("Unknonw surface coloring type found when trying to initialize a Surface.");
 			}
 			break;
 		}
 
 		default:
-			throw INFO_EXCEPT("Unknonw surface type found when trying to initialize a Surface.");
+			USER_ERROR("Unknonw surface type found when trying to initialize a Surface.");
 	}
 
 	AddBind(new Topology(TRIANGLE_LIST));
@@ -3288,13 +3302,15 @@ void Surface::initialize(const SURFACE_DESC* pDesc)
 
 void Surface::updateShape(Vector2f range_u, Vector2f range_v, Vector2f range_w)
 {
-	if (!isInit)
-		throw INFO_EXCEPT("Trying to update the shape on an uninitialized Surface.");
+	USER_CHECK(isInit,
+		"Trying to update the shape on an uninitialized Surface."
+	);
 
 	SurfaceInternals& data = *(SurfaceInternals*)surfaceData;
 
-	if (!data.desc.enable_updates)
-		throw INFO_EXCEPT("Trying to update the vertices on a Surface with updates disabled.");
+	USER_CHECK(data.desc.enable_updates,
+		"Trying to update the vertices on a Surface with updates disabled."
+	);
 
 	if (range_u)
 		data.desc.range_u = range_u;
@@ -3323,9 +3339,6 @@ void Surface::updateShape(Vector2f range_u, Vector2f range_v, Vector2f range_w)
 	{
 		case SURFACE_DESC::EXPLICIT_SURFACE:
 		{
-			if (!data.desc.explicit_func)
-				throw INFO_EXCEPT("Found nullptr when trying to access an explicit function to generate a Surface.");
-
 			switch (data.desc.coloring)
 			{
 				case SURFACE_DESC::GLOBAL_COLORING:
@@ -5109,13 +5122,12 @@ void Surface::updateShape(Vector2f range_u, Vector2f range_v, Vector2f range_w)
 								{
 									if (depth + 1u == data.desc.max_refinements)
 									{
-										if (num_triangles + 5u >= data.desc.max_implicit_triangles)
-											throw INFO_EXCEPT(
-												"Maximum amount of triangles reached when generating an implicit surface.\n"
-												"If you want to generate this implicit surface you will have to increase the number of triangles.\n"
-												"Icrease with caution because the entire length will be stored on CPU and on GPU if updates are enabled.\n"
-												"Function constant zero is invalid and will quickly crash the implicit generation."
-											);
+										USER_CHECK(num_triangles + 5u < data.desc.max_implicit_triangles,
+											"Maximum amount of triangles reached when generating an implicit surface.\n"
+											"If you want to generate this implicit surface you will have to increase the number of triangles.\n"
+											"Icrease with caution because the entire length will be stored on CPU and on GPU if updates are enabled.\n"
+											"Function constant zero is invalid and will quickly crash the implicit generation."
+										);
 
 										float values[8] =
 										{
@@ -5248,19 +5260,23 @@ void Surface::updateShape(Vector2f range_u, Vector2f range_v, Vector2f range_w)
 
 void Surface::updateColors(const Color** color_array)
 {
-	if (!isInit)
-		throw INFO_EXCEPT("Trying to update the colors on an uninitialized Surface.");
+	USER_CHECK(isInit,
+		"Trying to update the colors on an uninitialized Surface."
+	);
 
-	if (!color_array)
-		throw INFO_EXCEPT("Trying to update the colors on a Surface with an invalid color array.");
+	USER_CHECK(color_array,
+		"Trying to update the colors on a Surface with an invalid color array."
+	);
 
 	SurfaceInternals& data = *(SurfaceInternals*)surfaceData;
 
-	if (data.desc.coloring != SURFACE_DESC::ARRAY_COLORING)
-		throw INFO_EXCEPT("Trying to update the colors on a Surface with a different coloring.");
+	USER_CHECK(data.desc.coloring == SURFACE_DESC::ARRAY_COLORING,
+		"Trying to update the colors on a Surface with a different coloring."
+	);
 
-	if (!data.desc.enable_updates)
-		throw INFO_EXCEPT("Trying to update the colors on a Surface with updates disabled.");
+	USER_CHECK(data.desc.enable_updates,
+		"Trying to update the colors on a Surface with updates disabled."
+	);
 
 	// Store the pointer for use during this function.
 	data.desc.color_array = (Color**)color_array;
@@ -5284,19 +5300,23 @@ void Surface::updateColors(const Color** color_array)
 
 void Surface::updateTexture(const Image* texture_image)
 {
-	if (!isInit)
-		throw INFO_EXCEPT("Trying to update the texture on an uninitialized Surface.");
+	USER_CHECK(isInit,
+		"Trying to update the texture on an uninitialized Surface."
+	);
 
 	SurfaceInternals& data = *(SurfaceInternals*)surfaceData;
 
-	if (data.desc.coloring != SURFACE_DESC::TEXTURED_COLORING)
-		throw INFO_EXCEPT("Trying to update the texture on a Surface with a different coloring.");
+	USER_CHECK(data.desc.coloring == SURFACE_DESC::TEXTURED_COLORING,
+		"Trying to update the texture on a Surface with a different coloring."
+	);
 
-	if (!texture_image)
-		throw INFO_EXCEPT("Found nullptr when trying to access an Image to update a textured Surface.");
+	USER_CHECK(texture_image,
+		"Found nullptr when trying to access an Image to update a textured Surface."
+	);
 
-	if (!data.desc.enable_updates)
-		throw INFO_EXCEPT("Trying to update the texture on a Surface with updates disabled.");
+	USER_CHECK(data.desc.enable_updates,
+		"Trying to update the texture on a Surface with updates disabled."
+	);
 
 	data.pUpdateTexture->update(texture_image);
 }
@@ -5305,13 +5325,15 @@ void Surface::updateTexture(const Image* texture_image)
 
 void Surface::updateGlobalColor(Color color)
 {
-	if (!isInit)
-		throw INFO_EXCEPT("Trying to update the global color on an uninitialized Surface.");
+	USER_CHECK(isInit,
+		"Trying to update the global color on an uninitialized Surface."
+	);
 
 	SurfaceInternals& data = *(SurfaceInternals*)surfaceData;
 
-	if (data.desc.coloring != SURFACE_DESC::GLOBAL_COLORING)
-		throw INFO_EXCEPT("Trying to update the global color on a Surface with a different coloring.");
+	USER_CHECK(data.desc.coloring == SURFACE_DESC::GLOBAL_COLORING,
+		"Trying to update the global color on a Surface with a different coloring."
+	);
 
 	_float4color col = color.getColor4();
 	data.pGlobalColorCB->update(&col);
@@ -5323,14 +5345,14 @@ void Surface::updateGlobalColor(Color color)
 
 void Surface::updateRotation(Quaternion rotation, bool multiplicative)
 {
-	if (!isInit)
-		throw INFO_EXCEPT("Trying to update the rotation on an uninitialized Surface.");
+	USER_CHECK(isInit,
+		"Trying to update the rotation on an uninitialized Surface."
+	);
 
-	if (!rotation)
-		throw INFO_EXCEPT(
-			"Invalid quaternion found when trying to update rotation on a Surface.\n"
-			"Quaternion 0 can not be normalized and therefore can not describe an objects rotation."
-		);
+	USER_CHECK(rotation,
+		"Invalid quaternion found when trying to update rotation on a Surface.\n"
+		"Quaternion 0 can not be normalized and therefore can not describe an objects rotation."
+	);
 
 	SurfaceInternals& data = *(SurfaceInternals*)surfaceData;
 
@@ -5354,8 +5376,9 @@ void Surface::updateRotation(Quaternion rotation, bool multiplicative)
 
 void Surface::updatePosition(Vector3f position, bool additive)
 {
-	if (!isInit)
-		throw INFO_EXCEPT("Trying to update the position on an uninitialized Surface.");
+	USER_CHECK(isInit,
+		"Trying to update the position on an uninitialized Surface."
+	);
 
 	SurfaceInternals& data = *(SurfaceInternals*)surfaceData;
 
@@ -5378,8 +5401,9 @@ void Surface::updatePosition(Vector3f position, bool additive)
 
 void Surface::updateDistortion(Matrix distortion, bool multiplicative)
 {
-	if (!isInit)
-		throw INFO_EXCEPT("Trying to update the distortion on an uninitialized Surface.");
+	USER_CHECK(isInit,
+		"Trying to update the distortion on an uninitialized Surface."
+	);
 
 	SurfaceInternals& data = *(SurfaceInternals*)surfaceData;
 
@@ -5401,8 +5425,9 @@ void Surface::updateDistortion(Matrix distortion, bool multiplicative)
 
 void Surface::updateScreenPosition(Vector2f screenDisplacement)
 {
-	if (!isInit)
-		throw INFO_EXCEPT("Trying to update the screen position on an uninitialized Surface.");
+	USER_CHECK(isInit,
+		"Trying to update the screen position on an uninitialized Surface."
+	);
 
 	SurfaceInternals& data = *(SurfaceInternals*)surfaceData;
 
@@ -5415,16 +5440,19 @@ void Surface::updateScreenPosition(Vector2f screenDisplacement)
 
 void Surface::updateLight(unsigned id, Vector2f intensities, Color color, Vector3f position)
 {
-	if (!isInit)
-		throw INFO_EXCEPT("Trying to update a light on an uninitialized Surface.");
+	USER_CHECK(isInit,
+		"Trying to update a light on an uninitialized Surface."
+	);
 
 	SurfaceInternals& data = *(SurfaceInternals*)surfaceData;
 
-	if (!data.desc.enable_iluminated)
-		throw INFO_EXCEPT("Trying to update a light on a Surface with ilumination disabled.");
+	USER_CHECK(data.desc.enable_iluminated,
+		"Trying to update a light on a Surface with ilumination disabled."
+	);
 
-	if (id >= 8)
-		throw INFO_EXCEPT("Trying to update a light with an invalid id (must be 0-7).");
+	USER_CHECK(id < 8,
+		"Trying to update a light with an invalid id (must be 0-7)."
+	);
 
 	data.pscBuff.lightsource[id] = { intensities.getVector4(), color.getColor4(), position.getVector4() };
 	data.pPSCB->update(&data.pscBuff);
@@ -5434,13 +5462,15 @@ void Surface::updateLight(unsigned id, Vector2f intensities, Color color, Vector
 
 void Surface::clearLights()
 {
-	if (!isInit)
-		throw INFO_EXCEPT("Trying to clear the lights on an uninitialized Surface.");
+	USER_CHECK(isInit,
+		"Trying to clear the lights on an uninitialized Surface."
+	);
 
 	SurfaceInternals& data = *(SurfaceInternals*)surfaceData;
 
-	if (!data.desc.enable_iluminated)
-		throw INFO_EXCEPT("Trying to clear the lights on a Surface with ilumination disabled.");
+	USER_CHECK(data.desc.enable_iluminated,
+		"Trying to clear the lights on a Surface with ilumination disabled."
+	);
 
 	for (auto& light : data.pscBuff.lightsource)
 		light = {};
@@ -5458,16 +5488,19 @@ void Surface::clearLights()
 
 void Surface::getLight(unsigned id, Vector2f* intensities, Color* color, Vector3f* position)
 {
-	if (!isInit)
-		throw INFO_EXCEPT("Trying to get a light of an uninitialized Surface.");
+	USER_CHECK(isInit,
+		"Trying to get a light of an uninitialized Surface."
+	);
 
 	SurfaceInternals& data = *(SurfaceInternals*)surfaceData;
 
-	if (!data.desc.enable_iluminated)
-		throw INFO_EXCEPT("Trying to get a light of a Surface with ilumination disabled.");
+	USER_CHECK(data.desc.enable_iluminated,
+		"Trying to get a light of a Surface with ilumination disabled."
+	);
 
-	if (id >= 8)
-		throw INFO_EXCEPT("Trying to get a light with an invalid id (must be 0-7).");
+	USER_CHECK(id < 8,
+		"Trying to get a light with an invalid id (must be 0-7)."
+	);
 
 	if (intensities)
 		*intensities = { data.pscBuff.lightsource[id].intensity.x,data.pscBuff.lightsource[id].intensity.y };
@@ -5479,16 +5512,17 @@ void Surface::getLight(unsigned id, Vector2f* intensities, Color* color, Vector3
 		*position = {
 			data.pscBuff.lightsource[id].position.x,
 			data.pscBuff.lightsource[id].position.y,
-			data.pscBuff.lightsource[id].position.z 
-		};
+			data.pscBuff.lightsource[id].position.z
+	};
 }
 
 // Returns the current rotation quaternion.
 
 Quaternion Surface::getRotation() const
 {
-	if (!isInit)
-		throw INFO_EXCEPT("Trying to get the rotation of an uninitialized Surface.");
+	USER_CHECK(isInit,
+		"Trying to get the rotation of an uninitialized Surface."
+	);
 
 	SurfaceInternals& data = *(SurfaceInternals*)surfaceData;
 
@@ -5499,8 +5533,9 @@ Quaternion Surface::getRotation() const
 
 Vector3f Surface::getPosition() const
 {
-	if (!isInit)
-		throw INFO_EXCEPT("Trying to get the position of an uninitialized Surface.");
+	USER_CHECK(isInit,
+		"Trying to get the position of an uninitialized Surface."
+	);
 
 	SurfaceInternals& data = *(SurfaceInternals*)surfaceData;
 
@@ -5511,8 +5546,9 @@ Vector3f Surface::getPosition() const
 
 Matrix Surface::getDistortion() const
 {
-	if (!isInit)
-		throw INFO_EXCEPT("Trying to get the distortion matrix of an uninitialized Surface.");
+	USER_CHECK(isInit,
+		"Trying to get the distortion matrix of an uninitialized Surface."
+	);
 
 	SurfaceInternals& data = *(SurfaceInternals*)surfaceData;
 
@@ -5523,8 +5559,9 @@ Matrix Surface::getDistortion() const
 
 Vector2f Surface::getScreenPosition() const
 {
-	if (!isInit)
-		throw INFO_EXCEPT("Trying to get the screen position of an uninitialized Surface.");
+	USER_CHECK(isInit,
+		"Trying to get the screen position of an uninitialized Surface."
+	);
 
 	SurfaceInternals& data = *(SurfaceInternals*)surfaceData;
 

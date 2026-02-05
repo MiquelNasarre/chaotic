@@ -43,7 +43,7 @@ struct WINDOW_DESC
 	// be processed, other methoes must be used for interaction. For example,
 	// an active console, another window or a limited lifespan.
 	// NOTE: You can swap the monitor display by using setWallpaperMonitor, 
-	// other reshaping functions will throw. It does not adjust automatically 
+	// other reshaping functions will error. It does not adjust automatically 
 	// to settings changes, so setWallpaperMonitor must be called to re-adjust.
 	enum WINDOW_MODE
 	{
@@ -53,7 +53,7 @@ struct WINDOW_DESC
 	window_mode = WINDOW_MODE_NORMAL;
 
 	// Initial window dimensions.
-	Vector2i window_dim = { 640, 320 };
+	Vector2i window_dim = { 720, 480 };
 
 	// Initial window icon file path. If none provided defaults.
 	char icon_filename[512] = "";

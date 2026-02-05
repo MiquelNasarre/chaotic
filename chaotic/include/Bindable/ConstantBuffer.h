@@ -14,7 +14,7 @@ the PS or VS to have access to and send the pointer to the constructor. The cons
 expects 1 object, if you want to structure it different you can also use the raw constructor.
 
 DirectX11 enforces 16 Byte alignment, so if the size is not divisible by 16 the constructor will
-throw an exception, to avoid that I strongly recommend using alignas(16) in your struct definition.
+error, to avoid that I strongly recommend using alignas(16) in your struct definition.
 
 In the specific case of this library given its 3D nature the Graphics object associated to a Window
 reserves the right to the first VS Constant Buffer slot to store the current scene perspective.
@@ -66,7 +66,7 @@ public:
 	}
 
 	// Raw update function, expects a valid pointer and the byte size to match the one used in 
-	// the constructor, otherwise will throw. Updates the data in the GPU with the new data.
+	// the constructor, otherwise will error. Updates the data in the GPU with the new data.
 	void update(const void* data, unsigned size);
 
 	// Binds the Constant Buffer to the global context according to its type.

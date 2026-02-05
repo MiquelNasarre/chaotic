@@ -8,13 +8,17 @@ cbuffer Cbuff1 : register(b1)
 
 struct VSOut
 {
-    float4 R3pos : PointPos;
+    float4 R3pos : TEXCOORD0;
+    float4 norm : NORMAL;
     float4 SCpos : SV_Position;
 };
 
 VSOut main(float4 pos : Position)
 {
     VSOut vso;
+    
+    // We need this to match overall shaders format.
+    vso.norm = float4(0.f, 0.f, 0.f, 0.f);
     
     // Transform the position with the objects distortion/rotation/translation.
     vso.R3pos = mul(transform, pos);

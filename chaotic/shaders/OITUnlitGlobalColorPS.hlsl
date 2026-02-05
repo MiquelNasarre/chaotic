@@ -11,7 +11,14 @@ struct PSOut
     float reveal : SV_Target1; // alpha for revealage product
 };
 
-PSOut main(float4 scPos : SV_Position)
+struct VSOut
+{
+    float4 R3pos : TEXCOORD0;
+    float4 norm : NORMAL;
+    float4 SCpos : SV_Position;
+};
+
+PSOut main(VSOut vso)
 {
     // Use incoming color alpha as transparency
     float alpha = saturate(color.a);
@@ -19,7 +26,7 @@ PSOut main(float4 scPos : SV_Position)
     PSOut outp;
     
     // Z dependent weight 
-    float w = depth_weight(scPos);  
+    float w = depth_weight(vso.SCpos);  
     
     // Accumulation target: premultiplied color + alpha (C_src * C_dst, A_src + A_dst)
     outp.accum = float4(color.rgb * alpha * w, alpha * w);

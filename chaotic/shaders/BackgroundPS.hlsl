@@ -2,7 +2,13 @@
 Texture2D backgrd : register(t0);
 SamplerState splr : register(s0);
 
-float4 main(float2 tex : TexCoord) : SV_Target
+struct VSOut
 {
-    return backgrd.Sample(splr, tex);
+    float2 tex : TEXCOORD0;
+    float4 pos : SV_Position;
+};
+
+float4 main(VSOut vso) : SV_Target
+{
+    return backgrd.Sample(splr, vso.tex);
 }

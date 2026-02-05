@@ -3,8 +3,16 @@
 TextureCube _texture : register(t0);
 SamplerState _samp : register(s0);
 
-float4 main(float3 coord : Coord) : SV_Target
+struct VSOut
+{
+    float4 coord : TEXCOORD0;
+    float4 R3pos : TEXCOORD1;
+    float4 norm : NORMAL;
+    float4 SCpos : SV_Position;
+};
+
+float4 main(VSOut vso) : SV_Target
 {
     // Sample from texture
-    return _texture.Sample(_samp, coord);
+    return _texture.Sample(_samp, vso.coord.xyz);
 }

@@ -27,8 +27,8 @@ PixelShader::PixelShader(const wchar_t* path)
 	PixelShaderInternals& data = *(PixelShaderInternals*)BindableData;
 
 	ComPtr<ID3DBlob> pBlob;
-	GFX_THROW_INFO(D3DReadFileToBlob(path, &pBlob));
-	GFX_THROW_INFO(_device->CreatePixelShader(pBlob->GetBufferPointer(), pBlob->GetBufferSize(), NULL, data.pPixelShader.GetAddressOf()));
+    GRAPHICS_HR_CHECK(D3DReadFileToBlob(path, &pBlob));
+    GRAPHICS_HR_CHECK(_device->CreatePixelShader(pBlob->GetBufferPointer(), pBlob->GetBufferSize(), NULL, data.pPixelShader.GetAddressOf()));
 }
 
 // Raw constructor for deployment, uses embedded resources. Expects valid blobs.
@@ -38,7 +38,7 @@ PixelShader::PixelShader(const void* bytecode, unsigned long long size)
     BindableData = new PixelShaderInternals;
     auto& ps = *static_cast<PixelShaderInternals*>(BindableData);
 
-    GFX_THROW_INFO(
+    GRAPHICS_HR_CHECK(
         _device->CreatePixelShader(
             bytecode,
             size,
@@ -61,5 +61,5 @@ void PixelShader::Bind()
 {
 	PixelShaderInternals& data = *(PixelShaderInternals*)BindableData;
 
-	GFX_THROW_INFO_ONLY(_context->PSSetShader(data.pPixelShader.Get(), NULL, 0u));
+    GRAPHICS_INFO_CHECK(_context->PSSetShader(data.pPixelShader.Get(), NULL, 0u));
 }

@@ -1,7 +1,7 @@
 #include "Drawable/Light.h"
 #include "Bindable/BindableBase.h"
 
-#include "Exception/_exDefault.h"
+#include "Error/_erDefault.h"
 #include <math.h>
 
 #ifdef _DEPLOYMENT
@@ -60,24 +60,25 @@ Light::~Light()
 
 void Light::initialize(const LIGHT_DESC* pDesc)
 {
-	if (!pDesc)
-		throw INFO_EXCEPT("Trying to initialize a Light with an invalid descriptor pointer.");
+	USER_CHECK(pDesc,
+		"Trying to initialize a Light with an invalid descriptor pointer."
+	);
 
-	if (isInit)
-		throw INFO_EXCEPT("Trying to initialize a Light that has already been initialized.");
-	else
-		isInit = true;
+	USER_CHECK(isInit == false,
+		"Trying to initialize a Light that has already been initialized."
+	);
+
+	isInit = true;
 
 	lightData = new LightInternals;
 	LightInternals& data = *(LightInternals*)lightData;
 
 	data.desc = *pDesc;
 
-	if (data.desc.poligon_sides < 3u)
-		throw INFO_EXCEPT(
-			"Found poligon sides smaller than three when trying to create a Light.\n"
-			"You need at least three poligon sides to initialize a Light."
-		);
+	USER_CHECK(data.desc.poligon_sides >= 3u,
+		"Found poligon sides smaller than three when trying to create a Light.\n"
+		"You need at least three poligon sides to initialize a Light."
+	);
 
 	// Make a circle of points and connect them.
 
@@ -149,8 +150,9 @@ void Light::initialize(const LIGHT_DESC* pDesc)
 
 void Light::updateIntensity(float intensity)
 {
-	if (!isInit)
-		throw INFO_EXCEPT("Trying to update the intensity on an uninitialized Light.");
+	USER_CHECK(isInit,
+		"Trying to update the intensity on an uninitialized Light."
+	);
 
 	LightInternals& data = *(LightInternals*)lightData;
 
@@ -167,8 +169,9 @@ void Light::updateIntensity(float intensity)
 
 void Light::updatePosition(Vector3f position, bool additive)
 {
-	if (!isInit)
-		throw INFO_EXCEPT("Trying to update the position on an uninitialized Light.");
+	USER_CHECK(isInit,
+		"Trying to update the position on an uninitialized Light."
+	);
 
 	LightInternals& data = *(LightInternals*)lightData;
 
@@ -184,8 +187,9 @@ void Light::updatePosition(Vector3f position, bool additive)
 
 void Light::updateColor(Color color)
 {
-	if (!isInit)
-		throw INFO_EXCEPT("Trying to update the color on an uninitialized Light.");
+	USER_CHECK(isInit,
+		"Trying to update the color on an uninitialized Light."
+	);
 
 	LightInternals& data = *(LightInternals*)lightData;
 
@@ -201,8 +205,9 @@ void Light::updateColor(Color color)
 
 void Light::updateRadius(float radius)
 {
-	if (!isInit)
-		throw INFO_EXCEPT("Trying to update the radius on an uninitialized Light.");
+	USER_CHECK(isInit,
+		"Trying to update the radius on an uninitialized Light."
+	);
 
 	LightInternals& data = *(LightInternals*)lightData;
 
@@ -222,8 +227,9 @@ void Light::updateRadius(float radius)
 
 float Light::getIntensity() const
 {
-	if (!isInit)
-		throw INFO_EXCEPT("Trying to get the intensity of an uninitialized Light.");
+	USER_CHECK(isInit,
+		"Trying to get the intensity of an uninitialized Light."
+	);
 
 	LightInternals& data = *(LightInternals*)lightData;
 
@@ -234,8 +240,9 @@ float Light::getIntensity() const
 
 Color Light::getColor() const
 {
-	if (!isInit)
-		throw INFO_EXCEPT("Trying to get the color of an uninitialized Light.");
+	USER_CHECK(isInit,
+		"Trying to get the color of an uninitialized Light."
+	);
 
 	LightInternals& data = *(LightInternals*)lightData;
 
@@ -246,8 +253,9 @@ Color Light::getColor() const
 
 Vector3f Light::getPosition() const
 {
-	if (!isInit)
-		throw INFO_EXCEPT("Trying to get the position of an uninitialized Light.");
+	USER_CHECK(isInit,
+		"Trying to get the position of an uninitialized Light."
+	);
 
 	LightInternals& data = *(LightInternals*)lightData;
 
@@ -258,8 +266,9 @@ Vector3f Light::getPosition() const
 
 float Light::getRadius() const
 {
-	if (!isInit)
-		throw INFO_EXCEPT("Trying to get the radius of an uninitialized Light.");
+	USER_CHECK(isInit,
+		"Trying to get the radius of an uninitialized Light."
+	);
 
 	LightInternals& data = *(LightInternals*)lightData;
 

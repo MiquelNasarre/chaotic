@@ -2,7 +2,7 @@
 
 struct VSOut
 {
-    float dist : Distance;
+    float dist : TEXCOORD0;
     float4 SCpos : SV_Position;
 };
 

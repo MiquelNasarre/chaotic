@@ -40,11 +40,19 @@
     <ClCompile Include="source\Drawable\Scatter.cpp" />
     <ClCompile Include="source\Drawable\Surface.cpp" />
     <ClCompile Include="source\embedded_resources.cpp" />
-    <ClCompile Include="source\Exception\DxgiInfoManager.cpp" />
-    <ClCompile Include="source\Exception\Exception.cpp" />
+    <ClCompile Include="source\Error\ChaoticError.cpp" />
+    <ClCompile Include="source\Error\DxgiInfoManager.cpp" />
+    <ClCompile Include="source\Error\ImGuiError.cpp" />
     <ClCompile Include="source\Graphics.cpp" />
     <ClCompile Include="source\iGManager.cpp" />
     <ClCompile Include="source\Image\Image.cpp" />
+    <ClCompile Include="source\imgui\imgui.cpp" />
+    <ClCompile Include="source\imgui\imgui_demo.cpp" />
+    <ClCompile Include="source\imgui\imgui_draw.cpp" />
+    <ClCompile Include="source\imgui\imgui_impl_dx11.cpp" />
+    <ClCompile Include="source\imgui\imgui_impl_win32.cpp" />
+    <ClCompile Include="source\imgui\imgui_tables.cpp" />
+    <ClCompile Include="source\imgui\imgui_widgets.cpp" />
     <ClCompile Include="source\Keyboard.cpp" />
     <ClCompile Include="source\Math\Quaternion.cpp" />
     <ClCompile Include="source\Math\Vectors.cpp" />
@@ -79,16 +87,24 @@
     <ClInclude Include="include\Drawable\Scatter.h" />
     <ClInclude Include="include\Drawable\Surface.h" />
     <ClInclude Include="include\embedded_resources.h" />
-    <ClInclude Include="include\Exception\DxgiInfoManager.h" />
-    <ClInclude Include="include\Exception\Exception.h" />
-    <ClInclude Include="include\Exception\_exDefault.h" />
-    <ClInclude Include="include\Exception\_exGraphics.h" />
-    <ClInclude Include="include\Exception\_exWindow.h" />
+    <ClInclude Include="include\Error\ChaoticError.h" />
+    <ClInclude Include="include\Error\DxgiInfoManager.h" />
+    <ClInclude Include="include\Error\_erDefault.h" />
+    <ClInclude Include="include\Error\_erGraphics.h" />
+    <ClInclude Include="include\Error\_erWindow.h" />
     <ClInclude Include="include\Graphics.h" />
     <ClInclude Include="include\Header.h" />
     <ClInclude Include="include\iGManager.h" />
     <ClInclude Include="include\Image\Color.h" />
     <ClInclude Include="include\Image\Image.h" />
+    <ClInclude Include="include\imgui\imconfig.h" />
+    <ClInclude Include="include\imgui\imgui.h" />
+    <ClInclude Include="include\imgui\imgui_impl_dx11.h" />
+    <ClInclude Include="include\imgui\imgui_impl_win32.h" />
+    <ClInclude Include="include\imgui\imgui_internal.h" />
+    <ClInclude Include="include\imgui\imstb_rectpack.h" />
+    <ClInclude Include="include\imgui\imstb_textedit.h" />
+    <ClInclude Include="include\imgui\imstb_truetype.h" />
     <ClInclude Include="include\Keyboard.h" />
     <ClInclude Include="include\Math\constants.h" />
     <ClInclude Include="include\Math\Matrix.h" />
@@ -447,7 +463,7 @@
       <PreprocessorDefinitions>PROJECT_DIR=LR"($(ProjectDir))";_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>$(ProjectDir)include/;$(SolutionDir)imgui/include/;</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)include/;$(ProjectDir)include/imgui/;$(ProjectDir)chaotic_headers/</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -455,7 +471,8 @@
       <AdditionalDependencies />
     </Link>
     <Lib>
-      <AdditionalDependencies>../lib/Debug/imgui_d.lib</AdditionalDependencies>
+      <AdditionalDependencies>
+      </AdditionalDependencies>
     </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -467,7 +484,7 @@
       <PreprocessorDefinitions>PROJECT_DIR=LR"($(ProjectDir))";NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>$(ProjectDir)include/;$(SolutionDir)imgui/include/;</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)include/;$(ProjectDir)include/imgui/;$(ProjectDir)chaotic_headers/</AdditionalIncludeDirectories>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
     </ClCompile>
     <Link>
@@ -476,7 +493,8 @@
       <AdditionalDependencies />
     </Link>
     <Lib>
-      <AdditionalDependencies>../lib/Release/imgui.lib</AdditionalDependencies>
+      <AdditionalDependencies>
+      </AdditionalDependencies>
     </Lib>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

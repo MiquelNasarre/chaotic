@@ -426,19 +426,17 @@ Window::Window(const WINDOW_DESC* pDesc): w_id { next_id++ }
 
 			// Spawn the workerW
 			HWND progman = FindWindowW(L"Progman", nullptr);
-			if (!progman)
-				throw INFO_EXCEPT("Could not find desktop workerW to parent to, unable to create wallpaper window.");
+			WINDOW_CHECK(progman);
 
 			// This function makes the workerW appear
 			DWORD_PTR result = 0;
 			if (!SendMessageTimeoutW(progman, 0x052C, 0, 0, SMTO_NORMAL, 1000, &result))
-				throw INFO_EXCEPT("Could not find desktop workerW to parent to, unable to create wallpaper window.");
+				WINDOW_LAST_ERROR();
 
 			// Find that workerW window
 			HWND workerw = nullptr;
 			EnumWindows(EnumWindowsFindWorkerW, (LPARAM)&workerw);
-			if (!workerw)
-				throw INFO_EXCEPT("Could not find desktop workerW to parent to, unable to create wallpaper window.");
+			WINDOW_CHECK(workerw);
 
 			// Virtual desktop size. Depending on monitor
 			// This function also squeezes other windows of the same process if scale is different in a monitor, but its worth it.
@@ -471,8 +469,7 @@ Window::Window(const WINDOW_DESC* pDesc): w_id { next_id++ }
 			);
 
 			// Sanity check
-			if (!hWnd)
-				throw WND_LAST_EXCEPT();
+			WINDOW_CHECK(hWnd);
 
 			// Set workerW as parent window
 			SetParent(hWnd, workerw);
@@ -509,7 +506,7 @@ Window::Window(const WINDOW_DESC* pDesc): w_id { next_id++ }
 			wr.top = 100;
 			wr.bottom = desc.window_dim.y + wr.top;
 			if (!AdjustWindowRect(&wr, WS_CAPTION | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_SYSMENU | WS_OVERLAPPEDWINDOW, FALSE))
-				throw WND_LAST_EXCEPT();
+				WINDOW_LAST_ERROR();
 
 			//	Create Window & get hWnd
 			HWND hWnd = CreateWindowExA(
@@ -528,8 +525,7 @@ Window::Window(const WINDOW_DESC* pDesc): w_id { next_id++ }
 			);
 
 			//	Check for error
-			if (!hWnd)
-				throw WND_LAST_EXCEPT();
+			WINDOW_CHECK(hWnd);
 			break;
 		}
 	};
@@ -606,11 +602,10 @@ void Window::requestFocus()
 
 void Window::setTitle(const char* fmt_name, ...)
 {
-	if (!fmt_name)
-		throw INFO_EXCEPT(
-			"Found nullptr when trying to access the name to set the window title.\n"
-			"Please send a valid const char* when setting the window title."
-		);
+	USER_CHECK(fmt_name,
+		"Found nullptr when trying to access the name to set the window title.\n"
+		"Please send a valid const char* when setting the window title."
+	);
 
 	va_list ap;
 
@@ -622,20 +617,19 @@ void Window::setTitle(const char* fmt_name, ...)
 	va_end(ap);
 
 	if (!IsWindow(data.hWnd))
-		return;
+		WINDOW_LAST_ERROR();
 	if (!SetWindowTextA(data.hWnd, data.Name))
-		throw WND_LAST_EXCEPT();
+		WINDOW_LAST_ERROR();
 }
 
 // Sets the icon of the window via its filename (Has to be a .ico file).
 
 void Window::setIcon(const char* filename)
 {
-	if (!filename)
-		throw INFO_EXCEPT(
-			"Found nullptr when trying to access the filename to set the window icon.\n"
-			"Please send a valid file path when setting the window icon."
-		);
+	USER_CHECK(filename,
+		"Found nullptr when trying to access the filename to set the window icon.\n"
+		"Please send a valid file path when setting the window icon."
+	);
 
 	WindowInternals& data = *((WindowInternals*)WindowData);
 
@@ -649,7 +643,7 @@ void Window::setIcon(const char* filename)
 		SendMessage(GetWindow(data.hWnd, GW_OWNER), WM_SETICON, ICON_SMALL, (LPARAM)hIcon);
 		SendMessage(GetWindow(data.hWnd, GW_OWNER), WM_SETICON, ICON_BIG, (LPARAM)hIcon);
 	}
-	else throw WND_LAST_EXCEPT();
+	else WINDOW_LAST_ERROR();
 }
 
 // Sets the dimensions of the window to the ones specified.
@@ -661,11 +655,10 @@ void Window::setDimensions(Vector2i Dim)
 	
 	WindowInternals& data = *((WindowInternals*)WindowData);
 
-	if (data.wallpaper)
-		throw INFO_EXCEPT(
-			"Calling setDimensions on a wallpaper window is not allowed.\n"
-			"Please use setWallpaperMonitor to adjust wallpaper window."
-		);
+	USER_CHECK(!data.wallpaper,
+		"Calling setDimensions on a wallpaper window is not allowed.\n"
+		"Please use setWallpaperMonitor to adjust wallpaper window."
+	);
 
 	RECT wr;
 	wr.left = 100;
@@ -673,10 +666,10 @@ void Window::setDimensions(Vector2i Dim)
 	wr.top = 100;
 	wr.bottom = height + wr.top;
 	if (!AdjustWindowRect(&wr, WS_CAPTION | WS_MINIMIZEBOX | WS_SYSMENU | WS_MAXIMIZEBOX | WS_OVERLAPPEDWINDOW, FALSE))
-		throw WND_LAST_EXCEPT();
+		WINDOW_LAST_ERROR();
 
 	if (!SetWindowPos(data.hWnd, data.hWnd, 0, 0, wr.right - wr.left, wr.bottom - wr.top, SWP_NOMOVE | SWP_NOZORDER))
-		throw WND_LAST_EXCEPT();
+		WINDOW_LAST_ERROR();
 }
 
 // Sets the position of the window to the one specified.
@@ -687,11 +680,10 @@ void Window::setPosition(Vector2i Pos)
 
 	WindowInternals& data = *((WindowInternals*)WindowData);
 
-	if (data.wallpaper)
-		throw INFO_EXCEPT(
-			"Calling setPosition on a wallpaper window is not allowed.\n"
-			"Please use setWallpaperMonitor to adjust wallpaper window."
-		);
+	USER_CHECK(!data.wallpaper,
+		"Calling setPosition on a wallpaper window is not allowed.\n"
+		"Please use setWallpaperMonitor to adjust wallpaper window."
+	);
 
 	int eX = -8;
 	int eY = -31;
@@ -699,7 +691,7 @@ void Window::setPosition(Vector2i Pos)
 	Y += eY;
 
 	if (!SetWindowPos(data.hWnd, data.hWnd, X, Y, 0, 0, SWP_NOSIZE | SWP_NOZORDER))
-		throw WND_LAST_EXCEPT();
+		WINDOW_LAST_ERROR();
 }
 
 // Selects the monitor where the wallpaper will be shown. If -1
@@ -709,27 +701,24 @@ void Window::setWallpaperMonitor(int monitor_idx)
 {
 	WindowInternals& data = *((WindowInternals*)WindowData);
 
-	if (!data.wallpaper)
-		throw INFO_EXCEPT(
-			"Calling setWallpaperMonitor on a non wallpaper window is not allowed.\n"
-			"If you want to create a wallpaper window you must initialize it with wallpaper mode in the descriptor."
-		);
+	USER_CHECK(data.wallpaper,
+		"Calling setWallpaperMonitor on a non wallpaper window is not allowed.\n"
+		"If you want to create a wallpaper window you must initialize it with wallpaper mode in the descriptor."
+	);
 
 	// Spawn the workerW
 	HWND progman = FindWindowW(L"Progman", nullptr);
-	if (!progman)
-		throw INFO_EXCEPT("Could not find desktop workerW to parent to, unable to update wallpaper window.");
+	WINDOW_CHECK(progman);
 
 	// This function makes the workerW appear
 	DWORD_PTR result = 0;
 	if (!SendMessageTimeoutW(progman, 0x052C, 0, 0, SMTO_NORMAL, 1000, &result))
-		throw INFO_EXCEPT("Could not find desktop workerW to parent to, unable to update wallpaper window.");
+		WINDOW_LAST_ERROR();
 
 	// Find that workerW window
 	HWND workerw = nullptr;
 	EnumWindows(EnumWindowsFindWorkerW, (LPARAM)&workerw);
-	if (!workerw)
-		throw INFO_EXCEPT("Could not find desktop workerW to parent to, unable to update wallpaper window.");
+	WINDOW_CHECK(workerw);
 
 	// Detach
 	SetParent(data.hWnd, nullptr);
@@ -797,15 +786,14 @@ void Window::setDarkTheme(bool DARK_THEME)
 {
 	WindowInternals& data = *((WindowInternals*)WindowData);
 
-	if (data.wallpaper)
-		throw INFO_EXCEPT(
-			"Calling setDarkTheme on a wallpaper window is not allowed.\n"
-			"Please use setWallpaperMonitor to adjust wallpaper window."
-		);
+	USER_CHECK(!data.wallpaper,
+		"Calling setDarkTheme on a wallpaper window is not allowed.\n"
+		"Please use setWallpaperMonitor to adjust wallpaper window."
+	);
 
 	BOOL theme = DARK_THEME;
 	if (FAILED(DwmSetWindowAttribute(data.hWnd, DWMWINDOWATTRIBUTE::DWMWA_USE_IMMERSIVE_DARK_MODE, &theme, sizeof(BOOL))))
-		throw WND_LAST_EXCEPT();
+		WINDOW_LAST_ERROR();
 
 	// Window dimensions wiggle to force and udate.
 	setDimensions(data.Dimensions - Vector2i(1, 1));
@@ -818,11 +806,10 @@ void Window::setFullScreen(bool FULL_SCREEN)
 {
 	WindowInternals& data = *((WindowInternals*)WindowData);
 
-	if (data.wallpaper)
-		throw INFO_EXCEPT(
-			"Calling setFullScreen on a wallpaper window is not allowed.\n"
-			"Please use setWallpaperMonitor to adjust wallpaper window."
-		);
+	USER_CHECK(!data.wallpaper,
+		"Calling setFullScreen on a wallpaper window is not allowed.\n"
+		"Please use setWallpaperMonitor to adjust wallpaper window."
+	);
 
 	static WINDOWPLACEMENT g_wpPrev;
 

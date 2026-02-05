@@ -4,10 +4,16 @@ cbuffer cBuff : register(b0)
     float4 color;
 }
 
-float4 main(float dist : Distance) : SV_Target
+struct VSOut
 {
-    if (dist <1e-5)
-        dist = 1e-5;
+    float dist : TEXCOORD0;
+    float4 SCpos : SV_Position;
+};
+
+float4 main(VSOut vso) : SV_Target
+{
+    if (vso.dist <1e-5)
+        vso.dist = 1e-5;
     // Light dims with the square to the dist
-    return color / (dist * dist);
+    return color / (vso.dist * vso.dist);
 }

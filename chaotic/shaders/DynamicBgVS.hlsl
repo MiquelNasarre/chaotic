@@ -10,7 +10,7 @@ cbuffer cBuff : register(b1)
 
 struct VSOut
 {
-    float3 dir : SphereVector;
+    float3 dir : TEXCOORD0;
     float4 pos : SV_Position;
 };
 

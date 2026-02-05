@@ -1,5 +1,13 @@
 
-float4 main(float4 color : Color) : SV_Target
+struct VSOut
 {
-    return color;
+    float4 color : COLOR0;
+    float4 R3pos : TEXCOORD0;
+    float4 norm : NORMAL;
+    float4 SCpos : SV_Position;
+};
+
+float4 main(VSOut vso) : SV_Target
+{
+    return vso.color;
 }

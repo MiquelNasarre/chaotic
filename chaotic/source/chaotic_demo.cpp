@@ -17,9 +17,8 @@ public:
 	// the next draw call. All demoWindows must define this function.
 	virtual void event_and_draw() = 0;
 
-	// To be called before event_and_draw(). If imgui changed add_new_window 
-	// from the selector it creates the specified new window.
-	// It also controls the full screen events.
+	// To be called before event_and_draw(). Events shared by all demo windows, like 
+	// new window events, screenshots and some keyboard updates are managed here.
 	bool new_window_event();
 
 	// Virtual destructor, erases itself from the active windows list.
@@ -42,10 +41,6 @@ private:
 	}
 	add_new_window = NONE;
 
-	// To activate/deactivate full screen from keyboard and imgui.
-	int screen_mode = 0;
-	int info_selector;
-
 	// Stores the names of all the demoWindow types for the selector.
 	static inline const char* demo_names[] =
 	{
@@ -58,6 +53,10 @@ private:
 		"Sierpinski Tetrahedron",
 		"Fourier",
 	};
+
+	// To activate/deactivate full screen from keyboard and imgui.
+	int screen_mode = 0;
+	int info_selector;
 
 	// Capture vairables.
 	Image screenshot;
@@ -80,10 +79,7 @@ protected:
 		Window(pDesc), screenshot_name { screenshot_name }
 #ifdef _INCLUDE_IMGUI
 		, imgui(*this) 
-#endif
 	{ 
-		active_windows.push_back(this);
-#ifdef _INCLUDE_IMGUI
 		snprintf(imgui.title, 64, "Menu");
 		imgui.pushSelector("New Window", { LORENTZ, FOURIER }, (int*)&add_new_window, demo_names);
 		imgui.pushSelector("Info", { 0,0 }, &info_selector, &info);
@@ -96,7 +92,10 @@ protected:
 			"Hide ImGui    (Ctrl+M)"
 		};
 		imgui.pushSelector("View", { 1,4 }, &screen_mode, names);
+#else
+	{
 #endif
+		active_windows.push_back(this);
 	}
 };
 
@@ -3198,9 +3197,8 @@ public:
 	}
 };
 
-// To be called before event_and_draw(). If imgui changed add_new_window 
-// from the selector it creates the specified new window.
-// It also controls the full screen events.
+// To be called before event_and_draw(). Events shared by all demo windows, like 
+// new window events, screenshots and some keyboard updates are managed here.
 bool demoWindow::new_window_event()
 {
 	// Check for screenshots.

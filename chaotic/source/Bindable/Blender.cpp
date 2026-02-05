@@ -70,7 +70,7 @@ Blender::Blender(BLEND_MODE mode)
 		return; // Graphics takes care of all the OIT pipeline.
 	};
 
-	GFX_THROW_INFO(_device->CreateBlendState(&blendDesc, data.pBlender.GetAddressOf()));
+	GRAPHICS_HR_CHECK(_device->CreateBlendState(&blendDesc, data.pBlender.GetAddressOf()));
 }
 
 // Releases the GPU pointer and deletes the data.
@@ -89,7 +89,7 @@ void Blender::Bind()
 	if (data.mode == BLEND_MODE_OIT_WEIGHTED)
 		return;	// Graphics will take care of the rest.
 
-	GFX_THROW_INFO_ONLY(_context->OMSetBlendState(data.pBlender.Get(), nullptr, 0xFFFFFFFFu));
+	GRAPHICS_INFO_CHECK(_context->OMSetBlendState(data.pBlender.Get(), nullptr, 0xFFFFFFFFu));
 }
 
 // To be called by the draw call to check for OIT.

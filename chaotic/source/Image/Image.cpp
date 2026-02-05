@@ -1,6 +1,6 @@
 #include "Image/Image.h"
 
-#include "Exception/_exDefault.h"
+#include "Error/_erDefault.h"
 
 #include <cstdint>
 #include <cstdarg>
@@ -18,7 +18,7 @@ static inline void write_le16(FILE* f, uint16_t v)
 {
     uint8_t b[2] = { (uint8_t)(v & 0xFF), (uint8_t)((v >> 8) & 0xFF) };
     if (fwrite(b, 1, 2, f) != 2) 
-        throw INFO_EXCEPT("Failed to write in file, possible corruption");
+        USER_ERROR("Failed to write in file, possible corruption");
 }
 static inline void write_le32(FILE* f, uint32_t v) 
 {
@@ -28,13 +28,14 @@ static inline void write_le32(FILE* f, uint32_t v)
         (uint8_t)((v >> 16) & 0xFF),
         (uint8_t)((v >> 24) & 0xFF)
     };
-    if (fwrite(b, 1, 4, f) != 4) throw INFO_EXCEPT("Failed to write in file, possible corruption");
+    if (fwrite(b, 1, 4, f) != 4) 
+        USER_ERROR("Failed to write in file, possible corruption");
 }
 static inline uint16_t read_le16(FILE* f) 
 {
     uint8_t b[2]; 
     if (fread(b, 1, 2, f) != 2) 
-        throw INFO_EXCEPT("Failed to read from file, possible corruption");
+        USER_ERROR("Failed to read from file, possible corruption");
 
     return (uint16_t)(b[0] | (b[1] << 8));
 }
@@ -42,7 +43,7 @@ static inline uint32_t read_le32(FILE* f)
 {
     uint8_t b[4]; 
     if (fread(b, 1, 4, f) != 4) 
-        throw INFO_EXCEPT("Failed to read from file, possible corruption");
+        USER_ERROR("Failed to read from file, possible corruption");
 
     return (uint32_t)(b[0] | (b[1] << 8) | (b[2] << 16) | (b[3] << 24));
 }
@@ -90,7 +91,7 @@ const char* Image::internal_formatting(const char* fmt_filename, ...)
 Image::Image(const char* filename)
 {
     if (!load(filename))
-        throw INFO_EXCEPT("Could not create image from file");
+        USER_ERROR("Could not create image from file");
 }
 
 // Copies the other image

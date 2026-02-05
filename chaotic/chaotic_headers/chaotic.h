@@ -51,8 +51,8 @@ The classes included are the following:
  Other library classes:
   * iGManager					— Support class to incorporate ImGui into the windows (optional).
   * Timer						— Timer class used by the internals added for convenience (optional).
-  * Exception					— Exception base class used by the library for any error occurred.
-  * Exception default class		— Exception type to be used by the user (INFO_EXCEPT).
+  * ChaoticError				— Error base class used by the library for any error occurred. (optional).
+  * UserError default class		— User type to be used by the user (USER_ERROR/USER_CHECK) (optional).
 
 The classes are copied as they are in their original header files. For further reading
 each class has its own description and all functions are explained. I suggest reading the 
@@ -89,8 +89,8 @@ the DirectX11 and Win32 dependencies used to create the internals of the library
 // Toggle to enable and disable Timer class inside the header.
 #define _INCLUDE_TIMER
 
-// Toggle to enable and disable InfoException class inside the header.
-#define _INCLUDE_DEFAULT_EXCEPTION
+// Toggle to enable and disable Error classes inside the header.
+#define _INCLUDE_USER_ERROR
 
 
 /* VECTOR STRUCTURES HEADER
@@ -1857,7 +1857,7 @@ struct WINDOW_DESC
 	// be processed, other methoes must be used for interaction. For example,
 	// an active console, another window or a limited lifespan.
 	// NOTE: You can swap the monitor display by using setWallpaperMonitor, 
-	// other reshaping functions will throw. It does not adjust automatically 
+	// other reshaping functions will error. It does not adjust automatically 
 	// to settings changes, so setWallpaperMonitor must be called to re-adjust.
 	enum WINDOW_MODE
 	{
@@ -1867,7 +1867,7 @@ struct WINDOW_DESC
 	window_mode = WINDOW_MODE_NORMAL;
 
 	// Initial window dimensions.
-	Vector2i window_dim = { 640, 320 };
+	Vector2i window_dim = { 720, 480 };
 
 	// Initial window icon file path. If none provided defaults.
 	char icon_filename[512] = "";
@@ -2610,8 +2610,7 @@ public:
 	// *.obj files, that reads the files and outputs a valid descriptor. If the file 
 	// supports texturing, optionally accepts an image to be used as texture_image.
 	// NOTE: All data is allocated by (new) and its deletion must be handled by the 
-	// user. The image pointer used is the same as provided.
-	// If any error occurs, including missing file, it will throw.
+	// user. The image pointer used is the same as provided..
 	static POLYHEDRON_DESC getDescFromObj(const char* obj_file_path, Image* texture = nullptr);
 
 public:
@@ -3123,10 +3122,12 @@ ImGui GitHub Repositiory: https://github.com/ocornut/imgui.git
 // ImGui Interface base class, contains the basic building blocks to connect the ImGui
 // API to this library, any app that wishes to use ImGui needs to inherit this class and 
 // call the constructor on the desired window.
-class iGManager 
+class iGManager
 {
 	// Needs access to the internals to feed messages to ImGui if used.
 	friend class MSGHandlePipeline;
+	// To get access to newFrame, drawFrame and render.
+	friend class Graphics;
 
 protected:
 	// Constructor, initializes ImGui WIN32/DX11 for the specific instance and
@@ -3140,13 +3141,20 @@ protected:
 	// If it is the last class instance shuts down ImGui WIN32/DX11.
 	virtual ~iGManager();
 
-	// Function to be called at the beggining of an ImGui render function.
-	// Calls new frame on Win32 and DX11 on the imGui API.
+	// Calls new frame on Win32 and DX11 on the imGui API. Called automatically during
+	// pushFrame() before render(). If you define custom imGui rendering you must call 
+	// this function before drawing any imgui objects.
 	void newFrame();
 
-	// Function to be called at the end of an ImGui render function.
-	// Calls the rendering method of DX11 on the imGui API.
+	// Calls the rendering method of DX11 on the imGui API. Called automatically during
+	// pushFrame() after render(). If you define custom imGui rendering you must call 
+	// this function after drawing your imgui objects.
 	void drawFrame();
+
+	// InGui rendering function, needs to be implemented by inheritance and will be 
+	// called by the bounded window just before pushing a frame. For custom behavior 
+	// just leave it blank and create your onw rendering functions.
+	virtual void render() = 0;
 
 public:
 	// Binds the objects user interaction to the specified window.
@@ -3154,11 +3162,6 @@ public:
 
 	// If it's bound to a window it unbinds it.
 	void unbind();
-
-	// InGui rendering function, needs to be implemented by inheritance and will be 
-	// called by the bounded window just before pushing a frame. For custom behavior 
-	// just leave it blank and create your onw rendering functions.
-	virtual void render() = 0;
 
 private:
 	// Stores the pointer to the ImGui context of the specific window of the instance.
@@ -3308,86 +3311,116 @@ public:
 #undef _INCLUDE_TIMER
 #endif // _INCLUDE_TIMER
 
-/* EXCEPTION BASE CLASS
------------------------------------------------------------------------------------------------------------
------------------------------------------------------------------------------------------------------------
-This header contains the base class for all exception types defined
-across the library, for proper exception management you can wrapp your
-entire app call in try/catch and catch this exception type.
+#ifdef _INCLUDE_USER_ERROR
 
-The what() and GetType() functions are virtual and will describe the 
-specifics of the thrown exception.
+/* ERROR BASE CLASS
+-------------------------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------
+This header contains the base class for all error types defined across the library.
+It also contains the main macro where all fatal checks are funneled through, to be
+modified by the user if so desires.
 
-If you simply want a message box to pop and explain the exception I 
-recommend calling the PopMessageBox function upon catch.
------------------------------------------------------------------------------------------------------------
------------------------------------------------------------------------------------------------------------
+Failed check in this library are to be considered always fatal, when a check is
+failed, a ChaoticError object is created, and is always funneled through
+the CHAOTIC_FATAL macro, which by default calls PopMessageBoxAbort.
+
+We distinguish errors between two types, user errors, which are given from improper
+use of the API, this will appear as "Info Errors" upon crash. And system errors,
+which are failed checks on Win32 or DX11 functions, all of them do diagnostics if
+available and print it to the message box.
+
+Checks are performed in both debug and release mode, due to their almost negligible
+overhead and their really valuable diagnostics. However this can be disabled by the
+user, all expressions that make it into CHAOTIC_CHECK are intended to be skipped,
+they do not modify any state, so CHAOTIC_CHECK and CHAOTIC_FATAL can be nullyfied
+with no additional modifications needed.
+
+The modifications must be done in the original header for compilation, in this case
+the header is "ChaoticError.h".
+-------------------------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------
 */
 
-// Exception Base class layout, the what() and GetType() function
-// contain the relevant information from the specific exception.
-class Exception
+// General macro where all failed checks are funneled through
+#ifdef _DEBUG
+#define CHAOTIC_FATAL(_ERROR)  (_ERROR).PopMessageBoxAbort()
+#else
+#define CHAOTIC_FATAL(_ERROR)  (_ERROR).PopMessageBoxAbort()
+#endif
+
+// Macro used for regular checks with no state modifination expressions.
+#ifdef _DEBUG
+#define CHAOTIC_CHECK(_EXPR, _ERROR)  do { if (!(_EXPR)) { CHAOTIC_FATAL(_ERROR); } } while(0)
+#else
+#define CHAOTIC_CHECK(_EXPR, _ERROR)  do { if (!(_EXPR)) { CHAOTIC_FATAL(_ERROR); } } while(0)
+#endif
+
+// Error Base class layout, all error classes must follow it, when 
+// an error is found, PopMessageBoxAbort() is called.
+class ChaoticError
 {
 protected:
 	// Default constructor, Only accessable to inheritance.
-	// Stores the code line and file where the exception was thrown.
-	Exception(int line, const char* file) noexcept;
+	// Stores the code line and file where the error was found.
+	ChaoticError(int line, const char* file) noexcept;
 
 public:
-	// Virtual function that returns the description of the exception.
-	// Each exception type can override this default method.
-	virtual const char* what() const noexcept { return info; }
-
-	// Returns the exception type, to be overwritten by inheritance.
+	// Returns the error type, to be overwritten by inheritance.
 	virtual const char* GetType() const noexcept = 0;
 
-	// Returns the line of the code file the exception was thrown.
-	int GetLine() const noexcept { return line; }
+	// Getters for custom error behavior.
+	int			GetLine()   const noexcept { return line;   }
+	const char* GetFile()   const noexcept { return file;   }
+	const char* GetOrigin() const noexcept { return origin; }
+	const char* GetInfo()   const noexcept { return info;   }
 
-	// Returns the file path of the file where the exception was thrown.
-	const char* GetFile() const noexcept { return file; }
-
-	// Returns the original code string where the exception was thrown.
-	const char* GetOriginString() const noexcept { return origin; }
-
-	// Creates a default message box using Win32 with the exception data.
-	void PopMessageBox() const noexcept;
-private:
-	int line;				// Stores the line where the exception was thrown.
-	char file[512] = {};	// Stores the file where the exception was thrown.
+	// Creates a default message box using Win32 with the error data.
+	[[noreturn]] void PopMessageBoxAbort() const noexcept;
+protected:
+	int line;				// Stores the line where the error was found.
+	char file[512] = {};	// Stores the file where the error was found.
 
 	char origin[512] = {};	// Stores the origin string.
 
 protected:
-	// Pointer to the what buffer to be used by the inheritance.
+	// Pointer to the what buffer to be used by inheritance.
 	char info[2048] = {};
 };
 
-#ifdef _INCLUDE_DEFAULT_EXCEPTION
+/* USER ERROR CLASS
+-------------------------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------
+This header contains the default error class and user check, used by the
+library when no internal error has ocurred. Mostly used for user driven
+errors due to failed API conditions.
 
-/* DEFAULT EXCEPTION CLASS
------------------------------------------------------------------------------------------------------------
------------------------------------------------------------------------------------------------------------
-This header contains the default exception class thrown by the
-library when no specific exception is being thrown.
+Contains the line, file and a description of the error, as every other
+error funnels through the defalut error pipeline.
 
-Contains the line and file and a description of the excetion that
-can be entered as a single string or as a list of strings.
-For user created exceptions please use this one.
------------------------------------------------------------------------------------------------------------
------------------------------------------------------------------------------------------------------------
+It can also be used by the user own developed apps, but given the conditions
+outlined in the ChaoticError header, any expression inside a USER_CHEK must
+not modify internal variable because it might be nullyfied by the end user.
+-------------------------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------
 */
 
-#define INFO_EXCEPT(info)	InfoException(__LINE__, __FILE__, (info))
+// Default user error macro used for user error calls across the library. 
+// This is used if no specific condition has been checked on the path or 
+// if the condition check is necessary for normal library runtime.
+#define USER_ERROR(_MSG)			CHAOTIC_FATAL(UserError(__LINE__, __FILE__, _MSG))
 
-// Basic Exception class, stores the given information and adds it
+// Default user check macro used along the library for non system errors.
+// Can also be used by the user when designing their own apps.
+#define USER_CHECK(_EXPR, _MSG)		CHAOTIC_CHECK(_EXPR, UserError(__LINE__, __FILE__, _MSG))
+
+// Basic Error class, stores the given information and adds it
 // to the whatBuffer when the what() function is called.
-class InfoException : public Exception
+class UserError : public ChaoticError
 {
 public:
 	// Single message constructor, the message is stored in the info.
-	InfoException(int line, const char* file, const char* msg) noexcept
-		: Exception(line, file)
+	UserError(int line, const char* file, const char* msg) noexcept
+		: ChaoticError(line, file)
 	{
 		unsigned c = 0u;
 
@@ -3406,7 +3439,6 @@ public:
 			info[c++] = '\n';
 
 		// Add origin location.
-		const char* origin = GetOriginString();
 		i = 0u;
 		while (origin[i] && c < 2047)
 			info[c++] = origin[i++];
@@ -3415,43 +3447,9 @@ public:
 		info[c] = '\0';
 	}
 
-	// Multiple messages constructor, the messages are stored in the info.
-	InfoException(int line, const char* file, const char** infoMsgs = nullptr) noexcept
-		:Exception(line, file)
-	{
-		unsigned i, j, c = 0u;
-
-		// Add intro to information.
-		const char* intro = "\n[Error Info]\n";
-		i = 0u;
-		while (intro[i] && c < 2047)
-			info[c++] = intro[i++];
-
-		// join all info messages with newlines into single string.
-		i = 0u;
-		while (infoMsgs[i])
-		{
-			j = 0u;
-			while (infoMsgs[i][j] && c < 2047)
-				info[c++] = infoMsgs[i][j++];
-
-			if (c < 2047)
-				info[c++] = '\n';
-		}
-
-		// Add origin location.
-		const char* origin = GetOriginString();
-		i = 0u;
-		while (origin[i] && c < 2047)
-			info[c++] = origin[i++];
-
-		// Add final EOS
-		info[c] = '\0';
-	}
-
-	// Info Exception type override.
-	const char* GetType() const noexcept override { return "Graphics Info Exception"; }
+	// Info Error type override.
+	const char* GetType() const noexcept override { return "Default User Error"; }
 };
 
-#undef _INCLUDE_DEFAULT_EXCEPTION
-#endif // _INCLUDE_DEFAULT_EXCEPTION
+#undef _INCLUDE_USER_ERROR
+#endif // _INCLUDE_DEFAULT_ERROR

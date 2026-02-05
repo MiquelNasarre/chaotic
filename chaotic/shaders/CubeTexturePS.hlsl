@@ -17,10 +17,21 @@ cbuffer cBuff : register(b0)
 TextureCube _texture : register(t0);
 SamplerState _samp : register(s0);
 
-float4 main(float3 coord : Coord, float3 pos : PointPos, float3 norm : Norm, bool front : SV_IsFrontFace) : SV_Target
+struct VSOut
 {
+    float4 coord : TEXCOORD0;
+    float4 R3pos : TEXCOORD1;
+    float4 norm : NORMAL;
+    float4 SCpos : SV_Position;
+};
+
+float4 main(VSOut vso, bool front : SV_IsFrontFace) : SV_Target
+{
+    float3 pos = vso.R3pos.xyz;
+    float3 norm = vso.norm.xyz;
+    
     // Sample from texture
-    float4 color = _texture.Sample(_samp, coord);
+    float4 color = _texture.Sample(_samp, vso.coord.xyz);
     
     // Handle backfaces: flip normal if fragment is from back side
     if (!front)

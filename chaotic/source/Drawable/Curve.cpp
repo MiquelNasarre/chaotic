@@ -1,7 +1,7 @@
 #include "Drawable/Curve.h"
 #include "Bindable/BindableBase.h"
 
-#include "Exception/_exDefault.h"
+#include "Error/_erDefault.h"
 
 #ifdef _DEPLOYMENT
 #include "embedded_resources.h"
@@ -86,27 +86,29 @@ Curve::~Curve()
 
 void Curve::initialize(const CURVE_DESC* pDesc)
 {
-	if (!pDesc)
-		throw INFO_EXCEPT("Trying to initialize a Curve with an invalid descriptor pointer.");
+	USER_CHECK(pDesc,
+		"Trying to initialize a Curve with an invalid descriptor pointer."
+	);
 
-	if (isInit)
-		throw INFO_EXCEPT("Trying to initialize a Curve that has already been initialized.");
-	else
-		isInit = true;
+	USER_CHECK(isInit == false,
+		"Trying to initialize a Curve that has already been initialized."
+	);
+
+	isInit = true;
 
 	curveData = new CurveInternals;
 	CurveInternals& data = *(CurveInternals*)curveData;
 
 	data.desc = *pDesc;
 
-	if (!data.desc.curve_function)
-		throw INFO_EXCEPT("Found nullptr when trying to access a curve function to create a Curve.");
+	USER_CHECK(data.desc.curve_function,
+		"Found nullptr when trying to access a curve function to create a Curve."
+	);
 
-	if (data.desc.vertex_count < 2u)
-		throw INFO_EXCEPT(
-			"Found vertex count smaller than two when trying to create a Curve.\n"
-			"You need at least a vertex count of two to initialize a Curve."
-		);
+	USER_CHECK(data.desc.vertex_count >= 2u,
+		"Found vertex count smaller than two when trying to create a Curve.\n"
+		"You need at least a vertex count of two to initialize a Curve."
+	);
 
 	// Define the t_values where the generator function will be evaluated.
 	float dt = data.desc.border_points_included ?
@@ -172,8 +174,9 @@ void Curve::initialize(const CURVE_DESC* pDesc)
 
 		case CURVE_DESC::LIST_COLORING:
 		{
-			if (!data.desc.color_list)
-				throw INFO_EXCEPT("Found nullptr when trying to access a color list to create a Curve.");
+			USER_CHECK(data.desc.color_list,
+				"Found nullptr when trying to access a color list to create a Curve."
+			);
 
 			data.ColVertices = new CurveInternals::ColVertex[data.desc.vertex_count];
 
@@ -228,8 +231,9 @@ void Curve::initialize(const CURVE_DESC* pDesc)
 
 		case CURVE_DESC::FUNCTION_COLORING:
 		{
-			if (!data.desc.color_function)
-				throw INFO_EXCEPT("Found nullptr when trying to access a color function to create a Curve.");
+			USER_CHECK(data.desc.color_function,
+				"Found nullptr when trying to access a color function to create a Curve."
+			);
 
 			data.ColVertices = new CurveInternals::ColVertex[data.desc.vertex_count];
 
@@ -283,7 +287,7 @@ void Curve::initialize(const CURVE_DESC* pDesc)
 		}
 
 		default:
-			throw INFO_EXCEPT("Found an unrecognized coloring mode when trying to create a Curve.");
+			USER_ERROR("Found an unrecognized coloring mode when trying to create a Curve.");
 	}
 
 	unsigned* indexs = new unsigned[data.desc.vertex_count];
@@ -312,13 +316,15 @@ void Curve::initialize(const CURVE_DESC* pDesc)
 
 void Curve::updateRange(Vector2f range)
 {
-	if (!isInit)
-		throw INFO_EXCEPT("Trying to update the vertices on an uninitialized Curve.");
+	USER_CHECK(isInit,
+		"Trying to update the vertices on an uninitialized Curve."
+	);
 
 	CurveInternals& data = *(CurveInternals*)curveData;
 
-	if (!data.desc.enable_updates)
-		throw INFO_EXCEPT("Trying to update the vertices on a Curve with updates disabled.");
+	USER_CHECK(data.desc.enable_updates,
+		"Trying to update the vertices on a Curve with updates disabled."
+	);
 
 	// Unpdate range values if requested.
 	if (range)
@@ -371,19 +377,23 @@ void Curve::updateRange(Vector2f range)
 
 void Curve::updateColors(Color* color_list)
 {
-	if (!isInit)
-		throw INFO_EXCEPT("Trying to update the colors on an uninitialized Curve.");
+	USER_CHECK(isInit,
+		"Trying to update the colors on an uninitialized Curve."
+	);
 
-	if (!color_list)
-		throw INFO_EXCEPT("Trying to update the colors on a Curve with an invalid color list.");
+	USER_CHECK(color_list,
+		"Trying to update the colors on a Curve with an invalid color list."
+	);
 
 	CurveInternals& data = *(CurveInternals*)curveData;
 
-	if (data.desc.coloring != CURVE_DESC::LIST_COLORING)
-		throw INFO_EXCEPT("Trying to update the colors on a Curve with a different coloring.");
+	USER_CHECK(data.desc.coloring == CURVE_DESC::LIST_COLORING,
+		"Trying to update the colors on a Curve with a different coloring."
+	);
 
-	if (!data.desc.enable_updates)
-		throw INFO_EXCEPT("Trying to update the colors on a Curve with updates disabled.");
+	USER_CHECK(data.desc.enable_updates,
+		"Trying to update the colors on a Curve with updates disabled."
+	);
 
 	for (unsigned i = 0u; i < data.desc.vertex_count; i++)
 		data.ColVertices[i].color = color_list[i].getColor4();
@@ -395,13 +405,15 @@ void Curve::updateColors(Color* color_list)
 
 void Curve::updateGlobalColor(Color color)
 {
-	if (!isInit)
-		throw INFO_EXCEPT("Trying to update the global color on an uninitialized Curve.");
+	USER_CHECK(isInit,
+		"Trying to update the global color on an uninitialized Curve."
+	);
 
 	CurveInternals& data = *(CurveInternals*)curveData;
 
-	if (data.desc.coloring != CURVE_DESC::GLOBAL_COLORING)
-		throw INFO_EXCEPT("Trying to update the global color on a Curve with a different coloring.");
+	USER_CHECK(data.desc.coloring == CURVE_DESC::GLOBAL_COLORING,
+		"Trying to update the global color on a Curve with a different coloring."
+	);
 
 	_float4color col = color.getColor4();
 	data.pGlobalColorCB->update(&col);
@@ -413,14 +425,14 @@ void Curve::updateGlobalColor(Color color)
 
 void Curve::updateRotation(Quaternion rotation, bool multiplicative)
 {
-	if (!isInit)
-		throw INFO_EXCEPT("Trying to update the rotation on an uninitialized Curve.");
+	USER_CHECK(isInit,
+		"Trying to update the rotation on an uninitialized Curve."
+	);
 
-	if (!rotation)
-		throw INFO_EXCEPT(
-			"Invalid quaternion found when trying to update rotation on a Curve.\n"
-			"Quaternion 0 can not be normalized and therefore can not describe an objects rotation."
-		);
+	USER_CHECK(rotation,
+		"Invalid quaternion found when trying to update rotation on a Curve.\n"
+		"Quaternion 0 can not be normalized and therefore can not describe an objects rotation."
+	);
 
 	CurveInternals& data = *(CurveInternals*)curveData;
 
@@ -443,8 +455,9 @@ void Curve::updateRotation(Quaternion rotation, bool multiplicative)
 
 void Curve::updatePosition(Vector3f position, bool additive)
 {
-	if (!isInit)
-		throw INFO_EXCEPT("Trying to update the position on an uninitialized Curve.");
+	USER_CHECK(isInit,
+		"Trying to update the position on an uninitialized Curve."
+	);
 
 	CurveInternals& data = *(CurveInternals*)curveData;
 
@@ -467,8 +480,9 @@ void Curve::updatePosition(Vector3f position, bool additive)
 
 void Curve::updateDistortion(Matrix distortion, bool multiplicative)
 {
-	if (!isInit)
-		throw INFO_EXCEPT("Trying to update the distortion on an uninitialized Curve.");
+	USER_CHECK(isInit,
+		"Trying to update the distortion on an uninitialized Curve."
+	);
 
 	CurveInternals& data = *(CurveInternals*)curveData;
 
@@ -489,8 +503,9 @@ void Curve::updateDistortion(Matrix distortion, bool multiplicative)
 
 void Curve::updateScreenPosition(Vector2f screenDisplacement)
 {
-	if (!isInit)
-		throw INFO_EXCEPT("Trying to update the screen position on an uninitialized Curve.");
+	USER_CHECK(isInit,
+		"Trying to update the screen position on an uninitialized Curve."
+	);
 
 	CurveInternals& data = *(CurveInternals*)curveData;
 
@@ -508,8 +523,9 @@ void Curve::updateScreenPosition(Vector2f screenDisplacement)
 
 Quaternion Curve::getRotation() const
 {
-	if (!isInit)
-		throw INFO_EXCEPT("Trying to get the rotation of an uninitialized Curve.");
+	USER_CHECK(isInit,
+		"Trying to get the rotation of an uninitialized Curve."
+	);
 
 	CurveInternals& data = *(CurveInternals*)curveData;
 
@@ -520,8 +536,9 @@ Quaternion Curve::getRotation() const
 
 Vector3f Curve::getPosition() const
 {
-	if (!isInit)
-		throw INFO_EXCEPT("Trying to get the position of an uninitialized Curve.");
+	USER_CHECK(isInit,
+		"Trying to get the position of an uninitialized Curve."
+	);
 
 	CurveInternals& data = *(CurveInternals*)curveData;
 
@@ -532,8 +549,9 @@ Vector3f Curve::getPosition() const
 
 Matrix Curve::getDistortion() const
 {
-	if (!isInit)
-		throw INFO_EXCEPT("Trying to get the distortion matrix of an uninitialized Curve.");
+	USER_CHECK(isInit,
+		"Trying to get the distortion matrix of an uninitialized Curve."
+	);
 
 	CurveInternals& data = *(CurveInternals*)curveData;
 
@@ -544,8 +562,9 @@ Matrix Curve::getDistortion() const
 
 Vector2f Curve::getScreenPosition() const
 {
-	if (!isInit)
-		throw INFO_EXCEPT("Trying to get the screen position of an uninitialized Curve.");
+	USER_CHECK(isInit,
+		"Trying to get the screen position of an uninitialized Curve."
+	);
 
 	CurveInternals& data = *(CurveInternals*)curveData;
 

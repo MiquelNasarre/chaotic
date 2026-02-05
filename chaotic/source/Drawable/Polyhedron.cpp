@@ -1,7 +1,7 @@
 #include "Drawable/Polyhedron.h"
 #include "Bindable/BindableBase.h"
 
-#include "Exception/_exDefault.h"
+#include "Error/_erDefault.h"
 
 #include <cstdio> // For mesh support
 #include <cstdlib> // For mesh support
@@ -96,15 +96,15 @@ struct PolyhedronInternals
 // supports texturing, optionally accepts an image to be used as texture_image.
 // NOTE: All data is allocated by (new) and its deletion must be handled by the 
 // user. The image pointer used is the same as provided.
-// If any error occurs, including missing file, it will throw.
 
 POLYHEDRON_DESC Polyhedron::getDescFromObj(const char* obj_file_path, Image* texture)
 {
 	// First let's open the file.
 	FILE* file = nullptr;
 	fopen_s(&file, obj_file_path, "r");
-	if (!file)
-		throw INFO_EXCEPT("OBJ parse error: Unable to open OBJ file.");
+	USER_CHECK(file,
+		"OBJ parse error: Unable to open OBJ file."
+	);
 
 	POLYHEDRON_DESC desc = {};
 	desc.texture_image = texture;
@@ -139,12 +139,12 @@ POLYHEDRON_DESC Polyhedron::getDescFromObj(const char* obj_file_path, Image* tex
 			// v
 			char* end = nullptr;
 			long v = std::strtol(p, &end, 10);
-			if (end == p) throw INFO_EXCEPT("OBJ parse error: face token missing vertex index.");
+			USER_CHECK(end != p, "OBJ parse error: face token missing vertex index.");
 			out_vp = objToZeroBased(v, vpCountSoFar);
 			p = end;
 
 			if (*p == '\0') return;
-			if (*p != '/') throw INFO_EXCEPT("OBJ parse error: invalid face token format.");
+			USER_CHECK(*p == '/', "OBJ parse error: invalid face token format.");
 
 			++p; // skip '/'
 
@@ -157,7 +157,7 @@ POLYHEDRON_DESC Polyhedron::getDescFromObj(const char* obj_file_path, Image* tex
 			}
 
 			if (*p == '\0') return;
-			if (*p != '/') throw INFO_EXCEPT("OBJ parse error: invalid face token format (expected '/').");
+			USER_CHECK(*p == '/', "OBJ parse error: invalid face token format.");
 
 			++p; // skip '/'
 
@@ -219,7 +219,7 @@ POLYHEDRON_DESC Polyhedron::getDescFromObj(const char* obj_file_path, Image* tex
 			{
 				p += 2; // skip "f "
 				int corners = countFaceCorners(p);
-				if (corners < 3) throw INFO_EXCEPT("OBJ parse error: face has fewer than 3 vertices.");
+				USER_CHECK(corners >= 3, "OBJ parse error: face has fewer than 3 vertices.");
 				triangleCount += (unsigned)(corners - 2);
 			}
 		}
@@ -228,7 +228,7 @@ POLYHEDRON_DESC Polyhedron::getDescFromObj(const char* obj_file_path, Image* tex
 	if (vertexCount == 0 || triangleCount == 0)
 	{
 		fclose(file);
-		throw INFO_EXCEPT("OBJ parse error: file contains no vertices or no faces.");
+		USER_ERROR("OBJ parse error: file contains no vertices or no faces.");
 	}
 
 	// Allocate arrays owned by the user
@@ -265,7 +265,7 @@ POLYHEDRON_DESC Polyhedron::getDescFromObj(const char* obj_file_path, Image* tex
 
 
 	// Cleanup helper
-	auto cleanupAndThrow = [&](const char* msg) -> void
+	auto cleanupAndError = [&](const char* msg) -> void
 		{
 			delete[] desc.vertex_list;
 			delete[] desc.triangle_list;
@@ -280,7 +280,7 @@ POLYHEDRON_DESC Polyhedron::getDescFromObj(const char* obj_file_path, Image* tex
 			desc.normal_vectors_list = nullptr;
 
 			fclose(file);
-			throw INFO_EXCEPT(msg);
+			USER_ERROR(msg);
 		};
 
 	// Pass 2: fill
@@ -312,9 +312,9 @@ POLYHEDRON_DESC Polyhedron::getDescFromObj(const char* obj_file_path, Image* tex
 		{
 			p += 2;
 			char* end = nullptr;
-			float x = strtof(p, &end); if (end == p) cleanupAndThrow("OBJ parse error: invalid v line.");
-			p = end; float y = strtof(p, &end); if (end == p) cleanupAndThrow("OBJ parse error: invalid v line.");
-			p = end; float z = strtof(p, &end); if (end == p) cleanupAndThrow("OBJ parse error: invalid v line.");
+			float x = strtof(p, &end); if (end == p) cleanupAndError("OBJ parse error: invalid v line.");
+			p = end; float y = strtof(p, &end); if (end == p) cleanupAndError("OBJ parse error: invalid v line.");
+			p = end; float z = strtof(p, &end); if (end == p) cleanupAndError("OBJ parse error: invalid v line.");
 
 			desc.vertex_list[vpSoFar] = { x, y, z };
 			++vpSoFar;
@@ -323,8 +323,8 @@ POLYHEDRON_DESC Polyhedron::getDescFromObj(const char* obj_file_path, Image* tex
 		{
 			p += 3;
 			char* end = nullptr;
-			float u = strtof(p, &end); if (end == p) cleanupAndThrow("OBJ parse error: invalid vt line.");
-			p = end; float v = strtof(p, &end); if (end == p) cleanupAndThrow("OBJ parse error: invalid vt line.");
+			float u = strtof(p, &end); if (end == p) cleanupAndError("OBJ parse error: invalid vt line.");
+			p = end; float v = strtof(p, &end); if (end == p) cleanupAndError("OBJ parse error: invalid vt line.");
 
 			if (rawUV)
 				rawUV[vtSoFar] = { u, v };
@@ -335,9 +335,9 @@ POLYHEDRON_DESC Polyhedron::getDescFromObj(const char* obj_file_path, Image* tex
 		{
 			p += 3;
 			char* end = nullptr;
-			float x = strtof(p, &end); if (end == p) cleanupAndThrow("OBJ parse error: invalid vn line.");
-			p = end; float y = strtof(p, &end); if (end == p) cleanupAndThrow("OBJ parse error: invalid vn line.");
-			p = end; float z = strtof(p, &end); if (end == p) cleanupAndThrow("OBJ parse error: invalid vn line.");
+			float x = strtof(p, &end); if (end == p) cleanupAndError("OBJ parse error: invalid vn line.");
+			p = end; float y = strtof(p, &end); if (end == p) cleanupAndError("OBJ parse error: invalid vn line.");
+			p = end; float z = strtof(p, &end); if (end == p) cleanupAndError("OBJ parse error: invalid vn line.");
 
 			if (rawNrm)
 				rawNrm[vnSoFar] = { x, y, z };
@@ -356,7 +356,7 @@ POLYHEDRON_DESC Polyhedron::getDescFromObj(const char* obj_file_path, Image* tex
 				if (*p == '\0' || *p == '\n' || *p == '\r') break;
 
 				if (cornerCount >= MAX_FACE_CORNERS)
-					cleanupAndThrow("OBJ parse error: face has too many vertices (increase MAX_FACE_CORNERS).");
+					cleanupAndError("OBJ parse error: face has too many vertices (increase MAX_FACE_CORNERS).");
 
 				char* tokenStart = p;
 				while (*p && *p != ' ' && *p != '\t' && *p != '\n' && *p != '\r') ++p;
@@ -367,7 +367,7 @@ POLYHEDRON_DESC Polyhedron::getDescFromObj(const char* obj_file_path, Image* tex
 				int vp = -1, vt = -1, vn = -1;
 				parseFaceCornerToken(tokenStart, (int)vpSoFar, (int)vtSoFar, (int)vnSoFar, vp, vt, vn);
 
-				if (vp < 0 || vp >= (int)vpSoFar) cleanupAndThrow("OBJ parse error: face vertex index out of range.");
+				if (vp < 0 || vp >= (int)vpSoFar) cleanupAndError("OBJ parse error: face vertex index out of range.");
 
 				faceVP[cornerCount] = vp;
 				faceVT[cornerCount] = vt;
@@ -377,13 +377,13 @@ POLYHEDRON_DESC Polyhedron::getDescFromObj(const char* obj_file_path, Image* tex
 				++cornerCount;
 			}
 
-			if (cornerCount < 3) cleanupAndThrow("OBJ parse error: face has fewer than 3 vertices.");
+			if (cornerCount < 3) cleanupAndError("OBJ parse error: face has fewer than 3 vertices.");
 
 			// Fan triangulation: (0, i, i+1)
 			for (int i = 1; i < cornerCount - 1; ++i)
 			{
 				if (triSoFar >= triangleCount)
-					cleanupAndThrow("OBJ parse error: internal triangle count mismatch.");
+					cleanupAndError("OBJ parse error: internal triangle count mismatch.");
 
 				const int a = 0;
 				const int b = i;
@@ -501,371 +501,378 @@ Polyhedron::~Polyhedron()
 
 void Polyhedron::initialize(const POLYHEDRON_DESC* pDesc)
 {
-	if (!pDesc)
-		throw INFO_EXCEPT("Trying to initialize a Polyhedron with an invalid descriptor pointer.");
+	USER_CHECK(pDesc,
+		"Trying to initialize a Polyhedron with an invalid descriptor pointer."
+	);
 
-	if (isInit)
-		throw INFO_EXCEPT("Trying to initialize a Polyhedron that has already been initialized.");
-	else
-		isInit = true;
+	USER_CHECK(isInit == false,
+		"Trying to initialize a Polyhedron that has already been initialized."
+	);
+
+	isInit = true;
 
 	polyhedronData = new PolyhedronInternals;
 	PolyhedronInternals& data = *(PolyhedronInternals*)polyhedronData;
 
 	data.desc = *pDesc;
 
-	if (!data.desc.vertex_list)
-		throw INFO_EXCEPT("Found nullptr when trying to access a vertex list to create a Polyhedron.");
+	USER_CHECK(data.desc.vertex_list,
+		"Found nullptr when trying to access a vertex list to create a Polyhedron."
+	);
 
-	if (!data.desc.triangle_list)
-		throw INFO_EXCEPT("Found nullptr when trying to access a triangle list to create a Polyhedron.");
+	USER_CHECK(data.desc.triangle_list,
+		"Found nullptr when trying to access a triangle list to create a Polyhedron."
+	);
 
-	if (data.desc.normal_computation != POLYHEDRON_DESC::COMPUTED_TRIANGLE_NORMALS && !data.desc.normal_vectors_list)
-		throw INFO_EXCEPT("Found nullptr when trying to access a normal vector list to create a Polyhedron.");
-
+	USER_CHECK(data.desc.normal_computation == POLYHEDRON_DESC::COMPUTED_TRIANGLE_NORMALS || data.desc.normal_vectors_list,
+		"Found nullptr when trying to access a normal vector list to create a Polyhedron."
+	);
 
 	switch (data.desc.coloring)
 	{
-		case POLYHEDRON_DESC::GLOBAL_COLORING:
+	case POLYHEDRON_DESC::GLOBAL_COLORING:
+	{
+		data.Vertices = new PolyhedronInternals::Vertex[3 * data.desc.triangle_count];
+
+		for (unsigned i = 0u; i < data.desc.triangle_count; i++)
 		{
-			data.Vertices = new PolyhedronInternals::Vertex[3 * data.desc.triangle_count];
+			const Vector3f& v0 = data.desc.vertex_list[data.desc.triangle_list[i].x];
+			const Vector3f& v1 = data.desc.vertex_list[data.desc.triangle_list[i].y];
+			const Vector3f& v2 = data.desc.vertex_list[data.desc.triangle_list[i].z];
 
-			for (unsigned i = 0u; i < data.desc.triangle_count; i++)
+			data.Vertices[3 * i + 0].vector = v0.getVector4();
+			data.Vertices[3 * i + 1].vector = v1.getVector4();
+			data.Vertices[3 * i + 2].vector = v2.getVector4();
+
+			if (data.desc.enable_iluminated)
 			{
-				const Vector3f& v0 = data.desc.vertex_list[data.desc.triangle_list[i].x];
-				const Vector3f& v1 = data.desc.vertex_list[data.desc.triangle_list[i].y];
-				const Vector3f& v2 = data.desc.vertex_list[data.desc.triangle_list[i].z];
-
-				data.Vertices[3 * i + 0].vector = v0.getVector4();
-				data.Vertices[3 * i + 1].vector = v1.getVector4();
-				data.Vertices[3 * i + 2].vector = v2.getVector4();
-
-				if (data.desc.enable_iluminated)
+				switch (data.desc.normal_computation)
 				{
-					switch (data.desc.normal_computation)
-					{
-						case POLYHEDRON_DESC::COMPUTED_TRIANGLE_NORMALS:
-						{
-							Vector3f norm = ((v1 - v0) * (v2 - v0)).normalize();
-
-							data.Vertices[3 * i + 0].norm = norm.getVector4();
-							data.Vertices[3 * i + 1].norm = norm.getVector4();
-							data.Vertices[3 * i + 2].norm = norm.getVector4();
-							break;
-						}
-
-						case POLYHEDRON_DESC::PER_TRIANGLE_LIST_NORMALS:
-						{
-							data.Vertices[3 * i + 0].norm = data.desc.normal_vectors_list[3 * i + 0].getVector4();
-							data.Vertices[3 * i + 1].norm = data.desc.normal_vectors_list[3 * i + 1].getVector4();
-							data.Vertices[3 * i + 2].norm = data.desc.normal_vectors_list[3 * i + 2].getVector4();
-							break;
-						}
-
-						case POLYHEDRON_DESC::PER_VERTEX_LIST_NORMALS:
-						{
-							data.Vertices[3 * i + 0].norm = data.desc.normal_vectors_list[data.desc.triangle_list[i].x].getVector4();
-							data.Vertices[3 * i + 1].norm = data.desc.normal_vectors_list[data.desc.triangle_list[i].y].getVector4();
-							data.Vertices[3 * i + 2].norm = data.desc.normal_vectors_list[data.desc.triangle_list[i].z].getVector4();
-							break;
-						}
-
-						default:
-							throw INFO_EXCEPT("Unknown normal computation mode found when trying to initialize a Polyhedron.");
-					}
-				}
-			}
-			data.pUpdateVB = AddBind(new VertexBuffer(data.Vertices, 3u * data.desc.triangle_count, data.desc.enable_updates ? VB_USAGE_DYNAMIC : VB_USAGE_DEFAULT));
-
-			// If updates disabled delete the vertexs
-			if (!data.desc.enable_updates)
-			{
-				delete[] data.Vertices;
-				data.Vertices = nullptr;
-			}
-			// Create the corresponding Vertex Shader
-#ifndef _DEPLOYMENT
-			VertexShader* pvs = AddBind(new VertexShader(PROJECT_DIR L"shaders/GlobalColorVS.cso"));
-#else
-			VertexShader* pvs = AddBind(new VertexShader(getBlobFromId(BLOB_ID::BLOB_GLOBAL_COLOR_VS), getBlobSizeFromId(BLOB_ID::BLOB_GLOBAL_COLOR_VS)));
-#endif
-			// Create the corresponding Pixel Shader and Blender
-			if (data.desc.enable_transparency)
-			{
-#ifndef _DEPLOYMENT
-				AddBind(new PixelShader(data.desc.enable_iluminated ? PROJECT_DIR L"shaders/OITGlobalColorPS.cso" : PROJECT_DIR L"shaders/OITUnlitGlobalColorPS.cso"));
-#else
-				AddBind(new PixelShader(
-					getBlobFromId(data.desc.enable_iluminated ? BLOB_ID::BLOB_OIT_GLOBAL_COLOR_PS : BLOB_ID::BLOB_OIT_UNLIT_GLOBAL_COLOR_PS), 
-					getBlobSizeFromId(data.desc.enable_iluminated ? BLOB_ID::BLOB_OIT_GLOBAL_COLOR_PS : BLOB_ID::BLOB_OIT_UNLIT_GLOBAL_COLOR_PS) 
-				));
-#endif
-				AddBind(new Blender(BLEND_MODE_OIT_WEIGHTED));
-			}
-			else
-			{
-#ifndef _DEPLOYMENT
-				AddBind(new PixelShader(data.desc.enable_iluminated ? PROJECT_DIR L"shaders/GlobalColorPS.cso" : PROJECT_DIR L"shaders/UnlitGlobalColorPS.cso"));
-#else
-				AddBind(new PixelShader(
-					getBlobFromId(data.desc.enable_iluminated ? BLOB_ID::BLOB_GLOBAL_COLOR_PS : BLOB_ID::BLOB_UNLIT_GLOBAL_COLOR_PS),
-					getBlobSizeFromId(data.desc.enable_iluminated ? BLOB_ID::BLOB_GLOBAL_COLOR_PS : BLOB_ID::BLOB_UNLIT_GLOBAL_COLOR_PS)
-				));
-#endif
-				AddBind(new Blender(BLEND_MODE_OPAQUE));
-			}
-			// Create the corresponding input layout
-			INPUT_ELEMENT_DESC ied[2] =
-			{
-				{ "Position",	_4_FLOAT },
-				{ "Normal",		_4_FLOAT },
-			};
-			AddBind(new InputLayout(ied, 2u, pvs));
-
-			// Create the constant buffer for the global color.
-			_float4color col = data.desc.global_color.getColor4();
-			data.pGlobalColorCB = AddBind(new ConstantBuffer(&col, PIXEL_CONSTANT_BUFFER, 1u /*Slot*/));
-			break;
-		}
-
-		case POLYHEDRON_DESC::PER_VERTEX_COLORING:
-		{
-			if (!data.desc.color_list)
-				throw INFO_EXCEPT("Found nullptr when trying to access a color list to create a vertex colored Polyhedron.");
-
-			data.ColVertices = new PolyhedronInternals::ColorVertex[3 * data.desc.triangle_count];
-
-			for (unsigned i = 0u; i < data.desc.triangle_count; i++)
-			{
-				const Vector3f& v0 = data.desc.vertex_list[data.desc.triangle_list[i].x];
-				const Vector3f& v1 = data.desc.vertex_list[data.desc.triangle_list[i].y];
-				const Vector3f& v2 = data.desc.vertex_list[data.desc.triangle_list[i].z];
-
-				data.ColVertices[3 * i + 0].vector = v0.getVector4();
-				data.ColVertices[3 * i + 1].vector = v1.getVector4();
-				data.ColVertices[3 * i + 2].vector = v2.getVector4();
-
-				data.ColVertices[3 * i + 0].color = data.desc.color_list[3 * i + 0].getColor4();
-				data.ColVertices[3 * i + 1].color = data.desc.color_list[3 * i + 1].getColor4();
-				data.ColVertices[3 * i + 2].color = data.desc.color_list[3 * i + 2].getColor4();
-
-				if (data.desc.enable_iluminated)
+				case POLYHEDRON_DESC::COMPUTED_TRIANGLE_NORMALS:
 				{
-					switch (data.desc.normal_computation)
-					{
-						case POLYHEDRON_DESC::COMPUTED_TRIANGLE_NORMALS:
-						{
-							Vector3f norm = ((v1 - v0) * (v2 - v0)).normalize();
+					Vector3f norm = ((v1 - v0) * (v2 - v0)).normalize();
 
-							data.ColVertices[3 * i + 0].norm = norm.getVector4();
-							data.ColVertices[3 * i + 1].norm = norm.getVector4();
-							data.ColVertices[3 * i + 2].norm = norm.getVector4();
-							break;
-						}
-
-						case POLYHEDRON_DESC::PER_TRIANGLE_LIST_NORMALS:
-						{
-							data.ColVertices[3 * i + 0].norm = data.desc.normal_vectors_list[3 * i + 0].getVector4();
-							data.ColVertices[3 * i + 1].norm = data.desc.normal_vectors_list[3 * i + 1].getVector4();
-							data.ColVertices[3 * i + 2].norm = data.desc.normal_vectors_list[3 * i + 2].getVector4();
-							break;
-						}
-
-						case POLYHEDRON_DESC::PER_VERTEX_LIST_NORMALS:
-						{
-							data.ColVertices[3 * i + 0].norm = data.desc.normal_vectors_list[data.desc.triangle_list[i].x].getVector4();
-							data.ColVertices[3 * i + 1].norm = data.desc.normal_vectors_list[data.desc.triangle_list[i].y].getVector4();
-							data.ColVertices[3 * i + 2].norm = data.desc.normal_vectors_list[data.desc.triangle_list[i].z].getVector4();
-							break;
-						}
-
-						default:
-							throw INFO_EXCEPT("Unknown normal computation mode found when trying to initialize a Polyhedron.");
-					}
-				}
-			}
-			data.pUpdateVB = AddBind(new VertexBuffer(data.ColVertices, 3u * data.desc.triangle_count, data.desc.enable_updates ? VB_USAGE_DYNAMIC : VB_USAGE_DEFAULT));
-
-			// If updates disabled delete the vertexs
-			if (!data.desc.enable_updates)
-			{
-				delete[] data.ColVertices;
-				data.ColVertices = nullptr;
-			}
-			// Create the corresponding Vertex Shader
-#ifndef _DEPLOYMENT
-			VertexShader* pvs = AddBind(new VertexShader(PROJECT_DIR L"shaders/VertexColorVS.cso"));
-#else
-			VertexShader* pvs = AddBind(new VertexShader(getBlobFromId(BLOB_ID::BLOB_VERTEX_COLOR_VS), getBlobSizeFromId(BLOB_ID::BLOB_VERTEX_COLOR_VS)));
-#endif
-			// Create the corresponding Pixel Shader and Blender
-			if (data.desc.enable_transparency)
-			{
-#ifndef _DEPLOYMENT
-				AddBind(new PixelShader(data.desc.enable_iluminated ? PROJECT_DIR L"shaders/OITVertexColorPS.cso" : PROJECT_DIR L"shaders/OITUnlitVertexColorPS.cso"));
-#else
-				AddBind(new PixelShader(
-					getBlobFromId(data.desc.enable_iluminated ? BLOB_ID::BLOB_OIT_VERTEX_COLOR_PS : BLOB_ID::BLOB_OIT_UNLIT_VERTEX_COLOR_PS),
-					getBlobSizeFromId(data.desc.enable_iluminated ? BLOB_ID::BLOB_OIT_VERTEX_COLOR_PS : BLOB_ID::BLOB_OIT_UNLIT_VERTEX_COLOR_PS)
-				));
-#endif
-				AddBind(new Blender(BLEND_MODE_OIT_WEIGHTED));
-			}
-			else
-			{
-#ifndef _DEPLOYMENT
-				AddBind(new PixelShader(data.desc.enable_iluminated ? PROJECT_DIR L"shaders/VertexColorPS.cso" : PROJECT_DIR L"shaders/UnlitVertexColorPS.cso"));
-#else
-				AddBind(new PixelShader(
-					getBlobFromId(data.desc.enable_iluminated ? BLOB_ID::BLOB_VERTEX_COLOR_PS : BLOB_ID::BLOB_UNLIT_VERTEX_COLOR_PS),
-					getBlobSizeFromId(data.desc.enable_iluminated ? BLOB_ID::BLOB_VERTEX_COLOR_PS : BLOB_ID::BLOB_UNLIT_VERTEX_COLOR_PS)
-				));
-#endif
-				AddBind(new Blender(BLEND_MODE_OPAQUE));
-			}
-			// Create the corresponding input layout
-			INPUT_ELEMENT_DESC ied[3] =
-			{
-				{ "Position",	_4_FLOAT },
-				{ "Normal",		_4_FLOAT },
-				{ "Color",		_4_FLOAT },
-			};
-			AddBind(new InputLayout(ied, 3u, pvs));
-			break;
-		}
-
-		case POLYHEDRON_DESC::TEXTURED_COLORING:
-		{
-			if (!data.desc.texture_image)
-				throw INFO_EXCEPT("Found nullptr when trying to access an Image to create a textured Polyhedron.");
-
-			if (!data.desc.texture_coordinates_list)
-				throw INFO_EXCEPT("Found nullptr when trying to access a texture coordinate list to create a textured Polyhedron.");
-
-			data.TexVertices = new PolyhedronInternals::TextureVertex[3 * data.desc.triangle_count];
-
-			data.image_height = data.desc.texture_image->height();
-			data.image_width = data.desc.texture_image->width();
-
-			for (unsigned i = 0u; i < data.desc.triangle_count; i++)
-			{
-				const Vector3f& v0 = data.desc.vertex_list[data.desc.triangle_list[i].x];
-				const Vector3f& v1 = data.desc.vertex_list[data.desc.triangle_list[i].y];
-				const Vector3f& v2 = data.desc.vertex_list[data.desc.triangle_list[i].z];
-
-				data.TexVertices[3 * i + 0].vector = v0.getVector4();
-				data.TexVertices[3 * i + 1].vector = v1.getVector4();
-				data.TexVertices[3 * i + 2].vector = v2.getVector4();
-
-				data.TexVertices[3 * i + 0].coord = {
-					float(data.desc.texture_coordinates_list[3 * i + 0].x) / data.image_width,
-					float(data.desc.texture_coordinates_list[3 * i + 0].y) / data.image_height,
-				0.f,0.f };
-
-				data.TexVertices[3 * i + 1].coord = {
-					float(data.desc.texture_coordinates_list[3 * i + 1].x) / data.image_width,
-					float(data.desc.texture_coordinates_list[3 * i + 1].y) / data.image_height,
-				0.f,0.f };
-
-				data.TexVertices[3 * i + 2].coord = {
-					float(data.desc.texture_coordinates_list[3 * i + 2].x) / data.image_width,
-					float(data.desc.texture_coordinates_list[3 * i + 2].y) / data.image_height,
-				0.f,0.f };
-
-				if (data.desc.enable_iluminated)
-				{
-					switch (data.desc.normal_computation)
-					{
-						case POLYHEDRON_DESC::COMPUTED_TRIANGLE_NORMALS:
-						{
-							Vector3f norm = ((v1 - v0) * (v2 - v0)).normalize();
-
-							data.TexVertices[3 * i + 0].norm = norm.getVector4();
-							data.TexVertices[3 * i + 1].norm = norm.getVector4();
-							data.TexVertices[3 * i + 2].norm = norm.getVector4();
-							break;
-						}
-
-						case POLYHEDRON_DESC::PER_TRIANGLE_LIST_NORMALS:
-						{
-							data.TexVertices[3 * i + 0].norm = data.desc.normal_vectors_list[3 * i + 0].getVector4();
-							data.TexVertices[3 * i + 1].norm = data.desc.normal_vectors_list[3 * i + 1].getVector4();
-							data.TexVertices[3 * i + 2].norm = data.desc.normal_vectors_list[3 * i + 2].getVector4();
-							break;
-						}
-
-						case POLYHEDRON_DESC::PER_VERTEX_LIST_NORMALS:
-						{
-							data.TexVertices[3 * i + 0].norm = data.desc.normal_vectors_list[data.desc.triangle_list[i].x].getVector4();
-							data.TexVertices[3 * i + 1].norm = data.desc.normal_vectors_list[data.desc.triangle_list[i].y].getVector4();
-							data.TexVertices[3 * i + 2].norm = data.desc.normal_vectors_list[data.desc.triangle_list[i].z].getVector4();
-							break;
-						}
-
-						default:
-							throw INFO_EXCEPT("Unknown normal computation mode found when trying to initialize a Polyhedron.");
-					}
+					data.Vertices[3 * i + 0].norm = norm.getVector4();
+					data.Vertices[3 * i + 1].norm = norm.getVector4();
+					data.Vertices[3 * i + 2].norm = norm.getVector4();
+					break;
 				}
 
-			}
-			data.pUpdateVB = AddBind(new VertexBuffer(data.TexVertices, 3u * data.desc.triangle_count, data.desc.enable_updates ? VB_USAGE_DYNAMIC : VB_USAGE_DEFAULT));
+				case POLYHEDRON_DESC::PER_TRIANGLE_LIST_NORMALS:
+				{
+					data.Vertices[3 * i + 0].norm = data.desc.normal_vectors_list[3 * i + 0].getVector4();
+					data.Vertices[3 * i + 1].norm = data.desc.normal_vectors_list[3 * i + 1].getVector4();
+					data.Vertices[3 * i + 2].norm = data.desc.normal_vectors_list[3 * i + 2].getVector4();
+					break;
+				}
 
-			// If updates disabled delete the vertexs
-			if (!data.desc.enable_updates)
-			{
-				delete[] data.TexVertices;
-				data.TexVertices = nullptr;
-			}
-			// Create the corresponding Vertex Shader
-#ifndef _DEPLOYMENT
-			VertexShader* pvs = AddBind(new VertexShader(PROJECT_DIR L"shaders/VertexTextureVS.cso"));
-#else
-			VertexShader* pvs = AddBind(new VertexShader(getBlobFromId(BLOB_ID::BLOB_VERTEX_TEXTURE_VS), getBlobSizeFromId(BLOB_ID::BLOB_VERTEX_TEXTURE_VS)));
-#endif
-			// Create the corresponding Pixel Shader and Blender
-			if (data.desc.enable_transparency)
-			{
-#ifndef _DEPLOYMENT
-				AddBind(new PixelShader(data.desc.enable_iluminated ? PROJECT_DIR L"shaders/OITVertexTexturePS.cso" : PROJECT_DIR L"shaders/OITUnlitVertexTexturePS.cso"));
-#else
-				AddBind(new PixelShader(
-					getBlobFromId(data.desc.enable_iluminated ? BLOB_ID::BLOB_OIT_VERTEX_TEXTURE_PS : BLOB_ID::BLOB_OIT_UNLIT_VERTEX_TEXTURE_PS),
-					getBlobSizeFromId(data.desc.enable_iluminated ? BLOB_ID::BLOB_OIT_VERTEX_TEXTURE_PS : BLOB_ID::BLOB_OIT_UNLIT_VERTEX_TEXTURE_PS)
-				));
-#endif
-				AddBind(new Blender(BLEND_MODE_OIT_WEIGHTED));
-			}
-			else
-			{
-#ifndef _DEPLOYMENT
-				AddBind(new PixelShader(data.desc.enable_iluminated ? PROJECT_DIR L"shaders/VertexTexturePS.cso" : PROJECT_DIR L"shaders/UnlitVertexTexturePS.cso"));
-#else
-				AddBind(new PixelShader(
-					getBlobFromId(data.desc.enable_iluminated ? BLOB_ID::BLOB_VERTEX_TEXTURE_PS : BLOB_ID::BLOB_UNLIT_VERTEX_TEXTURE_PS),
-					getBlobSizeFromId(data.desc.enable_iluminated ? BLOB_ID::BLOB_VERTEX_TEXTURE_PS : BLOB_ID::BLOB_UNLIT_VERTEX_TEXTURE_PS)
-				));
-#endif
-				AddBind(new Blender(BLEND_MODE_OPAQUE));
-			}
-			// Create the corresponding input layout
-			INPUT_ELEMENT_DESC ied[3] =
-			{
-				{ "Position",	_4_FLOAT },
-				{ "Normal",		_4_FLOAT },
-				{ "TexCoor",	_4_FLOAT },
-			};
-			AddBind(new InputLayout(ied, 3u, pvs));
+				case POLYHEDRON_DESC::PER_VERTEX_LIST_NORMALS:
+				{
+					data.Vertices[3 * i + 0].norm = data.desc.normal_vectors_list[data.desc.triangle_list[i].x].getVector4();
+					data.Vertices[3 * i + 1].norm = data.desc.normal_vectors_list[data.desc.triangle_list[i].y].getVector4();
+					data.Vertices[3 * i + 2].norm = data.desc.normal_vectors_list[data.desc.triangle_list[i].z].getVector4();
+					break;
+				}
 
-			// Create the texture from the image
-			AddBind(new Texture(data.desc.texture_image));
-
-			// Set the sampler as linear for the texture
-			AddBind(new Sampler(data.desc.pixelated_texture ? SAMPLE_FILTER_POINT : SAMPLE_FILTER_LINEAR, SAMPLE_ADDRESS_WRAP));
-			break;
+				default:
+					USER_ERROR("Unknown normal computation mode found when trying to initialize a Polyhedron.");
+				}
+			}
 		}
+		data.pUpdateVB = AddBind(new VertexBuffer(data.Vertices, 3u * data.desc.triangle_count, data.desc.enable_updates ? VB_USAGE_DYNAMIC : VB_USAGE_DEFAULT));
 
-		default:
-			throw INFO_EXCEPT("Found an unrecognized coloring mode when trying to create a Polyhedron.");
+		// If updates disabled delete the vertexs
+		if (!data.desc.enable_updates)
+		{
+			delete[] data.Vertices;
+			data.Vertices = nullptr;
+		}
+		// Create the corresponding Vertex Shader
+#ifndef _DEPLOYMENT
+		VertexShader* pvs = AddBind(new VertexShader(PROJECT_DIR L"shaders/GlobalColorVS.cso"));
+#else
+		VertexShader* pvs = AddBind(new VertexShader(getBlobFromId(BLOB_ID::BLOB_GLOBAL_COLOR_VS), getBlobSizeFromId(BLOB_ID::BLOB_GLOBAL_COLOR_VS)));
+#endif
+		// Create the corresponding Pixel Shader and Blender
+		if (data.desc.enable_transparency)
+		{
+#ifndef _DEPLOYMENT
+			AddBind(new PixelShader(data.desc.enable_iluminated ? PROJECT_DIR L"shaders/OITGlobalColorPS.cso" : PROJECT_DIR L"shaders/OITUnlitGlobalColorPS.cso"));
+#else
+			AddBind(new PixelShader(
+				getBlobFromId(data.desc.enable_iluminated ? BLOB_ID::BLOB_OIT_GLOBAL_COLOR_PS : BLOB_ID::BLOB_OIT_UNLIT_GLOBAL_COLOR_PS),
+				getBlobSizeFromId(data.desc.enable_iluminated ? BLOB_ID::BLOB_OIT_GLOBAL_COLOR_PS : BLOB_ID::BLOB_OIT_UNLIT_GLOBAL_COLOR_PS)
+			));
+#endif
+			AddBind(new Blender(BLEND_MODE_OIT_WEIGHTED));
+		}
+		else
+		{
+#ifndef _DEPLOYMENT
+			AddBind(new PixelShader(data.desc.enable_iluminated ? PROJECT_DIR L"shaders/GlobalColorPS.cso" : PROJECT_DIR L"shaders/UnlitGlobalColorPS.cso"));
+#else
+			AddBind(new PixelShader(
+				getBlobFromId(data.desc.enable_iluminated ? BLOB_ID::BLOB_GLOBAL_COLOR_PS : BLOB_ID::BLOB_UNLIT_GLOBAL_COLOR_PS),
+				getBlobSizeFromId(data.desc.enable_iluminated ? BLOB_ID::BLOB_GLOBAL_COLOR_PS : BLOB_ID::BLOB_UNLIT_GLOBAL_COLOR_PS)
+			));
+#endif
+			AddBind(new Blender(BLEND_MODE_OPAQUE));
+		}
+		// Create the corresponding input layout
+		INPUT_ELEMENT_DESC ied[2] =
+		{
+			{ "Position",	_4_FLOAT },
+			{ "Normal",		_4_FLOAT },
+		};
+		AddBind(new InputLayout(ied, 2u, pvs));
+
+		// Create the constant buffer for the global color.
+		_float4color col = data.desc.global_color.getColor4();
+		data.pGlobalColorCB = AddBind(new ConstantBuffer(&col, PIXEL_CONSTANT_BUFFER, 1u /*Slot*/));
+		break;
+	}
+
+	case POLYHEDRON_DESC::PER_VERTEX_COLORING:
+	{
+		USER_CHECK(data.desc.color_list,
+			"Found nullptr when trying to access a color list to create a vertex colored Polyhedron."
+		);
+
+		data.ColVertices = new PolyhedronInternals::ColorVertex[3 * data.desc.triangle_count];
+
+		for (unsigned i = 0u; i < data.desc.triangle_count; i++)
+		{
+			const Vector3f& v0 = data.desc.vertex_list[data.desc.triangle_list[i].x];
+			const Vector3f& v1 = data.desc.vertex_list[data.desc.triangle_list[i].y];
+			const Vector3f& v2 = data.desc.vertex_list[data.desc.triangle_list[i].z];
+
+			data.ColVertices[3 * i + 0].vector = v0.getVector4();
+			data.ColVertices[3 * i + 1].vector = v1.getVector4();
+			data.ColVertices[3 * i + 2].vector = v2.getVector4();
+
+			data.ColVertices[3 * i + 0].color = data.desc.color_list[3 * i + 0].getColor4();
+			data.ColVertices[3 * i + 1].color = data.desc.color_list[3 * i + 1].getColor4();
+			data.ColVertices[3 * i + 2].color = data.desc.color_list[3 * i + 2].getColor4();
+
+			if (data.desc.enable_iluminated)
+			{
+				switch (data.desc.normal_computation)
+				{
+				case POLYHEDRON_DESC::COMPUTED_TRIANGLE_NORMALS:
+				{
+					Vector3f norm = ((v1 - v0) * (v2 - v0)).normalize();
+
+					data.ColVertices[3 * i + 0].norm = norm.getVector4();
+					data.ColVertices[3 * i + 1].norm = norm.getVector4();
+					data.ColVertices[3 * i + 2].norm = norm.getVector4();
+					break;
+				}
+
+				case POLYHEDRON_DESC::PER_TRIANGLE_LIST_NORMALS:
+				{
+					data.ColVertices[3 * i + 0].norm = data.desc.normal_vectors_list[3 * i + 0].getVector4();
+					data.ColVertices[3 * i + 1].norm = data.desc.normal_vectors_list[3 * i + 1].getVector4();
+					data.ColVertices[3 * i + 2].norm = data.desc.normal_vectors_list[3 * i + 2].getVector4();
+					break;
+				}
+
+				case POLYHEDRON_DESC::PER_VERTEX_LIST_NORMALS:
+				{
+					data.ColVertices[3 * i + 0].norm = data.desc.normal_vectors_list[data.desc.triangle_list[i].x].getVector4();
+					data.ColVertices[3 * i + 1].norm = data.desc.normal_vectors_list[data.desc.triangle_list[i].y].getVector4();
+					data.ColVertices[3 * i + 2].norm = data.desc.normal_vectors_list[data.desc.triangle_list[i].z].getVector4();
+					break;
+				}
+
+				default:
+					USER_ERROR("Unknown normal computation mode found when trying to initialize a Polyhedron.");
+				}
+			}
+		}
+		data.pUpdateVB = AddBind(new VertexBuffer(data.ColVertices, 3u * data.desc.triangle_count, data.desc.enable_updates ? VB_USAGE_DYNAMIC : VB_USAGE_DEFAULT));
+
+		// If updates disabled delete the vertexs
+		if (!data.desc.enable_updates)
+		{
+			delete[] data.ColVertices;
+			data.ColVertices = nullptr;
+		}
+		// Create the corresponding Vertex Shader
+#ifndef _DEPLOYMENT
+		VertexShader* pvs = AddBind(new VertexShader(PROJECT_DIR L"shaders/VertexColorVS.cso"));
+#else
+		VertexShader* pvs = AddBind(new VertexShader(getBlobFromId(BLOB_ID::BLOB_VERTEX_COLOR_VS), getBlobSizeFromId(BLOB_ID::BLOB_VERTEX_COLOR_VS)));
+#endif
+		// Create the corresponding Pixel Shader and Blender
+		if (data.desc.enable_transparency)
+		{
+#ifndef _DEPLOYMENT
+			AddBind(new PixelShader(data.desc.enable_iluminated ? PROJECT_DIR L"shaders/OITVertexColorPS.cso" : PROJECT_DIR L"shaders/OITUnlitVertexColorPS.cso"));
+#else
+			AddBind(new PixelShader(
+				getBlobFromId(data.desc.enable_iluminated ? BLOB_ID::BLOB_OIT_VERTEX_COLOR_PS : BLOB_ID::BLOB_OIT_UNLIT_VERTEX_COLOR_PS),
+				getBlobSizeFromId(data.desc.enable_iluminated ? BLOB_ID::BLOB_OIT_VERTEX_COLOR_PS : BLOB_ID::BLOB_OIT_UNLIT_VERTEX_COLOR_PS)
+			));
+#endif
+			AddBind(new Blender(BLEND_MODE_OIT_WEIGHTED));
+		}
+		else
+		{
+#ifndef _DEPLOYMENT
+			AddBind(new PixelShader(data.desc.enable_iluminated ? PROJECT_DIR L"shaders/VertexColorPS.cso" : PROJECT_DIR L"shaders/UnlitVertexColorPS.cso"));
+#else
+			AddBind(new PixelShader(
+				getBlobFromId(data.desc.enable_iluminated ? BLOB_ID::BLOB_VERTEX_COLOR_PS : BLOB_ID::BLOB_UNLIT_VERTEX_COLOR_PS),
+				getBlobSizeFromId(data.desc.enable_iluminated ? BLOB_ID::BLOB_VERTEX_COLOR_PS : BLOB_ID::BLOB_UNLIT_VERTEX_COLOR_PS)
+			));
+#endif
+			AddBind(new Blender(BLEND_MODE_OPAQUE));
+		}
+		// Create the corresponding input layout
+		INPUT_ELEMENT_DESC ied[3] =
+		{
+			{ "Position",	_4_FLOAT },
+			{ "Normal",		_4_FLOAT },
+			{ "Color",		_4_FLOAT },
+		};
+		AddBind(new InputLayout(ied, 3u, pvs));
+		break;
+	}
+
+	case POLYHEDRON_DESC::TEXTURED_COLORING:
+	{
+		USER_CHECK(data.desc.texture_image,
+			"Found nullptr when trying to access an Image to create a textured Polyhedron."
+		);
+
+		USER_CHECK(data.desc.texture_coordinates_list,
+			"Found nullptr when trying to access a texture coordinate list to create a textured Polyhedron."
+		);
+
+		data.TexVertices = new PolyhedronInternals::TextureVertex[3 * data.desc.triangle_count];
+
+		data.image_height = data.desc.texture_image->height();
+		data.image_width = data.desc.texture_image->width();
+
+		for (unsigned i = 0u; i < data.desc.triangle_count; i++)
+		{
+			const Vector3f& v0 = data.desc.vertex_list[data.desc.triangle_list[i].x];
+			const Vector3f& v1 = data.desc.vertex_list[data.desc.triangle_list[i].y];
+			const Vector3f& v2 = data.desc.vertex_list[data.desc.triangle_list[i].z];
+
+			data.TexVertices[3 * i + 0].vector = v0.getVector4();
+			data.TexVertices[3 * i + 1].vector = v1.getVector4();
+			data.TexVertices[3 * i + 2].vector = v2.getVector4();
+
+			data.TexVertices[3 * i + 0].coord = {
+				float(data.desc.texture_coordinates_list[3 * i + 0].x) / data.image_width,
+				float(data.desc.texture_coordinates_list[3 * i + 0].y) / data.image_height,
+			0.f,0.f };
+
+			data.TexVertices[3 * i + 1].coord = {
+				float(data.desc.texture_coordinates_list[3 * i + 1].x) / data.image_width,
+				float(data.desc.texture_coordinates_list[3 * i + 1].y) / data.image_height,
+			0.f,0.f };
+
+			data.TexVertices[3 * i + 2].coord = {
+				float(data.desc.texture_coordinates_list[3 * i + 2].x) / data.image_width,
+				float(data.desc.texture_coordinates_list[3 * i + 2].y) / data.image_height,
+			0.f,0.f };
+
+			if (data.desc.enable_iluminated)
+			{
+				switch (data.desc.normal_computation)
+				{
+				case POLYHEDRON_DESC::COMPUTED_TRIANGLE_NORMALS:
+				{
+					Vector3f norm = ((v1 - v0) * (v2 - v0)).normalize();
+
+					data.TexVertices[3 * i + 0].norm = norm.getVector4();
+					data.TexVertices[3 * i + 1].norm = norm.getVector4();
+					data.TexVertices[3 * i + 2].norm = norm.getVector4();
+					break;
+				}
+
+				case POLYHEDRON_DESC::PER_TRIANGLE_LIST_NORMALS:
+				{
+					data.TexVertices[3 * i + 0].norm = data.desc.normal_vectors_list[3 * i + 0].getVector4();
+					data.TexVertices[3 * i + 1].norm = data.desc.normal_vectors_list[3 * i + 1].getVector4();
+					data.TexVertices[3 * i + 2].norm = data.desc.normal_vectors_list[3 * i + 2].getVector4();
+					break;
+				}
+
+				case POLYHEDRON_DESC::PER_VERTEX_LIST_NORMALS:
+				{
+					data.TexVertices[3 * i + 0].norm = data.desc.normal_vectors_list[data.desc.triangle_list[i].x].getVector4();
+					data.TexVertices[3 * i + 1].norm = data.desc.normal_vectors_list[data.desc.triangle_list[i].y].getVector4();
+					data.TexVertices[3 * i + 2].norm = data.desc.normal_vectors_list[data.desc.triangle_list[i].z].getVector4();
+					break;
+				}
+
+				default:
+					USER_ERROR("Unknown normal computation mode found when trying to initialize a Polyhedron.");
+				}
+			}
+
+		}
+		data.pUpdateVB = AddBind(new VertexBuffer(data.TexVertices, 3u * data.desc.triangle_count, data.desc.enable_updates ? VB_USAGE_DYNAMIC : VB_USAGE_DEFAULT));
+
+		// If updates disabled delete the vertexs
+		if (!data.desc.enable_updates)
+		{
+			delete[] data.TexVertices;
+			data.TexVertices = nullptr;
+		}
+		// Create the corresponding Vertex Shader
+#ifndef _DEPLOYMENT
+		VertexShader* pvs = AddBind(new VertexShader(PROJECT_DIR L"shaders/VertexTextureVS.cso"));
+#else
+		VertexShader* pvs = AddBind(new VertexShader(getBlobFromId(BLOB_ID::BLOB_VERTEX_TEXTURE_VS), getBlobSizeFromId(BLOB_ID::BLOB_VERTEX_TEXTURE_VS)));
+#endif
+		// Create the corresponding Pixel Shader and Blender
+		if (data.desc.enable_transparency)
+		{
+#ifndef _DEPLOYMENT
+			AddBind(new PixelShader(data.desc.enable_iluminated ? PROJECT_DIR L"shaders/OITVertexTexturePS.cso" : PROJECT_DIR L"shaders/OITUnlitVertexTexturePS.cso"));
+#else
+			AddBind(new PixelShader(
+				getBlobFromId(data.desc.enable_iluminated ? BLOB_ID::BLOB_OIT_VERTEX_TEXTURE_PS : BLOB_ID::BLOB_OIT_UNLIT_VERTEX_TEXTURE_PS),
+				getBlobSizeFromId(data.desc.enable_iluminated ? BLOB_ID::BLOB_OIT_VERTEX_TEXTURE_PS : BLOB_ID::BLOB_OIT_UNLIT_VERTEX_TEXTURE_PS)
+			));
+#endif
+			AddBind(new Blender(BLEND_MODE_OIT_WEIGHTED));
+		}
+		else
+		{
+#ifndef _DEPLOYMENT
+			AddBind(new PixelShader(data.desc.enable_iluminated ? PROJECT_DIR L"shaders/VertexTexturePS.cso" : PROJECT_DIR L"shaders/UnlitVertexTexturePS.cso"));
+#else
+			AddBind(new PixelShader(
+				getBlobFromId(data.desc.enable_iluminated ? BLOB_ID::BLOB_VERTEX_TEXTURE_PS : BLOB_ID::BLOB_UNLIT_VERTEX_TEXTURE_PS),
+				getBlobSizeFromId(data.desc.enable_iluminated ? BLOB_ID::BLOB_VERTEX_TEXTURE_PS : BLOB_ID::BLOB_UNLIT_VERTEX_TEXTURE_PS)
+			));
+#endif
+			AddBind(new Blender(BLEND_MODE_OPAQUE));
+		}
+		// Create the corresponding input layout
+		INPUT_ELEMENT_DESC ied[3] =
+		{
+			{ "Position",	_4_FLOAT },
+			{ "Normal",		_4_FLOAT },
+			{ "TexCoor",	_4_FLOAT },
+		};
+		AddBind(new InputLayout(ied, 3u, pvs));
+
+		// Create the texture from the image
+		AddBind(new Texture(data.desc.texture_image));
+
+		// Set the sampler as linear for the texture
+		AddBind(new Sampler(data.desc.pixelated_texture ? SAMPLE_FILTER_POINT : SAMPLE_FILTER_LINEAR, SAMPLE_ADDRESS_WRAP));
+		break;
+	}
+
+	default:
+		USER_ERROR("Found an unrecognized coloring mode when trying to create a Polyhedron.");
 	}
 
 	// If update enabled save a copy to update vertices
@@ -910,7 +917,7 @@ void Polyhedron::initialize(const POLYHEDRON_DESC* pDesc)
 
 			data.pscBuff.lightsource[0].position = { 0.f, 8.f, 8.f };
 			data.pscBuff.lightsource[1].position = { 0.f,-8.f, 8.f };
-			data.pscBuff.lightsource[2].position = {-8.f, 0.f,-8.f };
+			data.pscBuff.lightsource[2].position = { -8.f, 0.f,-8.f };
 			data.pscBuff.lightsource[3].position = { 8.f, 0.f, 8.f };
 		}
 
@@ -931,93 +938,96 @@ void Polyhedron::initialize(const POLYHEDRON_DESC* pDesc)
 
 void Polyhedron::updateVertices(const Vector3f* vertex_list)
 {
-	if (!isInit)
-		throw INFO_EXCEPT("Trying to update the vertices on an uninitialized Polyhedron.");
+	USER_CHECK(isInit,
+		"Trying to update the vertices on an uninitialized Polyhedron."
+	);
 
-	if (!vertex_list)
-		throw INFO_EXCEPT("Trying to update the vertices with an invalid vertex list.");
+	USER_CHECK(vertex_list,
+		"Trying to update the vertices with an invalid vertex list."
+	);
 
 	PolyhedronInternals& data = *(PolyhedronInternals*)polyhedronData;
 
-	if (!data.desc.enable_updates)
-		throw INFO_EXCEPT("Trying to update the vertices on a Polyhedron with updates disabled.");
+	USER_CHECK(data.desc.enable_updates,
+		"Trying to update the vertices on a Polyhedron with updates disabled."
+	);
 
 	switch (data.desc.coloring)
 	{
-		case POLYHEDRON_DESC::GLOBAL_COLORING:
+	case POLYHEDRON_DESC::GLOBAL_COLORING:
+	{
+		for (unsigned i = 0u; i < data.desc.triangle_count; i++)
 		{
-			for (unsigned i = 0u; i < data.desc.triangle_count; i++)
+			const Vector3f& v0 = vertex_list[data.desc.triangle_list[i].x];
+			const Vector3f& v1 = vertex_list[data.desc.triangle_list[i].y];
+			const Vector3f& v2 = vertex_list[data.desc.triangle_list[i].z];
+
+			data.Vertices[3 * i + 0].vector = v0.getVector4();
+			data.Vertices[3 * i + 1].vector = v1.getVector4();
+			data.Vertices[3 * i + 2].vector = v2.getVector4();
+
+			if (data.desc.normal_computation == POLYHEDRON_DESC::COMPUTED_TRIANGLE_NORMALS)
 			{
-				const Vector3f& v0 = vertex_list[data.desc.triangle_list[i].x];
-				const Vector3f& v1 = vertex_list[data.desc.triangle_list[i].y];
-				const Vector3f& v2 = vertex_list[data.desc.triangle_list[i].z];
+				Vector3f norm = data.desc.enable_iluminated ? ((v1 - v0) * (v2 - v0)).normalize() : Vector3f();
 
-				data.Vertices[3 * i + 0].vector = v0.getVector4();
-				data.Vertices[3 * i + 1].vector = v1.getVector4();
-				data.Vertices[3 * i + 2].vector = v2.getVector4();
-
-				if (data.desc.normal_computation == POLYHEDRON_DESC::COMPUTED_TRIANGLE_NORMALS)
-				{
-					Vector3f norm = data.desc.enable_iluminated ? ((v1 - v0) * (v2 - v0)).normalize() : Vector3f();
-
-					data.Vertices[3 * i + 0].norm = norm.getVector4();
-					data.Vertices[3 * i + 1].norm = norm.getVector4();
-					data.Vertices[3 * i + 2].norm = norm.getVector4();
-				}
+				data.Vertices[3 * i + 0].norm = norm.getVector4();
+				data.Vertices[3 * i + 1].norm = norm.getVector4();
+				data.Vertices[3 * i + 2].norm = norm.getVector4();
 			}
-			data.pUpdateVB->updateVertices(data.Vertices, 3u * data.desc.triangle_count);
-			break;
 		}
+		data.pUpdateVB->updateVertices(data.Vertices, 3u * data.desc.triangle_count);
+		break;
+	}
 
-		case POLYHEDRON_DESC::PER_VERTEX_COLORING:
+	case POLYHEDRON_DESC::PER_VERTEX_COLORING:
+	{
+		for (unsigned i = 0u; i < data.desc.triangle_count; i++)
 		{
-			for (unsigned i = 0u; i < data.desc.triangle_count; i++)
+			const Vector3f& v0 = vertex_list[data.desc.triangle_list[i].x];
+			const Vector3f& v1 = vertex_list[data.desc.triangle_list[i].y];
+			const Vector3f& v2 = vertex_list[data.desc.triangle_list[i].z];
+
+			data.ColVertices[3 * i + 0].vector = v0.getVector4();
+			data.ColVertices[3 * i + 1].vector = v1.getVector4();
+			data.ColVertices[3 * i + 2].vector = v2.getVector4();
+
+			if (data.desc.normal_computation == POLYHEDRON_DESC::COMPUTED_TRIANGLE_NORMALS)
 			{
-				const Vector3f& v0 = vertex_list[data.desc.triangle_list[i].x];
-				const Vector3f& v1 = vertex_list[data.desc.triangle_list[i].y];
-				const Vector3f& v2 = vertex_list[data.desc.triangle_list[i].z];
+				Vector3f norm = data.desc.enable_iluminated ? ((v1 - v0) * (v2 - v0)).normalize() : Vector3f();
 
-				data.ColVertices[3 * i + 0].vector = v0.getVector4();
-				data.ColVertices[3 * i + 1].vector = v1.getVector4();
-				data.ColVertices[3 * i + 2].vector = v2.getVector4();
-
-				if (data.desc.normal_computation == POLYHEDRON_DESC::COMPUTED_TRIANGLE_NORMALS)
-				{
-					Vector3f norm = data.desc.enable_iluminated ? ((v1 - v0) * (v2 - v0)).normalize() : Vector3f();
-
-					data.ColVertices[3 * i + 0].norm = norm.getVector4();
-					data.ColVertices[3 * i + 1].norm = norm.getVector4();
-					data.ColVertices[3 * i + 2].norm = norm.getVector4();
-				}
+				data.ColVertices[3 * i + 0].norm = norm.getVector4();
+				data.ColVertices[3 * i + 1].norm = norm.getVector4();
+				data.ColVertices[3 * i + 2].norm = norm.getVector4();
 			}
-			data.pUpdateVB->updateVertices(data.ColVertices, 3u * data.desc.triangle_count);
-			break;
 		}
+		data.pUpdateVB->updateVertices(data.ColVertices, 3u * data.desc.triangle_count);
+		break;
+	}
 
-		case POLYHEDRON_DESC::TEXTURED_COLORING:
+	case POLYHEDRON_DESC::TEXTURED_COLORING:
+	{
+		for (unsigned i = 0u; i < data.desc.triangle_count; i++)
 		{
-			for (unsigned i = 0u; i < data.desc.triangle_count; i++)
+			const Vector3f& v0 = vertex_list[data.desc.triangle_list[i].x];
+			const Vector3f& v1 = vertex_list[data.desc.triangle_list[i].y];
+			const Vector3f& v2 = vertex_list[data.desc.triangle_list[i].z];
+
+			data.TexVertices[3 * i + 0].vector = v0.getVector4();
+			data.TexVertices[3 * i + 1].vector = v1.getVector4();
+			data.TexVertices[3 * i + 2].vector = v2.getVector4();
+
+			if (data.desc.normal_computation == POLYHEDRON_DESC::COMPUTED_TRIANGLE_NORMALS)
 			{
-				const Vector3f& v0 = vertex_list[data.desc.triangle_list[i].x];
-				const Vector3f& v1 = vertex_list[data.desc.triangle_list[i].y];
-				const Vector3f& v2 = vertex_list[data.desc.triangle_list[i].z];
+				Vector3f norm = data.desc.enable_iluminated ? ((v1 - v0) * (v2 - v0)).normalize() : Vector3f();
 
-				data.TexVertices[3 * i + 0].vector = v0.getVector4();
-				data.TexVertices[3 * i + 1].vector = v1.getVector4();
-				data.TexVertices[3 * i + 2].vector = v2.getVector4();
-
-				if (data.desc.normal_computation == POLYHEDRON_DESC::COMPUTED_TRIANGLE_NORMALS)
-				{
-					Vector3f norm = data.desc.enable_iluminated ? ((v1 - v0) * (v2 - v0)).normalize() : Vector3f();
-
-					data.TexVertices[3 * i + 0].norm = norm.getVector4();
-					data.TexVertices[3 * i + 1].norm = norm.getVector4();
-					data.TexVertices[3 * i + 2].norm = norm.getVector4();
-				}
+				data.TexVertices[3 * i + 0].norm = norm.getVector4();
+				data.TexVertices[3 * i + 1].norm = norm.getVector4();
+				data.TexVertices[3 * i + 2].norm = norm.getVector4();
 			}
-			data.pUpdateVB->updateVertices(data.TexVertices, 3u * data.desc.triangle_count);
-			break;
 		}
+		data.pUpdateVB->updateVertices(data.TexVertices, 3u * data.desc.triangle_count);
+		break;
+	}
 	}
 }
 
@@ -1028,19 +1038,23 @@ void Polyhedron::updateVertices(const Vector3f* vertex_list)
 
 void Polyhedron::updateColors(const Color* color_list)
 {
-	if (!isInit)
-		throw INFO_EXCEPT("Trying to update the colors on an uninitialized Polyhedron.");
+	USER_CHECK(isInit,
+		"Trying to update the colors on an uninitialized Polyhedron."
+	);
 
-	if (!color_list)
-		throw INFO_EXCEPT("Trying to update the colors on a Polyhedron with an invalid color list.");
+	USER_CHECK(color_list,
+		"Trying to update the colors on a Polyhedron with an invalid color list."
+	);
 
 	PolyhedronInternals& data = *(PolyhedronInternals*)polyhedronData;
 
-	if (data.desc.coloring != POLYHEDRON_DESC::PER_VERTEX_COLORING)
-		throw INFO_EXCEPT("Trying to update the colors on a Polyhedron with a different coloring.");
+	USER_CHECK(data.desc.coloring == POLYHEDRON_DESC::PER_VERTEX_COLORING,
+		"Trying to update the colors on a Polyhedron with a different coloring."
+	);
 
-	if (!data.desc.enable_updates)
-		throw INFO_EXCEPT("Trying to update the colors on a Polyhedron with updates disabled.");
+	USER_CHECK(data.desc.enable_updates,
+		"Trying to update the colors on a Polyhedron with updates disabled."
+	);
 
 	for (unsigned i = 0u; i < 3u * data.desc.triangle_count; i++)
 		data.ColVertices[i].color = color_list[i].getColor4();
@@ -1054,25 +1068,26 @@ void Polyhedron::updateColors(const Color* color_list)
 
 void Polyhedron::updateNormals(const Vector3f* normal_vectors_list)
 {
-	if (!isInit)
-		throw INFO_EXCEPT("Trying to update the normal vectors on an uninitialized Polyhedron.");
+	USER_CHECK(isInit,
+		"Trying to update the normal vectors on an uninitialized Polyhedron."
+	);
 
-	if (!normal_vectors_list)
-		throw INFO_EXCEPT("Trying to update the normal vectors on a Polyhedron with an invalid normal vectors list.");
+	USER_CHECK(normal_vectors_list,
+		"Trying to update the normal vectors on a Polyhedron with an invalid normal vectors list."
+	);
 
 	PolyhedronInternals& data = *(PolyhedronInternals*)polyhedronData;
 
-	if (data.desc.normal_computation == POLYHEDRON_DESC::COMPUTED_TRIANGLE_NORMALS)
-		throw INFO_EXCEPT(
-			"Trying to update the normal vectors on a Polyhedron with a different normal vectors setting.\n"
-			"When normals are on computed mode, they are recomputed automatically when vertices are updated."
-		);
+	USER_CHECK(data.desc.normal_computation != POLYHEDRON_DESC::COMPUTED_TRIANGLE_NORMALS,
+		"Trying to update the normal vectors on a Polyhedron with a different normal vectors setting.\n"
+		"When normals are on computed mode, they are recomputed automatically when vertices are updated."
+	);
 
-	if (!data.desc.enable_updates)
-		throw INFO_EXCEPT("Trying to update the normal vectors on a Polyhedron with updates disabled.");
+	USER_CHECK(data.desc.enable_updates,
+		"Trying to update the normal vectors on a Polyhedron with updates disabled."
+	);
 
-
-	switch (data.desc.coloring) 
+	switch (data.desc.coloring)
 	{
 	case POLYHEDRON_DESC::GLOBAL_COLORING:
 
@@ -1150,19 +1165,23 @@ void Polyhedron::updateNormals(const Vector3f* normal_vectors_list)
 
 void Polyhedron::updateTextureCoordinates(const Vector2i* texture_coordinates_list)
 {
-	if (!isInit)
-		throw INFO_EXCEPT("Trying to update the texture coordinates on an uninitialized Polyhedron.");
+	USER_CHECK(isInit,
+		"Trying to update the texture coordinates on an uninitialized Polyhedron."
+	);
 
-	if (!texture_coordinates_list)
-		throw INFO_EXCEPT("Trying to update the texture coordinates with an invalid texture coordinate list.");
+	USER_CHECK(texture_coordinates_list,
+		"Trying to update the texture coordinates with an invalid texture coordinate list."
+	);
 
 	PolyhedronInternals& data = *(PolyhedronInternals*)polyhedronData;
 
-	if (data.desc.coloring != POLYHEDRON_DESC::TEXTURED_COLORING)
-		throw INFO_EXCEPT("Trying to update the texture coordinates on a Polyhedron with a different coloring.");
+	USER_CHECK(data.desc.coloring == POLYHEDRON_DESC::TEXTURED_COLORING,
+		"Trying to update the texture coordinates on a Polyhedron with a different coloring."
+	);
 
-	if (!data.desc.enable_updates)
-		throw INFO_EXCEPT("Trying to update the texture coordinates on a Polyhedron with updates disabled.");
+	USER_CHECK(data.desc.enable_updates,
+		"Trying to update the texture coordinates on a Polyhedron with updates disabled."
+	);
 
 	for (unsigned i = 0u; i < 3u * data.desc.triangle_count; i++)
 		data.TexVertices[i].coord = {
@@ -1177,13 +1196,15 @@ void Polyhedron::updateTextureCoordinates(const Vector2i* texture_coordinates_li
 
 void Polyhedron::updateGlobalColor(Color color)
 {
-	if (!isInit)
-		throw INFO_EXCEPT("Trying to update the global color on an uninitialized Polyhedron.");
+	USER_CHECK(isInit,
+		"Trying to update the global color on an uninitialized Polyhedron."
+	);
 
 	PolyhedronInternals& data = *(PolyhedronInternals*)polyhedronData;
 
-	if (data.desc.coloring != POLYHEDRON_DESC::GLOBAL_COLORING)
-		throw INFO_EXCEPT("Trying to update the global color on a Polyhedron with a different coloring.");
+	USER_CHECK(data.desc.coloring == POLYHEDRON_DESC::GLOBAL_COLORING,
+		"Trying to update the global color on a Polyhedron with a different coloring."
+	);
 
 	_float4color col = color.getColor4();
 	data.pGlobalColorCB->update(&col);
@@ -1195,14 +1216,14 @@ void Polyhedron::updateGlobalColor(Color color)
 
 void Polyhedron::updateRotation(Quaternion rotation, bool multiplicative)
 {
-	if (!isInit)
-		throw INFO_EXCEPT("Trying to update the rotation on an uninitialized Polyhedron.");
+	USER_CHECK(isInit,
+		"Trying to update the rotation on an uninitialized Polyhedron."
+	);
 
-	if (!rotation)
-		throw INFO_EXCEPT(
-			"Invalid quaternion found when trying to update rotation on a Polyhedron.\n"
-			"Quaternion 0 can not be normalized and therefore can not describe an objects rotation."
-		);
+	USER_CHECK(rotation,
+		"Invalid quaternion found when trying to update rotation on a Polyhedron.\n"
+		"Quaternion 0 can not be normalized and therefore can not describe an objects rotation."
+	);
 
 	PolyhedronInternals& data = *(PolyhedronInternals*)polyhedronData;
 
@@ -1226,8 +1247,9 @@ void Polyhedron::updateRotation(Quaternion rotation, bool multiplicative)
 
 void Polyhedron::updatePosition(Vector3f position, bool additive)
 {
-	if (!isInit)
-		throw INFO_EXCEPT("Trying to update the position on an uninitialized Polyhedron.");
+	USER_CHECK(isInit,
+		"Trying to update the position on an uninitialized Polyhedron."
+	);
 
 	PolyhedronInternals& data = *(PolyhedronInternals*)polyhedronData;
 
@@ -1250,8 +1272,9 @@ void Polyhedron::updatePosition(Vector3f position, bool additive)
 
 void Polyhedron::updateDistortion(Matrix distortion, bool multiplicative)
 {
-	if (!isInit)
-		throw INFO_EXCEPT("Trying to update the distortion on an uninitialized Polyhedron.");
+	USER_CHECK(isInit,
+		"Trying to update the distortion on an uninitialized Polyhedron."
+	);
 
 	PolyhedronInternals& data = *(PolyhedronInternals*)polyhedronData;
 
@@ -1273,8 +1296,9 @@ void Polyhedron::updateDistortion(Matrix distortion, bool multiplicative)
 
 void Polyhedron::updateScreenPosition(Vector2f screenDisplacement)
 {
-	if (!isInit)
-		throw INFO_EXCEPT("Trying to update the screen position on an uninitialized Polyhedron.");
+	USER_CHECK(isInit,
+		"Trying to update the screen position on an uninitialized Polyhedron."
+	);
 
 	PolyhedronInternals& data = *(PolyhedronInternals*)polyhedronData;
 
@@ -1287,16 +1311,19 @@ void Polyhedron::updateScreenPosition(Vector2f screenDisplacement)
 
 void Polyhedron::updateLight(unsigned id, Vector2f intensities, Color color, Vector3f position)
 {
-	if (!isInit)
-		throw INFO_EXCEPT("Trying to update a light on an uninitialized Polyhedron.");
+	USER_CHECK(isInit,
+		"Trying to update a light on an uninitialized Polyhedron."
+	);
 
 	PolyhedronInternals& data = *(PolyhedronInternals*)polyhedronData;
 
-	if (!data.desc.enable_iluminated)
-		throw INFO_EXCEPT("Trying to update a light on a Polyhedron with ilumination disabled.");
+	USER_CHECK(data.desc.enable_iluminated,
+		"Trying to update a light on a Polyhedron with ilumination disabled."
+	);
 
-	if (id >= 8)
-		throw INFO_EXCEPT("Trying to update a light with an invalid id (must be 0-7).");
+	USER_CHECK(id < 8,
+		"Trying to update a light with an invalid id (must be 0-7)."
+	);
 
 	data.pscBuff.lightsource[id] = { intensities.getVector4(), color.getColor4(), position.getVector4() };
 	data.pPSCB->update(&data.pscBuff);
@@ -1306,13 +1333,15 @@ void Polyhedron::updateLight(unsigned id, Vector2f intensities, Color color, Vec
 
 void Polyhedron::clearLights()
 {
-	if (!isInit)
-		throw INFO_EXCEPT("Trying to clear the lights on an uninitialized Polyhedron.");
+	USER_CHECK(isInit,
+		"Trying to clear the lights on an uninitialized Polyhedron."
+	);
 
 	PolyhedronInternals& data = *(PolyhedronInternals*)polyhedronData;
 
-	if (!data.desc.enable_iluminated)
-		throw INFO_EXCEPT("Trying to clear the lights on a Polyhedron with ilumination disabled.");
+	USER_CHECK(data.desc.enable_iluminated,
+		"Trying to clear the lights on a Polyhedron with ilumination disabled."
+	);
 
 	for (auto& light : data.pscBuff.lightsource)
 		light = {};
@@ -1331,16 +1360,19 @@ void Polyhedron::clearLights()
 
 void Polyhedron::getLight(unsigned id, Vector2f* intensities, Color* color, Vector3f* position)
 {
-	if (!isInit)
-		throw INFO_EXCEPT("Trying to get a light of an uninitialized Polyhedron.");
+	USER_CHECK(isInit,
+		"Trying to get a light of an uninitialized Polyhedron."
+	);
 
 	PolyhedronInternals& data = *(PolyhedronInternals*)polyhedronData;
 
-	if (!data.desc.enable_iluminated)
-		throw INFO_EXCEPT("Trying to get a light of a Polyhedron with ilumination disabled.");
+	USER_CHECK(data.desc.enable_iluminated,
+		"Trying to get a light of a Polyhedron with ilumination disabled."
+	);
 
-	if (id >= 8)
-		throw INFO_EXCEPT("Trying to get a light with an invalid id (must be 0-7).");
+	USER_CHECK(id < 8,
+		"Trying to get a light with an invalid id (must be 0-7)."
+	);
 
 	if (intensities)
 		*intensities = { data.pscBuff.lightsource[id].intensity.x,data.pscBuff.lightsource[id].intensity.y };
@@ -1353,15 +1385,16 @@ void Polyhedron::getLight(unsigned id, Vector2f* intensities, Color* color, Vect
 			data.pscBuff.lightsource[id].position.x,
 			data.pscBuff.lightsource[id].position.y,
 			data.pscBuff.lightsource[id].position.z
-		};
+	};
 }
 
 // Returns the current rotation quaternion.
 
 Quaternion Polyhedron::getRotation() const
 {
-	if (!isInit)
-		throw INFO_EXCEPT("Trying to get the rotation of an uninitialized Polyhedron.");
+	USER_CHECK(isInit,
+		"Trying to get the rotation of an uninitialized Polyhedron."
+	);
 
 	PolyhedronInternals& data = *(PolyhedronInternals*)polyhedronData;
 
@@ -1372,8 +1405,9 @@ Quaternion Polyhedron::getRotation() const
 
 Vector3f Polyhedron::getPosition() const
 {
-	if (!isInit)
-		throw INFO_EXCEPT("Trying to get the position of an uninitialized Polyhedron.");
+	USER_CHECK(isInit,
+		"Trying to get the position of an uninitialized Polyhedron."
+	);
 
 	PolyhedronInternals& data = *(PolyhedronInternals*)polyhedronData;
 
@@ -1384,8 +1418,9 @@ Vector3f Polyhedron::getPosition() const
 
 Matrix Polyhedron::getDistortion() const
 {
-	if (!isInit)
-		throw INFO_EXCEPT("Trying to get the distortion matrix of an uninitialized Polyhedron.");
+	USER_CHECK(isInit,
+		"Trying to get the distortion matrix of an uninitialized Polyhedron."
+	);
 
 	PolyhedronInternals& data = *(PolyhedronInternals*)polyhedronData;
 
@@ -1396,8 +1431,9 @@ Matrix Polyhedron::getDistortion() const
 
 Vector2f Polyhedron::getScreenPosition() const
 {
-	if (!isInit)
-		throw INFO_EXCEPT("Trying to get the screen position of an uninitialized Polyhedron.");
+	USER_CHECK(isInit,
+		"Trying to get the screen position of an uninitialized Polyhedron."
+	);
 
 	PolyhedronInternals& data = *(PolyhedronInternals*)polyhedronData;
 

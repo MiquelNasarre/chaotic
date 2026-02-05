@@ -1,7 +1,7 @@
 #include "Drawable.h"
 #include "Bindable/IndexBuffer.h"
 #include "Bindable/Blender.h"
-#include "Exception/_exDefault.h"
+#include "Error/_erDefault.h"
 
 #include <typeinfo>
 
@@ -68,8 +68,9 @@ Drawable::~Drawable()
 
 void Drawable::Draw()
 {
-	if (!isInit)
-		throw INFO_EXCEPT("You cannot issue a draw call if the drawable has not been initialized");
+	USER_CHECK(isInit,
+		"You cannot issue a draw call if the drawable has not been initialized"
+	);
 
 	_draw();
 }

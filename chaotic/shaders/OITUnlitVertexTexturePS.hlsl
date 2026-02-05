@@ -10,10 +10,18 @@ struct PSOut
     float reveal : SV_Target1; // alpha for revealage product
 };
 
-PSOut main(float2 coord : Coord, float4 scPos : SV_Position)
+struct VSOut
+{
+    float4 coord : TEXCOORD0;
+    float4 R3pos : TEXCOORD1;
+    float4 norm : NORMAL;
+    float4 SCpos : SV_Position;
+};
+
+PSOut main(VSOut vso)
 {
     // Sample from texture
-    float4 color = _texture.Sample(_samp, coord);
+    float4 color = _texture.Sample(_samp, vso.coord.xy);
     
     // Use incoming color alpha as transparency
     float alpha = saturate(color.a);
@@ -21,7 +29,7 @@ PSOut main(float2 coord : Coord, float4 scPos : SV_Position)
     PSOut outp;
     
     // Z dependent weight 
-    float w = depth_weight(scPos);
+    float w = depth_weight(vso.SCpos);
     
     // Accumulation target: premultiplied color + alpha (C_src * C_dst, A_src + A_dst)
     outp.accum = float4(color.rgb * alpha * w, alpha * w);

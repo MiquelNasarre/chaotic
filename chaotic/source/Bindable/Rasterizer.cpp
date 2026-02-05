@@ -31,7 +31,7 @@ Rasterizer::Rasterizer(bool doubleSided, bool wireFrame, bool frontCounterClockw
 	rasterDesc.FrontCounterClockwise = frontCounterClockwise;
 
 	// Creates the rasterizer object on the GPU and stores the pointer.
-	GFX_THROW_INFO(_device->CreateRasterizerState(&rasterDesc, data.pRasterizer.GetAddressOf()));
+	GRAPHICS_HR_CHECK(_device->CreateRasterizerState(&rasterDesc, data.pRasterizer.GetAddressOf()));
 }
 
 // Releases the GPU pointer and deletes the data.
@@ -47,5 +47,5 @@ void Rasterizer::Bind()
 {
 	RasterizerInternals& data = *(RasterizerInternals*)BindableData;
 
-	GFX_THROW_INFO_ONLY(_context->RSSetState(data.pRasterizer.Get()));
+	GRAPHICS_INFO_CHECK(_context->RSSetState(data.pRasterizer.Get()));
 }

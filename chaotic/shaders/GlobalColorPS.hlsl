@@ -18,8 +18,18 @@ cbuffer GlobalColor : register(b1)
     float4 color;
 }
 
-float4 main(float3 pos : PointPos, float3 norm : Norm, bool front : SV_IsFrontFace) : SV_Target
+struct VSOut
 {
+    float4 R3pos : TEXCOORD0;
+    float4 norm : NORMAL;
+    float4 SCpos : SV_Position;
+};
+
+float4 main(VSOut vso, bool front : SV_IsFrontFace) : SV_Target
+{
+    float3 pos = vso.R3pos.xyz;
+    float3 norm = vso.norm.xyz;
+    
     // Handle backfaces: flip normal if fragment is from back side
     if (!front)
         norm = -norm;

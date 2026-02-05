@@ -9,7 +9,8 @@
  */
 
 // Default library dependencies.
-#define _INCLUDE_DEFAULT_EXCEPTION
+#define _INCLUDE_DEFAULT_ERROR
+#define _INCLUDE_CONSTANTS
 #include "chaotic.h"
 
 // Some std dependencies for easier user experience.
@@ -131,11 +132,10 @@ struct EventData
 static void defaultEventManager(EventData& data)
 {
 	// If the window is not provided there is not much we can do.
-	if (!data.window)
-		throw INFO_EXCEPT(
-			"Called defaultEventManager on an EventData with an invalid window pointer.\n"
-			"A valid window pointer must exist for the default event manager to work."
-		);
+	USER_CHECK(data.window,
+		"Called defaultEventManager on an EventData with an invalid window pointer.\n"
+		"A valid window pointer must exist for the default event manager to work."
+	);
 
 	// We get the scene perspective data from the window.
 	Quaternion observer = data.window->graphics().getObserver();
@@ -339,17 +339,9 @@ public:
 	// by the user. You do not have to call this function yourself.
 	void render() override 
 	{
-		// iGManager function that declares a new imGui draw. Has to be called at the 
-		// beggining of iGManagers rendering functions.
-		newFrame();
-
-		// If not visible return before drawing.
+		// Return if invisible.
 		if (!visible)
-		{
-			// Still you want to drawFrame() so that imgui releases focus.
-			drawFrame();
 			return;
-		}
 
 		// We now render the main widgets window.
 		if (ImGui::Begin(title, NULL, ImGuiWindowFlags_MenuBar))
@@ -468,10 +460,6 @@ public:
 		// If a user extension has been provided do it here.
 		if (injected != nullptr)
 			injected();
-
-		// iGManager function that pushes an imGui draw. Has to be called at the 
-		// end of iGManagers rendering functions.
-		drawFrame();
 	}
 
 	// Toggle to control whether the imGui is rendered ot not.
@@ -524,7 +512,7 @@ public:
 		setDimensions(winDim);
 
 		imGui.pushSlider(&theta, { -2.f * MATH_PI, 2.f * MATH_PI }, "Theta");
-		imGui.pushSlider(  &phi, { -MATH_PI / 2.f, MATH_PI / 2.f },   "Phi");
+		imGui.pushSlider(  &phi, {            0.f,       MATH_PI },   "Phi");
 		imGui.pushSlider(&scale, {            1.f,        2000.f }, "Scale");
 
 		const char* names[2] = { "Normal View (esc)", "Full Screen (F11)" };
@@ -632,12 +620,12 @@ public:
 		}
 
 		// Then update the perspective with the up vector and the theta, phi values.
-		Quaternion rotUp = (up.normal().y > -0.99999f) ? 
+		Quaternion rotUp = (up.normal().y > -0.9999f) ? 
 			Quaternion{ 1.f + up.y, -up.z, 0.f, up.x } : 
 			Quaternion{ 0.f, 0.f, 0.f, 1.f };
 
-		Quaternion rotTheta = { cosf(theta / 2.f), 0.f,-sinf(theta / 2.f), 0.f };
-		Quaternion rotPhi   = { cosf(  phi / 2.f),-sinf(  phi / 2.f), 0.f, 0.f };
+		Quaternion rotTheta = { cosf(theta / 2.f), 0.f, sinf(theta / 2.f), 0.f };
+		Quaternion rotPhi = { sinf(phi / 2.f) + cosf(phi / 2.f), sinf(phi / 2.f) - cosf(phi / 2.f), 0.f, 0.f };
 
 		Quaternion observer = (rotPhi * rotTheta * rotUp).normal();
 		setPerspective(observer, center, scale);
@@ -651,7 +639,7 @@ public:
 	// Stores the up axis rotation of the perspective. (left/right view)
 	float theta = 0.f;
 	// Stores the horizontal axis rotation of the perspective. (up/down view)
-	float phi = 0.f;
+	float phi = MATH_PI / 2.f;
 	// Stores tue center of the scene. Center of coordinates by default.
 	Vector3f center = { 0.f,0.f,0.f };
 	// Stores the scale of the scene. Scale 1 being 1distance = 1px, default

@@ -8,7 +8,7 @@ are nicely taken care by the functions in this file so you can access the
 error messages via the static functions.
 
 To be used call Set() before doing a call and get messages right after, if 
-there are messages throw and exception. This class is only meant for debug.
+there are messages raises an error. This class is only meant for debug.
 -------------------------------------------------------------------------------------------------------
 -------------------------------------------------------------------------------------------------------
 */
@@ -25,7 +25,7 @@ public:
 
 	// Accesses the stored messages and if there are more than before returns
 	// a pointer to a list of this messages, otherwise returns nullptr.
-	static const char** GetMessages();
+	static const char* GetMessages();
 
 private:
 	// Private helper to run constructor/destructor.
@@ -42,5 +42,8 @@ private:
 
 	// Pointer to the IDXGIInfoQueue masked as void*.
 	static inline void* pDxgiInfoQueue = nullptr;
+
+	// Pointer to the debug dll masked as void*.
+	static inline void* hModDxgiDebug = nullptr;
 };
 #endif

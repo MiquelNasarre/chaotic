@@ -2,8 +2,8 @@
 
 #ifdef _INCLUDE_IMGUI
 #include "WinHeader.h"
-#include "../../imgui/include/imgui_impl_dx11.h"
-#include "../../imgui/include/imgui_impl_win32.h"
+#include "imgui_impl_dx11.h"
+#include "imgui_impl_win32.h"
 
 // Declares the use of the ImGui message procedure.
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
@@ -101,9 +101,9 @@ void iGManager::bind(Window& _w)
 	// If it's bound to a window unbind it.
 	unbind();
 
-	// If another iGManager is bound to this window throw exception.
+	// If another iGManager is bound to this window error.
 	if (*_w.imGuiPtrAdress())
-		throw INFO_EXCEPT("You cannot have multiple ImGui contexts bound to the same window at the same time.");
+		USER_ERROR("You cannot have multiple ImGui contexts bound to the same window at the same time.");
 
 	// Set your context as current
 	ImGuiContext* current = ImGui::GetCurrentContext();

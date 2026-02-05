@@ -40,7 +40,7 @@ Sampler::Sampler(SAMPLE_FILTER filter, SAMPLE_ADDRESS_MODE address_mode, unsigne
 	samplerDesc.ComparisonFunc	= D3D11_COMPARISON_NEVER;
 
 	// Creates the sampler object on the GPU and stores the pointer.
-	GFX_THROW_INFO(_device->CreateSamplerState(&samplerDesc, data.pSampler.GetAddressOf()));
+	GRAPHICS_HR_CHECK(_device->CreateSamplerState(&samplerDesc, data.pSampler.GetAddressOf()));
 }
 
 // Releases the GPU pointer and deletes the data.
@@ -56,7 +56,7 @@ void Sampler::Bind()
 {
 	SamplerInternals& data = *(SamplerInternals*)BindableData;
 
-	GFX_THROW_INFO_ONLY(_context->PSSetSamplers(data.slot, 1, data.pSampler.GetAddressOf()));
+	GRAPHICS_INFO_CHECK(_context->PSSetSamplers(data.slot, 1, data.pSampler.GetAddressOf()));
 }
 
 // Sets the slot at which the Sampler will be bound.

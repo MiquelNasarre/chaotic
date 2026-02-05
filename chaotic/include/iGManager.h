@@ -27,6 +27,8 @@ class iGManager
 {
 	// Needs access to the internals to feed messages to ImGui if used.
 	friend class MSGHandlePipeline;
+	// To get access to newFrame, drawFrame and render.
+	friend class Graphics;
 
 protected:
 	// Constructor, initializes ImGui WIN32/DX11 for the specific instance and
@@ -40,13 +42,20 @@ protected:
 	// If it is the last class instance shuts down ImGui WIN32/DX11.
 	virtual ~iGManager();
 
-	// Function to be called at the beggining of an ImGui render function.
-	// Calls new frame on Win32 and DX11 on the imGui API.
+	// Calls new frame on Win32 and DX11 on the imGui API. Called automatically during
+	// pushFrame() before render(). If you define custom imGui rendering you must call 
+	// this function before drawing any imgui objects.
 	void newFrame();
 
-	// Function to be called at the end of an ImGui render function.
-	// Calls the rendering method of DX11 on the imGui API.
+	// Calls the rendering method of DX11 on the imGui API. Called automatically during
+	// pushFrame() after render(). If you define custom imGui rendering you must call 
+	// this function after drawing your imgui objects.
 	void drawFrame();
+
+	// InGui rendering function, needs to be implemented by inheritance and will be 
+	// called by the bounded window just before pushing a frame. For custom behavior 
+	// just leave it blank and create your onw rendering functions.
+	virtual void render() = 0;
 
 public:
 	// Binds the objects user interaction to the specified window.
@@ -54,11 +63,6 @@ public:
 
 	// If it's bound to a window it unbinds it.
 	void unbind();
-
-	// InGui rendering function, needs to be implemented by inheritance and will be 
-	// called by the bounded window just before pushing a frame. For custom behavior 
-	// just leave it blank and create your onw rendering functions.
-	virtual void render() = 0;
 
 private:
 	// Stores the pointer to the ImGui context of the specific window of the instance.

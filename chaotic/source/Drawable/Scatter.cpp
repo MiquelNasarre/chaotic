@@ -1,7 +1,7 @@
 #include "Drawable/Scatter.h"
 #include "Bindable/BindableBase.h"
 
-#include "Exception/_exDefault.h"
+#include "Error/_erDefault.h"
 
 #ifdef _DEPLOYMENT
 #include "embedded_resources.h"
@@ -86,174 +86,176 @@ Scatter::~Scatter()
 
 void Scatter::initialize(const SCATTER_DESC* pDesc)
 {
-	if (!pDesc)
-		throw INFO_EXCEPT("Trying to initialize a Scatter with an invalid descriptor pointer.");
+	USER_CHECK(pDesc,
+		"Trying to initialize a Scatter with an invalid descriptor pointer."
+	);
 
-	if (isInit)
-		throw INFO_EXCEPT("Trying to initialize a Scatter that has already been initialized.");
-	else
-		isInit = true;
+	USER_CHECK(isInit == false,
+		"Trying to initialize a Scatter that has already been initialized."
+	);
+
+	isInit = true;
 
 	scatterData = new ScatterInternals;
 	ScatterInternals& data = *(ScatterInternals*)scatterData;
 
 	data.desc = *pDesc;
 
-	if (!data.desc.point_list)
-		throw INFO_EXCEPT("Found nullptr when trying to access a point list to create a Scatter.");
+	USER_CHECK(data.desc.point_list,
+		"Found nullptr when trying to access a point list to create a Scatter."
+	);
 
-	if (!data.desc.point_count)
-		throw INFO_EXCEPT(
-			"Found zero point count when trying to create a Scatter.\n"
-			"You need at least a point count of one to initialize a Scatter."
-		);
+	USER_CHECK(data.desc.point_count,
+		"Found zero point count when trying to create a Scatter.\n"
+		"You need at least a point count of one to initialize a Scatter."
+	);
 
-	if (data.desc.line_mesh && data.desc.point_count % 2u != 0u)
-		throw INFO_EXCEPT(
-			"Found an odd number of points when trying to initialize a line-mesh Scatter.\n"
-			"If you want to set the Scatter to line-mesh the number of points must be divisible by two."
-		);
+	USER_CHECK(!data.desc.line_mesh || data.desc.point_count % 2u == 0u,
+		"Found an odd number of points when trying to initialize a line-mesh Scatter.\n"
+		"If you want to set the Scatter to line-mesh the number of points must be divisible by two."
+	);
 
 	switch (data.desc.coloring)
 	{
-		case SCATTER_DESC::GLOBAL_COLORING:
+	case SCATTER_DESC::GLOBAL_COLORING:
+	{
+		data.Points = new _float4vector[data.desc.point_count];
+
+		for (unsigned n = 0u; n < data.desc.point_count; n++)
+			data.Points[n] = data.desc.point_list[n].getVector4();
+
+		data.pUpdateVB = AddBind(new VertexBuffer(data.Points, data.desc.point_count, data.desc.enable_updates ? VB_USAGE_DYNAMIC : VB_USAGE_DEFAULT));
+
+		// If updates disabled delete the Points
+		if (!data.desc.enable_updates)
 		{
-			data.Points = new _float4vector[data.desc.point_count];
-
-			for (unsigned n = 0u; n < data.desc.point_count; n++)
-				data.Points[n] = data.desc.point_list[n].getVector4();
-
-			data.pUpdateVB = AddBind(new VertexBuffer(data.Points, data.desc.point_count, data.desc.enable_updates ? VB_USAGE_DYNAMIC : VB_USAGE_DEFAULT));
-
-			// If updates disabled delete the Points
-			if (!data.desc.enable_updates)
-			{
-				delete[] data.Points;
-				data.Points = nullptr;
-			}
-			// Create the corresponding Vertex Shader
+			delete[] data.Points;
+			data.Points = nullptr;
+		}
+		// Create the corresponding Vertex Shader
 #ifndef _DEPLOYMENT
-			VertexShader* pvs = AddBind(new VertexShader(PROJECT_DIR L"shaders/CurveVS.cso"));
+		VertexShader* pvs = AddBind(new VertexShader(PROJECT_DIR L"shaders/CurveVS.cso"));
 #else
-			VertexShader* pvs = AddBind(new VertexShader(getBlobFromId(BLOB_ID::BLOB_CURVE_VS), getBlobSizeFromId(BLOB_ID::BLOB_CURVE_VS)));
+		VertexShader* pvs = AddBind(new VertexShader(getBlobFromId(BLOB_ID::BLOB_CURVE_VS), getBlobSizeFromId(BLOB_ID::BLOB_CURVE_VS)));
 #endif
-			// Create the corresponding Pixel Shader and Blender
-			switch (data.desc.blending)
-			{
-			case SCATTER_DESC::OPAQUE_POINTS:
+		// Create the corresponding Pixel Shader and Blender
+		switch (data.desc.blending)
+		{
+		case SCATTER_DESC::OPAQUE_POINTS:
 #ifndef _DEPLOYMENT
-				AddBind(new PixelShader(PROJECT_DIR L"shaders/UnlitGlobalColorPS.cso"));
+			AddBind(new PixelShader(PROJECT_DIR L"shaders/UnlitGlobalColorPS.cso"));
 #else
-				AddBind(new PixelShader(getBlobFromId(BLOB_ID::BLOB_UNLIT_GLOBAL_COLOR_PS), getBlobSizeFromId(BLOB_ID::BLOB_UNLIT_GLOBAL_COLOR_PS)));
+			AddBind(new PixelShader(getBlobFromId(BLOB_ID::BLOB_UNLIT_GLOBAL_COLOR_PS), getBlobSizeFromId(BLOB_ID::BLOB_UNLIT_GLOBAL_COLOR_PS)));
 #endif
-				AddBind(new Blender(BLEND_MODE_OPAQUE));
-				break;
+			AddBind(new Blender(BLEND_MODE_OPAQUE));
+			break;
 
-			case SCATTER_DESC::GLOWING_POINTS:
+		case SCATTER_DESC::GLOWING_POINTS:
 #ifndef _DEPLOYMENT
-				AddBind(new PixelShader(PROJECT_DIR L"shaders/UnlitGlobalColorPS.cso"));
+			AddBind(new PixelShader(PROJECT_DIR L"shaders/UnlitGlobalColorPS.cso"));
 #else
-				AddBind(new PixelShader(getBlobFromId(BLOB_ID::BLOB_UNLIT_GLOBAL_COLOR_PS), getBlobSizeFromId(BLOB_ID::BLOB_UNLIT_GLOBAL_COLOR_PS)));
+			AddBind(new PixelShader(getBlobFromId(BLOB_ID::BLOB_UNLIT_GLOBAL_COLOR_PS), getBlobSizeFromId(BLOB_ID::BLOB_UNLIT_GLOBAL_COLOR_PS)));
 #endif
-				AddBind(new Blender(BLEND_MODE_ADDITIVE));
-				AddBind(new DepthStencil(DEPTH_STENCIL_MODE_NOWRITE));
-				break;
+			AddBind(new Blender(BLEND_MODE_ADDITIVE));
+			AddBind(new DepthStencil(DEPTH_STENCIL_MODE_NOWRITE));
+			break;
 
-			case SCATTER_DESC::TRANSPARENT_POINTS:
+		case SCATTER_DESC::TRANSPARENT_POINTS:
 #ifndef _DEPLOYMENT
-				AddBind(new PixelShader(PROJECT_DIR L"shaders/OITUnlitGlobalColorPS.cso"));
+			AddBind(new PixelShader(PROJECT_DIR L"shaders/OITUnlitGlobalColorPS.cso"));
 #else
-				AddBind(new PixelShader(getBlobFromId(BLOB_ID::BLOB_OIT_UNLIT_GLOBAL_COLOR_PS), getBlobSizeFromId(BLOB_ID::BLOB_OIT_UNLIT_GLOBAL_COLOR_PS)));
+			AddBind(new PixelShader(getBlobFromId(BLOB_ID::BLOB_OIT_UNLIT_GLOBAL_COLOR_PS), getBlobSizeFromId(BLOB_ID::BLOB_OIT_UNLIT_GLOBAL_COLOR_PS)));
 #endif
-				AddBind(new Blender(BLEND_MODE_OIT_WEIGHTED));
-				break;
-			}
-
-			// Create the corresponding input layout
-			INPUT_ELEMENT_DESC ied[1] =
-			{
-				{ "Position",	_4_FLOAT },
-			};
-			AddBind(new InputLayout(ied, 1u, pvs));
-
-			// Create the constant buffer for the global color.
-			_float4color col = data.desc.global_color.getColor4();
-			data.pGlobalColorCB = AddBind(new ConstantBuffer(&col, PIXEL_CONSTANT_BUFFER, 1u /*Slot*/));
+			AddBind(new Blender(BLEND_MODE_OIT_WEIGHTED));
 			break;
 		}
 
-		case SCATTER_DESC::POINT_COLORING:
+		// Create the corresponding input layout
+		INPUT_ELEMENT_DESC ied[1] =
 		{
-			if (!data.desc.color_list)
-				throw INFO_EXCEPT("Found nullptr when trying to access a color list to create a Scatter.");
+			{ "Position",	_4_FLOAT },
+		};
+		AddBind(new InputLayout(ied, 1u, pvs));
 
-			data.ColPoints = new ScatterInternals::ColPoint[data.desc.point_count];
+		// Create the constant buffer for the global color.
+		_float4color col = data.desc.global_color.getColor4();
+		data.pGlobalColorCB = AddBind(new ConstantBuffer(&col, PIXEL_CONSTANT_BUFFER, 1u /*Slot*/));
+		break;
+	}
 
-			for (unsigned n = 0u; n < data.desc.point_count; n++)
-			{
-				data.ColPoints[n].position = data.desc.point_list[n].getVector4();
-				data.ColPoints[n].color = data.desc.color_list[n].getColor4();
-			}
+	case SCATTER_DESC::POINT_COLORING:
+	{
+		USER_CHECK(data.desc.color_list,
+			"Found nullptr when trying to access a color list to create a Scatter."
+		);
 
-			data.pUpdateVB = AddBind(new VertexBuffer(data.ColPoints, data.desc.point_count, data.desc.enable_updates ? VB_USAGE_DYNAMIC : VB_USAGE_DEFAULT));
+		data.ColPoints = new ScatterInternals::ColPoint[data.desc.point_count];
 
-			// If updates disabled delete the points
-			if (!data.desc.enable_updates)
-			{
-				delete[] data.ColPoints;
-				data.ColPoints = nullptr;
-			}
-			// Create the corresponding Vertex Shader
+		for (unsigned n = 0u; n < data.desc.point_count; n++)
+		{
+			data.ColPoints[n].position = data.desc.point_list[n].getVector4();
+			data.ColPoints[n].color = data.desc.color_list[n].getColor4();
+		}
+
+		data.pUpdateVB = AddBind(new VertexBuffer(data.ColPoints, data.desc.point_count, data.desc.enable_updates ? VB_USAGE_DYNAMIC : VB_USAGE_DEFAULT));
+
+		// If updates disabled delete the points
+		if (!data.desc.enable_updates)
+		{
+			delete[] data.ColPoints;
+			data.ColPoints = nullptr;
+		}
+		// Create the corresponding Vertex Shader
 #ifndef _DEPLOYMENT
-			VertexShader* pvs = AddBind(new VertexShader(PROJECT_DIR L"shaders/ColorCurveVS.cso"));
+		VertexShader* pvs = AddBind(new VertexShader(PROJECT_DIR L"shaders/ColorCurveVS.cso"));
 #else
-			VertexShader* pvs = AddBind(new VertexShader(getBlobFromId(BLOB_ID::BLOB_COLOR_CURVE_VS), getBlobSizeFromId(BLOB_ID::BLOB_COLOR_CURVE_VS)));
+		VertexShader* pvs = AddBind(new VertexShader(getBlobFromId(BLOB_ID::BLOB_COLOR_CURVE_VS), getBlobSizeFromId(BLOB_ID::BLOB_COLOR_CURVE_VS)));
 #endif
-			// Create the corresponding Pixel Shader and Blender
+		// Create the corresponding Pixel Shader and Blender
 // Create the corresponding Pixel Shader and Blender
-			switch (data.desc.blending)
-			{
-			case SCATTER_DESC::OPAQUE_POINTS:
+		switch (data.desc.blending)
+		{
+		case SCATTER_DESC::OPAQUE_POINTS:
 #ifndef _DEPLOYMENT
-				AddBind(new PixelShader(PROJECT_DIR L"shaders/UnlitVertexColorPS.cso"));
+			AddBind(new PixelShader(PROJECT_DIR L"shaders/UnlitVertexColorPS.cso"));
 #else
-				AddBind(new PixelShader(getBlobFromId(BLOB_ID::BLOB_UNLIT_VERTEX_COLOR_PS), getBlobSizeFromId(BLOB_ID::BLOB_UNLIT_VERTEX_COLOR_PS)));
+			AddBind(new PixelShader(getBlobFromId(BLOB_ID::BLOB_UNLIT_VERTEX_COLOR_PS), getBlobSizeFromId(BLOB_ID::BLOB_UNLIT_VERTEX_COLOR_PS)));
 #endif
-				AddBind(new Blender(BLEND_MODE_OPAQUE));
-				break;
+			AddBind(new Blender(BLEND_MODE_OPAQUE));
+			break;
 
-			case SCATTER_DESC::GLOWING_POINTS:
+		case SCATTER_DESC::GLOWING_POINTS:
 #ifndef _DEPLOYMENT
-				AddBind(new PixelShader(PROJECT_DIR L"shaders/UnlitVertexColorPS.cso"));
+			AddBind(new PixelShader(PROJECT_DIR L"shaders/UnlitVertexColorPS.cso"));
 #else
-				AddBind(new PixelShader(getBlobFromId(BLOB_ID::BLOB_UNLIT_VERTEX_COLOR_PS), getBlobSizeFromId(BLOB_ID::BLOB_UNLIT_VERTEX_COLOR_PS)));
+			AddBind(new PixelShader(getBlobFromId(BLOB_ID::BLOB_UNLIT_VERTEX_COLOR_PS), getBlobSizeFromId(BLOB_ID::BLOB_UNLIT_VERTEX_COLOR_PS)));
 #endif
-				AddBind(new Blender(BLEND_MODE_ADDITIVE));
-				AddBind(new DepthStencil(DEPTH_STENCIL_MODE_NOWRITE));
-				break;
+			AddBind(new Blender(BLEND_MODE_ADDITIVE));
+			AddBind(new DepthStencil(DEPTH_STENCIL_MODE_NOWRITE));
+			break;
 
-			case SCATTER_DESC::TRANSPARENT_POINTS:
+		case SCATTER_DESC::TRANSPARENT_POINTS:
 #ifndef _DEPLOYMENT
-				AddBind(new PixelShader(PROJECT_DIR L"shaders/OITUnlitVertexColorPS.cso"));
+			AddBind(new PixelShader(PROJECT_DIR L"shaders/OITUnlitVertexColorPS.cso"));
 #else
-				AddBind(new PixelShader(getBlobFromId(BLOB_ID::BLOB_OIT_UNLIT_VERTEX_COLOR_PS), getBlobSizeFromId(BLOB_ID::BLOB_OIT_UNLIT_VERTEX_COLOR_PS)));
+			AddBind(new PixelShader(getBlobFromId(BLOB_ID::BLOB_OIT_UNLIT_VERTEX_COLOR_PS), getBlobSizeFromId(BLOB_ID::BLOB_OIT_UNLIT_VERTEX_COLOR_PS)));
 #endif
-				AddBind(new Blender(BLEND_MODE_OIT_WEIGHTED));
-				break;
-			}
-
-			// Create the corresponding input layout
-			INPUT_ELEMENT_DESC ied[2] =
-			{
-				{ "Position",	_4_FLOAT },
-				{ "Color",		_4_FLOAT },
-			};
-			AddBind(new InputLayout(ied, 2u, pvs));
+			AddBind(new Blender(BLEND_MODE_OIT_WEIGHTED));
 			break;
 		}
 
-		default:
-			throw INFO_EXCEPT("Found an unrecognized coloring mode when trying to create a Scatter.");
+		// Create the corresponding input layout
+		INPUT_ELEMENT_DESC ied[2] =
+		{
+			{ "Position",	_4_FLOAT },
+			{ "Color",		_4_FLOAT },
+		};
+		AddBind(new InputLayout(ied, 2u, pvs));
+		break;
+	}
+
+	default:
+		USER_ERROR("Found an unrecognized coloring mode when trying to create a Scatter.");
 	}
 
 	unsigned* indexs = new unsigned[data.desc.point_count];
@@ -281,16 +283,19 @@ void Scatter::initialize(const SCATTER_DESC* pDesc)
 
 void Scatter::updatePoints(Vector3f* point_list)
 {
-	if (!isInit)
-		throw INFO_EXCEPT("Trying to update the points on an uninitialized Scatter.");
+	USER_CHECK(isInit,
+		"Trying to update the points on an uninitialized Scatter."
+	);
 
-	if (!point_list)
-		throw INFO_EXCEPT("Trying to update the points on a Scatter with an invalid point list.");
+	USER_CHECK(point_list,
+		"Trying to update the points on a Scatter with an invalid point list."
+	);
 
 	ScatterInternals& data = *(ScatterInternals*)scatterData;
 
-	if (!data.desc.enable_updates)
-		throw INFO_EXCEPT("Trying to update the points on a Scatter with updates disabled.");
+	USER_CHECK(data.desc.enable_updates,
+		"Trying to update the points on a Scatter with updates disabled."
+	);
 
 	switch (data.desc.coloring)
 	{
@@ -316,19 +321,23 @@ void Scatter::updatePoints(Vector3f* point_list)
 
 void Scatter::updateColors(Color* color_list)
 {
-	if (!isInit)
-		throw INFO_EXCEPT("Trying to update the colors on an uninitialized Scatter.");
+	USER_CHECK(isInit,
+		"Trying to update the colors on an uninitialized Scatter."
+	);
 
-	if (!color_list)
-		throw INFO_EXCEPT("Trying to update the colors on a Scatter with an invalid color list.");
+	USER_CHECK(color_list,
+		"Trying to update the colors on a Scatter with an invalid color list."
+	);
 
 	ScatterInternals& data = *(ScatterInternals*)scatterData;
 
-	if (data.desc.coloring != SCATTER_DESC::POINT_COLORING)
-		throw INFO_EXCEPT("Trying to update the colors on a Scatter with a different coloring.");
+	USER_CHECK(data.desc.coloring == SCATTER_DESC::POINT_COLORING,
+		"Trying to update the colors on a Scatter with a different coloring."
+	);
 
-	if (!data.desc.enable_updates)
-		throw INFO_EXCEPT("Trying to update the colors on a Scatter with updates disabled.");
+	USER_CHECK(data.desc.enable_updates,
+		"Trying to update the colors on a Scatter with updates disabled."
+	);
 
 	for (unsigned i = 0u; i < data.desc.point_count; i++)
 		data.ColPoints[i].color = color_list[i].getColor4();
@@ -340,13 +349,15 @@ void Scatter::updateColors(Color* color_list)
 
 void Scatter::updateGlobalColor(Color color)
 {
-	if (!isInit)
-		throw INFO_EXCEPT("Trying to update the global color on an uninitialized Scatter.");
+	USER_CHECK(isInit,
+		"Trying to update the global color on an uninitialized Scatter."
+	);
 
 	ScatterInternals& data = *(ScatterInternals*)scatterData;
 
-	if (data.desc.coloring != SCATTER_DESC::GLOBAL_COLORING)
-		throw INFO_EXCEPT("Trying to update the global color on a Scatter with a different coloring.");
+	USER_CHECK(data.desc.coloring == SCATTER_DESC::GLOBAL_COLORING,
+		"Trying to update the global color on a Scatter with a different coloring."
+	);
 
 	_float4color col = color.getColor4();
 	data.pGlobalColorCB->update(&col);
@@ -358,14 +369,14 @@ void Scatter::updateGlobalColor(Color color)
 
 void Scatter::updateRotation(Quaternion rotation, bool multiplicative)
 {
-	if (!isInit)
-		throw INFO_EXCEPT("Trying to update the rotation on an uninitialized Scatter.");
+	USER_CHECK(isInit,
+		"Trying to update the rotation on an uninitialized Scatter."
+	);
 
-	if (!rotation)
-		throw INFO_EXCEPT(
-			"Invalid quaternion found when trying to update rotation on a Scatter.\n"
-			"Quaternion 0 can not be normalized and therefore can not describe an objects rotation."
-		);
+	USER_CHECK(rotation,
+		"Invalid quaternion found when trying to update rotation on a Scatter.\n"
+		"Quaternion 0 can not be normalized and therefore can not describe an objects rotation."
+	);
 
 	ScatterInternals& data = *(ScatterInternals*)scatterData;
 
@@ -388,8 +399,9 @@ void Scatter::updateRotation(Quaternion rotation, bool multiplicative)
 
 void Scatter::updatePosition(Vector3f position, bool additive)
 {
-	if (!isInit)
-		throw INFO_EXCEPT("Trying to update the position on an uninitialized Scatter.");
+	USER_CHECK(isInit,
+		"Trying to update the position on an uninitialized Scatter."
+	);
 
 	ScatterInternals& data = *(ScatterInternals*)scatterData;
 
@@ -412,8 +424,9 @@ void Scatter::updatePosition(Vector3f position, bool additive)
 
 void Scatter::updateDistortion(Matrix distortion, bool multiplicative)
 {
-	if (!isInit)
-		throw INFO_EXCEPT("Trying to update the distortion on an uninitialized Scatter.");
+	USER_CHECK(isInit,
+		"Trying to update the distortion on an uninitialized Scatter."
+	);
 
 	ScatterInternals& data = *(ScatterInternals*)scatterData;
 
@@ -434,8 +447,9 @@ void Scatter::updateDistortion(Matrix distortion, bool multiplicative)
 
 void Scatter::updateScreenPosition(Vector2f screenDisplacement)
 {
-	if (!isInit)
-		throw INFO_EXCEPT("Trying to update the screen position on an uninitialized Scatter.");
+	USER_CHECK(isInit,
+		"Trying to update the screen position on an uninitialized Scatter."
+	);
 
 	ScatterInternals& data = *(ScatterInternals*)scatterData;
 
@@ -453,8 +467,9 @@ void Scatter::updateScreenPosition(Vector2f screenDisplacement)
 
 Quaternion Scatter::getRotation() const
 {
-	if (!isInit)
-		throw INFO_EXCEPT("Trying to get the rotation of an uninitialized Scatter.");
+	USER_CHECK(isInit,
+		"Trying to get the rotation of an uninitialized Scatter."
+	);
 
 	ScatterInternals& data = *(ScatterInternals*)scatterData;
 
@@ -465,8 +480,9 @@ Quaternion Scatter::getRotation() const
 
 Vector3f Scatter::getPosition() const
 {
-	if (!isInit)
-		throw INFO_EXCEPT("Trying to get the position of an uninitialized Scatter.");
+	USER_CHECK(isInit,
+		"Trying to get the position of an uninitialized Scatter."
+	);
 
 	ScatterInternals& data = *(ScatterInternals*)scatterData;
 
@@ -477,8 +493,9 @@ Vector3f Scatter::getPosition() const
 
 Matrix Scatter::getDistortion() const
 {
-	if (!isInit)
-		throw INFO_EXCEPT("Trying to get the distortion matrix of an uninitialized Scatter.");
+	USER_CHECK(isInit,
+		"Trying to get the distortion matrix of an uninitialized Scatter."
+	);
 
 	ScatterInternals& data = *(ScatterInternals*)scatterData;
 
@@ -489,8 +506,9 @@ Matrix Scatter::getDistortion() const
 
 Vector2f Scatter::getScreenPosition() const
 {
-	if (!isInit)
-		throw INFO_EXCEPT("Trying to get the screen position of an uninitialized Scatter.");
+	USER_CHECK(isInit,
+		"Trying to get the screen position of an uninitialized Scatter."
+	);
 
 	ScatterInternals& data = *(ScatterInternals*)scatterData;
 

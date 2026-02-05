@@ -56,10 +56,10 @@ DepthStencil::DepthStencil(DEPTH_STENCIL_MODE mode)
 		break;
 
 	default:
-		throw INFO_EXCEPT("Unknown DEPTH_STENCIL_MODE found in the constructor.");
+		USER_ERROR("Unknown DEPTH_STENCIL_MODE found in the constructor.");
 	}
 
-	GFX_THROW_INFO(_device->CreateDepthStencilState(&dsd, data.pDepthStencil.GetAddressOf()));
+	GRAPHICS_HR_CHECK(_device->CreateDepthStencilState(&dsd, data.pDepthStencil.GetAddressOf()));
 }
 
 // Releases the GPU pointer and deletes the data.
@@ -75,5 +75,5 @@ void DepthStencil::Bind()
 {
 	DepthStencilInternals& data = *(DepthStencilInternals*)BindableData;
 
-	GFX_THROW_INFO_ONLY(_context->OMSetDepthStencilState(data.pDepthStencil.Get(), 0u));
+	GRAPHICS_INFO_CHECK(_context->OMSetDepthStencilState(data.pDepthStencil.Get(), 0u));
 }

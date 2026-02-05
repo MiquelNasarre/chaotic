@@ -1,7 +1,7 @@
 
 struct VSOut
 {
-    float4 TXpos : TexPos;
+    float4 TXpos : TEXCOORD0;
     float4 SCpos : SV_Position;
 };
 

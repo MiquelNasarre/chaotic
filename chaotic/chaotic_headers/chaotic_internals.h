@@ -16,7 +16,7 @@ your own Win32 and DirectX11 additions to the library, adding functionalities to
 or Graphics classes or creating your own bindables.
 
 These ones that follow are the main external dependencies for the library included in all 
-internal files as well as some exception classes used for DirectX11 and Win32 errors.
+internal files as well as some error classes used for DirectX11 and Win32 errors.
 
 For implementation details I suggest checking the microsoft-learn resources and you can 
 also read the Window, Graphics and bindables source files.
@@ -122,16 +122,16 @@ using Microsoft::WRL::ComPtr;
 
 #ifdef _DEBUG
 /* DXGI INFO MANAGEMENT CLASS
------------------------------------------------------------------------------------------------------------
------------------------------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------
 This class handles the message pump by the DXGI API. All necessary methods
 are nicely taken care by the functions in this file so you can access the
 error messages via the static functions.
 
 To be used call Set() before doing a call and get messages right after, if
-there are messages throw and exception. This class is only meant for debug.
------------------------------------------------------------------------------------------------------------
------------------------------------------------------------------------------------------------------------
+there are messages raises an error. This class is only meant for debug.
+-------------------------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------
 */
 
 // Static DXGI debug info management class. When using DXGI methods
@@ -146,7 +146,7 @@ public:
 
 	// Accesses the stored messages and if there are more than before returns
 	// a pointer to a list of this messages, otherwise returns nullptr.
-	static const char** GetMessages();
+	static const char* GetMessages();
 
 private:
 	// Private helper to run constructor/destructor.
@@ -163,75 +163,110 @@ private:
 
 	// Pointer to the IDXGIInfoQueue masked as void*.
 	static inline void* pDxgiInfoQueue = nullptr;
+
+	// Pointer to the debug dll masked as void*.
+	static inline void* hModDxgiDebug = nullptr;
 };
 #endif
 
 
-/* GRAPHICS EXCEPTION CLASSES
------------------------------------------------------------------------------------------------------------
------------------------------------------------------------------------------------------------------------
-This header contains the graphics exception classes to be used when
+/* GRAPHICS ERROR CLASSES
+-------------------------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------
+This header contains the graphics error classes to be used when
 making DXGI API calls, some macros are alos defined for convenience.
 
 WHen on debug the DXGI Info Manager will be used.to get access to the
-error messages. Two classes are defined, the HrException, the macro
-takes in an HRESULT and if non-zero throws an exception.
+error messages. Two classes are defined, the HrError, the macro
+takes in an HRESULT and if non-zero creates an error.
 
-And the device removed exception for specific cases where that can happen.
------------------------------------------------------------------------------------------------------------
------------------------------------------------------------------------------------------------------------
+And the device removed error for specific cases where that can happen.
+-------------------------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------
 */
 
 /*
------------------------------------------------------------------------------------------------------------
- Graphics Exception Macros
------------------------------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------
+ Graphics Error Macros
+-------------------------------------------------------------------------------------------------------
 */
 
-// Exception and throw test macros for both classes.
+// Checks and error macros for both classes.
 // In debug they use the info manager to get the error messages.
 #ifdef _DEBUG
-#define GFX_EXCEPT(hr)					HrException( __LINE__,__FILE__,(long)(hr), DxgiInfoManager::GetMessages() )
-#define GFX_THROW_INFO(hrcall)			{ HRESULT hr; DxgiInfoManager::Set(); if( FAILED( hr = (hrcall) ) ) throw GFX_EXCEPT(hr); }
-#define GFX_THROW_INFO_ONLY(call)		{ DxgiInfoManager::Set(); (call); { auto v = DxgiInfoManager::GetMessages(); if(v) throw INFO_EXCEPT(v); } }
-#define GFX_DEVICE_REMOVED_EXCEPT(hr)	DeviceRemovedException( __LINE__,__FILE__,(hr),DxgiInfoManager::GetMessages() )
+// GraphicsError
+#define GRAPHICS_INFO_ERROR(_MSG)				CHAOTIC_FATAL(GraphicsError( __LINE__,__FILE__,_MSG))
+#define GRAPHICS_INFO_CHECK(_CALL)				do { DxgiInfoManager::Set(); (_CALL); { auto msg = DxgiInfoManager::GetMessages(); if(msg) { GRAPHICS_INFO_ERROR(msg); } } } while(0)
+// HrError
+#define GRAPHICS_HR_ERROR(_HR)					CHAOTIC_FATAL(HrError( __LINE__,__FILE__,(long)(_HR), DxgiInfoManager::GetMessages()))
+#define GRAPHICS_HR_CHECK(_HRCALL)				do { HRESULT hr; DxgiInfoManager::Set(); if( FAILED( hr = (_HRCALL) ) ) GRAPHICS_HR_ERROR(hr); } while(0)
+// DeviceRemovedError
+#define GRAPHICS_HR_DEVICE_REMOVED_ERROR(_HR)	CHAOTIC_FATAL(DeviceRemovedError( __LINE__,__FILE__,(_HR),DxgiInfoManager::GetMessages()))
 #else
-#define GFX_EXCEPT(hr)					HrException( __LINE__,__FILE__,(long)(hr) )
-#define GFX_THROW_INFO(hrcall)			{ HRESULT hr; if( FAILED( hr = (hrcall) ) ) throw GFX_EXCEPT(hr); }
-#define GFX_THROW_INFO_ONLY(call)		(call);
-#define GFX_DEVICE_REMOVED_EXCEPT(hr)	DeviceRemovedException( __LINE__,__FILE__,(hr) )
+// GraphicsError
+#define GRAPHICS_INFO_ERROR(_MSG)				CHAOTIC_FATAL(GraphicsError( __LINE__,__FILE__,_MSG))
+#define GRAPHICS_INFO_CHECK(_CALL)				(_CALL)
+// HrError
+#define GRAPHICS_HR_ERROR(_HR)					CHAOTIC_FATAL(HrError( __LINE__,__FILE__,(long)(_HR)))
+#define GRAPHICS_HR_CHECK(_HRCALL)				do { HRESULT hr; if( FAILED( hr = (_HRCALL) ) ) GRAPHICS_HR_ERROR(hr); } while(0)
+// DeviceRemovedError
+#define GRAPHICS_HR_DEVICE_REMOVED_ERROR(_HR)	CHAOTIC_FATAL(DeviceRemovedError( __LINE__,__FILE__,(_HR)))
 #endif
 
 /*
------------------------------------------------------------------------------------------------------------
- Graphics Exception Classes
------------------------------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------
+ Graphics Error Classes
+-------------------------------------------------------------------------------------------------------
 */
 
-// HRESULT Exception class, stores the given HRESULT and an optional list of messages, when
+// Info only Graphics Error class. Same behavior as UserError class, but called with 
+// DXGI info messages for Graphics falied calls.
+class GraphicsError : public ChaoticError
+{
+public:
+	// Single message constructor, the message is stored in the info.
+	GraphicsError(int line, const char* file, const char* msg) noexcept
+		: ChaoticError(line, file)
+	{
+		unsigned c = 0u;
+
+		// Add intro to information.
+		const char* intro = "\n[Error Info]\n";
+		unsigned i = 0u;
+		while (intro[i])
+			info[c++] = intro[i++];
+
+		// join all info messages with newlines into single string.
+		i = 0u;
+		while (msg[i] && c < 2047)
+			info[c++] = msg[i++];
+
+		if (c < 2047)
+			info[c++] = '\n';
+
+		// Add origin location.
+		i = 0u;
+		while (origin[i] && c < 2047)
+			info[c++] = origin[i++];
+
+		// Add final EOS
+		info[c] = '\0';
+	}
+
+	// Info Error type override.
+	const char* GetType() const noexcept override { return "Graphics Info Error"; }
+};
+
+// HRESULT Error class, stores the given HRESULT and an optional list of messages, when
 // what() is called it retrieves the HRESULT information and adds the messages if they exist.
-class HrException : public Exception
+class HrError : public ChaoticError
 {
 public:
 	// Constructor, takes in a FAILED HRESULT and an optional list of
-	// messages and stores it in memory for future what() call.
-	HrException(int line, const char* file, long hr, const char** infoMsgs = nullptr) noexcept
-		: Exception(line, file), hr(hr)
+	// messages and stores it in memory for future info printing.
+	HrError(int line, const char* file, long hr, const char* infoMsgs = nullptr) noexcept
+		: ChaoticError(line, file)
 	{
-		// join all info messages with newlines into single string
-		char msgs[2048] = {};
-
-		unsigned i = 0u, j = 0u, c = 0u;
-		while (infoMsgs && infoMsgs[i])
-		{
-			while (infoMsgs[i][j] && c < 2047)
-				msgs[c++] = infoMsgs[i][j];
-
-			while (infoMsgs[++i] && c < 2047)
-				msgs[c++] = '\n';
-		}
-		msgs[c] = '\0';
-
 		char description[512] = {};
 
 		// Try Win32 message for HRESULT_FROM_WIN32 codes
@@ -262,74 +297,60 @@ public:
 		}
 		// Fallback
 		snprintf(description, 512, "Unknown error (0x%8X)", (unsigned)hr);
+
 	description_done:
+		snprintf(info, 2048,
+			"[Error String]\n0x%8X\n"
+			"[Description]\n%s\n"
+			"[Error Info]\n%s\n"
+			"%s"
+			, (unsigned)hr, description, infoMsgs ? infoMsgs : "Not provided", origin);
 
-		char e_string[64] = {};
-		snprintf(e_string, 64, "0x%8X", (unsigned)hr);
-
-		if (msgs[0])
-			snprintf(info, 2048,
-				"[Error Code]\n%lu\n "
-				"[Error String]\n%s\n"
-				"[Description]\n%s\n"
-				"[Error Info]\n%s\n"
-				"%s"
-				, hr, e_string, description, msgs, GetOriginString());
-
-		else
-			snprintf(info, 2048,
-				"[Error Code]\n%lu\n "
-				"[Error String]\n%s\n"
-				"[Description]\n%s\n"
-				"%s"
-				, hr, e_string, description, GetOriginString());
 	}
 
-	// HResult Exception type override.
-	const char* GetType() const noexcept override { return "Graphics HResult Exception"; }
-
-private:
-	// Stores the FAILED HRESULT
-	long hr;
+	// HResult Error type override.
+	const char* GetType() const noexcept override { return "Graphics HResult Error"; }
 };
 
-// Wrapper of an HRESULT Exception that has the same constructor but get the type
+// Wrapper of an HRESULT Error that has the same constructor but get the type
 // Device Removed. To be called with HRESULT of pDevice->GetDeviceRemovedReason().
-class DeviceRemovedException : public HrException
+class DeviceRemovedError : public HrError
 {
-	// Using same constructor as HRESULT Exception.
-	using HrException::HrException;
+	// Using same constructor as HRESULT Error.
+	using HrError::HrError;
 public:
-	// [Device Removed] Exception type override.
-	const char* GetType() const noexcept override { return "Graphics [Device Removed] Exception (DXGI_ERROR_DEVICE_REMOVED)"; }
+	// [Device Removed] Error type override.
+	const char* GetType() const noexcept override { return "Graphics [Device Removed] Error"; }
 };
 
 
 #include <cstdio>
-/* WIN32 EXCEPTION CLASS
------------------------------------------------------------------------------------------------------------
------------------------------------------------------------------------------------------------------------
-This header contains the windows exception class, to be used when calling Win32
-API functions that can throw errors but are not part of the DXGI API functions.
+/* WIN32 ERROR CLASS
+-------------------------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------
+This header contains the windows error class, to be used when calling Win32
+API functions that can error but are not part of the DXGI API functions.
 
 The class takes an HRESULT as an input and decodes it using the Win32 FormatMessage
 functions. By the macros default it retrieves the last error by calling GetLastError().
------------------------------------------------------------------------------------------------------------
------------------------------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------
 */
 
-// Macro to retrieve the last error code amd create a Window Exception with it.
-#define WND_LAST_EXCEPT()	WindowException( __LINE__,__FILE__,GetLastError() )
+// Macro to retrieve the last error code amd create a Window Error with it.
+#define WINDOW_LAST_ERROR()		CHAOTIC_FATAL(WindowError( __LINE__,__FILE__,GetLastError()))
+// Expression check macro for window errors.
+#define WINDOW_CHECK(_EXPR)		CHAOTIC_CHECK(_EXPR, WindowError( __LINE__,__FILE__,GetLastError()))
 
-// Win32 Exception class, when an API function call returns something unexpected
+// Win32 Error class, when an API function call returns something unexpected
 // the HRESULT from that function is retrieved and used to translate the error code.
 // This error code and string can be accessed via the what function.
-class WindowException : public Exception
+class WindowError : public ChaoticError
 {
 public:
-	// Constructor initializes the public Exception and stores the HRESULT.
-	WindowException(int line, const char* file, HRESULT hr) noexcept
-		: Exception(line, file), hr(hr)
+	// Constructor initializes the public Error and stores the HRESULT.
+	WindowError(int line, const char* file, DWORD dw) noexcept
+		: ChaoticError(line, file)
 	{
 		// Retrieves the error string from a given Win32 failed HRESULT 
 		// using the FormatMessage method and returns the string.
@@ -338,35 +359,24 @@ public:
 		DWORD nMsgLen = FormatMessageA(
 			FORMAT_MESSAGE_ALLOCATE_BUFFER |
 			FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
-			nullptr, hr, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+			nullptr, dw, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
 			reinterpret_cast<LPSTR>(&pMsgBuf), 0, nullptr
 		);
 
-		if (nMsgLen && pMsgBuf)
-		{
-			snprintf(info, 2048,
-				"[Error Code]\n%i\n"
-				"[Description]\n%s\n"
-				"%s"
-				, hr, pMsgBuf, GetOriginString()
-			);
+		// Store information gathered.
+		snprintf(info, 2048,
+			"[Error String]\n0x%8X\n"
+			"[Description]\n%s\n"
+			"%s"
+			, (unsigned)dw,
+			nMsgLen ? pMsgBuf : "Unidentified error code",
+			origin
+		);
 
+		if (pMsgBuf)
 			LocalFree(pMsgBuf);
-		}
-
-		else
-			snprintf(info, 2048,
-				"[Error Code]\n%i\n"
-				"[Description]\nUnidentified error code\n"
-				"%s"
-				, hr, GetOriginString()
-			);
 	}
 
-	// Win32 Exception type override.
-	const char* GetType() const noexcept override { return "Win32 Exception"; }
-
-private:
-	// Stores the FAILED HRESULT
-	HRESULT hr;
+	// Win32 Error type override.
+	const char* GetType() const noexcept override { return "Win32 Error"; }
 };
