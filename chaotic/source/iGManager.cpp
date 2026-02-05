@@ -18,8 +18,8 @@ extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg
 // initializes ImGui WIN32/DX11 in general if called for the first time.
 // Important to call ImGui is to be used in the application.
 
-iGManager::iGManager(Window& _w)
-	: iGManager()
+iGManager::iGManager(Window& _w, bool ini_file)
+	: iGManager(ini_file)
 {
 	bind(_w);
 }
@@ -27,7 +27,7 @@ iGManager::iGManager(Window& _w)
 // Constructor, initializes ImGui DX11 for the specific instance. Does not 
 // bind user interface to any window. Bind must be called for interaction.
 
-iGManager::iGManager()
+iGManager::iGManager(bool ini_file)
 {
 	IMGUI_CHECKVERSION();
 
@@ -47,6 +47,13 @@ iGManager::iGManager()
 		(ID3D11Device*)GlobalDevice::get_device_ptr(),
 		(ID3D11DeviceContext*)GlobalDevice::get_context_ptr()
 	);
+
+	if (!ini_file)
+	{
+		// Avoid the creation of imgui.ini file
+		ImGuiIO& io = ImGui::GetIO();
+		io.IniFilename = nullptr;
+	}
 
 	// Go back to previous context if existed.
 	if (current)

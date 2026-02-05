@@ -32,6 +32,8 @@ struct WindowInternals
 #endif
 	static inline Timer timer;		// Timer object to keep track of the framerate.
 
+	WINDOWPLACEMENT g_wpPrev;   // When entering fullscreen stores the previous placement data.
+
 	Vector2i Dimensions = {};	// Dimensions of the window.
 	Vector2i Position = {};		// Position of the window.
 	HWND hWnd = nullptr;		// Handle to the window.
@@ -152,16 +154,16 @@ public:
 		}
 
 		case WM_SIZE:
-			data.Dimensions.x = LOWORD(lParam);
-			data.Dimensions.y = HIWORD(lParam);
+			data.Dimensions.x = GET_X_LPARAM(lParam);
+			data.Dimensions.y = GET_Y_LPARAM(lParam);
 			if (data.graphics)
 				data.graphics->setWindowDimensions(data.Dimensions);
 			break;
 
 		case WM_MOVE:
 			data.noFrameUpdate = true;
-			data.Position.x = LOWORD(lParam);
-			data.Position.y = HIWORD(lParam);
+			data.Position.x = GET_X_LPARAM(lParam);
+			data.Position.y = GET_Y_LPARAM(lParam);
 			break;
 
 		case WM_KILLFOCUS:
@@ -381,7 +383,8 @@ unsigned Window::processEvents()
 	//	Message Pump
 	MSG msg;
 
-	while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
+	while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) 
+	{
 		if (msg.message == WM_APP_WINDOW_CLOSE)
 			return (unsigned)msg.wParam; // Close Window ID
 
@@ -811,12 +814,10 @@ void Window::setFullScreen(bool FULL_SCREEN)
 		"Please use setWallpaperMonitor to adjust wallpaper window."
 	);
 
-	static WINDOWPLACEMENT g_wpPrev;
-
 	DWORD dwStyle = GetWindowLong(data.hWnd, GWL_STYLE);
 	if (dwStyle & WS_OVERLAPPEDWINDOW && FULL_SCREEN) {
 		MONITORINFO mi = { sizeof(mi) };
-		if (GetWindowPlacement(data.hWnd, &g_wpPrev) && GetMonitorInfo(MonitorFromWindow(data.hWnd,MONITOR_DEFAULTTOPRIMARY), &mi))
+		if (GetWindowPlacement(data.hWnd, &data.g_wpPrev) && GetMonitorInfo(MonitorFromWindow(data.hWnd,MONITOR_DEFAULTTOPRIMARY), &mi))
 		{
 			SetWindowLongPtr(data.hWnd, GWL_STYLE, dwStyle & ~WS_OVERLAPPEDWINDOW);
 			SetWindowPos(data.hWnd, HWND_TOP,
@@ -831,7 +832,15 @@ void Window::setFullScreen(bool FULL_SCREEN)
 	else if (!FULL_SCREEN)
 	{
 		SetWindowLongPtr(data.hWnd, GWL_STYLE, dwStyle | WS_OVERLAPPEDWINDOW);
-		SetWindowPlacement(data.hWnd, &g_wpPrev);
+		// Forces WM_SIZE message for reshaping
+		SetWindowPos(
+			data.hWnd, nullptr,
+			0, 0, 0, 0,
+			SWP_NOMOVE | SWP_NOSIZE |
+			SWP_NOZORDER | SWP_NOOWNERZORDER |
+			SWP_FRAMECHANGED
+		);
+		SetWindowPlacement(data.hWnd, &data.g_wpPrev);
 	}
 }
 

@@ -27,11 +27,6 @@ to deal with library linkage yourself.
 // resources instead of the files, so that the library is self sufficient.
 #define _DEPLOYMENT
 
-// This makes sure there is no leakage in the deployment
-#ifdef _DEPLOYMENT
-#undef PROJECT_DIR
-#endif
-
 // Default API includes
 
 #include "Math/Vectors.h"

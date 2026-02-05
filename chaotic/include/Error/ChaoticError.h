@@ -53,10 +53,10 @@ public:
 	virtual const char* GetType() const noexcept = 0;
 
 	// Getters for custom error behavior.
-	int			GetLine()   const noexcept { return line;   }
-	const char* GetFile()   const noexcept { return file;   }
-	const char* GetOrigin() const noexcept { return origin; }
-	const char* GetInfo()   const noexcept { return info;   }
+	constexpr int		  GetLine()   const noexcept { return line;   }
+	constexpr const char* GetFile()   const noexcept { return file;   }
+	constexpr const char* GetOrigin() const noexcept { return origin; }
+	constexpr const char* GetInfo()   const noexcept { return info;   }
 
 	// Creates a default message box using Win32 with the error data.
 	[[noreturn]] void PopMessageBoxAbort() const noexcept;

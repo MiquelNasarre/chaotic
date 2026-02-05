@@ -16,9 +16,17 @@ functions. By the macros default it retrieves the last error by calling GetLastE
 */
 
 // Macro to retrieve the last error code amd create a Window Error with it.
+#if defined _DEPLOYMENT && defined SOLUTION_DIR
+#define WINDOW_LAST_ERROR()		CHAOTIC_FATAL(WindowError( __LINE__,__FILE__ + sizeof(SOLUTION_DIR) - 1,GetLastError()))
+#else
 #define WINDOW_LAST_ERROR()		CHAOTIC_FATAL(WindowError( __LINE__,__FILE__,GetLastError()))
+#endif
 // Expression check macro for window errors.
+#if defined _DEPLOYMENT && defined SOLUTION_DIR
+#define WINDOW_CHECK(_EXPR)		CHAOTIC_CHECK(_EXPR, WindowError( __LINE__,__FILE__ + sizeof(SOLUTION_DIR) - 1,GetLastError()))
+#else
 #define WINDOW_CHECK(_EXPR)		CHAOTIC_CHECK(_EXPR, WindowError( __LINE__,__FILE__,GetLastError()))
+#endif
 
 // Win32 Error class, when an API function call returns something unexpected
 // the HRESULT from that function is retrieved and used to translate the error code.
@@ -27,33 +35,7 @@ class WindowError : public ChaoticError
 {
 public:
 	// Constructor initializes the public Error and stores the HRESULT.
-	WindowError(int line, const char* file, DWORD dw) noexcept
-		: ChaoticError(line, file)
-	{
-		// Retrieves the error string from a given Win32 failed HRESULT 
-		// using the FormatMessage method and returns the string.
-		char* pMsgBuf = nullptr;
-		// windows will allocate memory for err string and make our pointer point to it
-		DWORD nMsgLen = FormatMessageA(
-			FORMAT_MESSAGE_ALLOCATE_BUFFER |
-			FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
-			nullptr, dw, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-			reinterpret_cast<LPSTR>(&pMsgBuf), 0, nullptr
-		);
-
-		// Store information gathered.
-		snprintf(info, 2048,
-			"\n[Error String]\n0x%8X\n"
-			"\n[Description]\n%s"
-			"%s"
-			, (unsigned)dw, 
-			nMsgLen ? pMsgBuf : "Unidentified error code", 
-			origin
-		);
-
-		if (pMsgBuf)
-			LocalFree(pMsgBuf);
-	}
+	WindowError(int line, const char* file, DWORD dw) noexcept;
 
 	// Win32 Error type override.
 	const char* GetType() const noexcept override { return "Win32 Error"; }

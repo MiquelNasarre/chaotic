@@ -208,7 +208,7 @@ class defaultImGui : public iGManager	// API ImGui implementation class
 public:
 	// Constructor expects a window to bind and will use the default iGMnaager constructor.
 	// If you later want to bind it to another window you can use the iGManager functions.
-	defaultImGui(Window& _w) : iGManager(_w) {}
+	defaultImGui(Window& _w) : iGManager(_w, false) {}
 
 	// You can add simple imgui float sliders to the widgets. Just send the address of the
 	// float you want to slide, the range, and the name of the slider. And it will be used

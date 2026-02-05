@@ -33,11 +33,11 @@ class iGManager
 protected:
 	// Constructor, initializes ImGui WIN32/DX11 for the specific instance and
 	// binds Win32 to the specified window, for user interface.
-	explicit iGManager(Window& _w);
+	explicit iGManager(Window& _w, bool ini_file = true);
 
 	// Constructor, initializes ImGui DX11 for the specific instance. Does not 
 	// bind user interface to any window. Bind must be called for interaction.
-	explicit iGManager();
+	explicit iGManager(bool ini_file = true);
 
 	// If it is the last class instance shuts down ImGui WIN32/DX11.
 	virtual ~iGManager();

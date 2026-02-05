@@ -45,20 +45,17 @@ void GlobalDevice::set_global_device(GPU_PREFERENCE preference)
 
 	//  Create Factory
 
-	UINT factoryFlags = 0u;
-#ifdef _DEBUG
-	factoryFlags |= DXGI_CREATE_FACTORY_DEBUG;
-#endif
-
 	ComPtr<IDXGIFactory> dxgiFactory;
-	GRAPHICS_HR_CHECK(CreateDXGIFactory2(factoryFlags, __uuidof(IDXGIFactory), &dxgiFactory));
+#ifdef _DEBUG
+	HRESULT hr = CreateDXGIFactory2(DXGI_CREATE_FACTORY_DEBUG, IID_PPV_ARGS(dxgiFactory.GetAddressOf()));
+
+	if (FAILED(hr))
+		GRAPHICS_HR_CHECK(CreateDXGIFactory2(0, IID_PPV_ARGS(dxgiFactory.GetAddressOf())));
+#else
+	GRAPHICS_HR_CHECK(CreateDXGIFactory2(0, IID_PPV_ARGS(dxgiFactory.GetAddressOf())));
+#endif
 
 	// Create device based on preference
-
-	UINT createFlags = 0u;
-#ifdef _DEBUG
-	createFlags |= D3D11_CREATE_DEVICE_DEBUG;
-#endif
 
 #ifndef GRAPHICS_DEBUGGING
 	//  Find adapter by GPU preference
@@ -70,22 +67,60 @@ void GlobalDevice::set_global_device(GPU_PREFERENCE preference)
 	switch (preference)
 	{
 	case GPU_HIGH_PERFORMANCE:
-		GRAPHICS_HR_CHECK(Factory6->EnumAdapterByGpuPreference(0, DXGI_GPU_PREFERENCE_HIGH_PERFORMANCE, IID_PPV_ARGS(&bestAdapter)));
+		GRAPHICS_HR_CHECK(Factory6->EnumAdapterByGpuPreference(0, DXGI_GPU_PREFERENCE_HIGH_PERFORMANCE, IID_PPV_ARGS(bestAdapter.GetAddressOf())));
 		break;
 	case GPU_MINIMUM_POWER:
-		GRAPHICS_HR_CHECK(Factory6->EnumAdapterByGpuPreference(0, DXGI_GPU_PREFERENCE_MINIMUM_POWER, IID_PPV_ARGS(&bestAdapter)));
+		GRAPHICS_HR_CHECK(Factory6->EnumAdapterByGpuPreference(0, DXGI_GPU_PREFERENCE_MINIMUM_POWER, IID_PPV_ARGS(bestAdapter.GetAddressOf())));
 		break;
 	case GPU_UNSPECIFIED:
-		GRAPHICS_HR_CHECK(Factory6->EnumAdapterByGpuPreference(0, DXGI_GPU_PREFERENCE_UNSPECIFIED, IID_PPV_ARGS(&bestAdapter)));
+		GRAPHICS_HR_CHECK(Factory6->EnumAdapterByGpuPreference(0, DXGI_GPU_PREFERENCE_UNSPECIFIED, IID_PPV_ARGS(bestAdapter.GetAddressOf())));
 		break;
 	}
 
+#ifdef _DEBUG
+	//  Create D3D11 device and context with the chosen adapter
+	hr = D3D11CreateDevice(
+		bestAdapter.Get(),
+		D3D_DRIVER_TYPE_UNKNOWN,
+		nullptr,
+		D3D11_CREATE_DEVICE_DEBUG,
+		nullptr,
+		0u,
+		D3D11_SDK_VERSION,
+		data.pDevice.GetAddressOf(),
+		nullptr,
+		data.pContext.GetAddressOf()
+	);
+
+	if (FAILED(hr))
+	{
+		GRAPHICS_HR_CHECK(D3D11CreateDevice(
+			bestAdapter.Get(),
+			D3D_DRIVER_TYPE_UNKNOWN,
+			nullptr,
+			0u,
+			nullptr,
+			0u,
+			D3D11_SDK_VERSION,
+			data.pDevice.GetAddressOf(),
+			nullptr,
+			data.pContext.GetAddressOf()
+		));
+
+		if (!skip_error)
+			GRAPHICS_INFO_ERROR(
+				"Failed to create D3D11 device with debug tools enabled. Graphics error messages will not contain debug information.\n"
+				"Consider installing D3D Debug tools if you run the debug *.lib file for better error diagnostics.\n"
+				"To skip this message next build call GlobalDevice::skip_debug_tools_error() before the creation of any windows.\n"
+			);
+	}
+#else
 	//  Create D3D11 device and context with the chosen adapter
 	GRAPHICS_HR_CHECK(D3D11CreateDevice(
 		bestAdapter.Get(),
 		D3D_DRIVER_TYPE_UNKNOWN,
 		nullptr,
-		createFlags,
+		0u,
 		nullptr,
 		0u,
 		D3D11_SDK_VERSION,
@@ -93,13 +128,20 @@ void GlobalDevice::set_global_device(GPU_PREFERENCE preference)
 		nullptr,
 		data.pContext.GetAddressOf()
 	));
-#else
-	// Use the debuggers choice
+#endif
+
+#else // GRAPHICS DEBUGGING
+
+	// Use the debuggers choice. Debugging SDK tools are assumed for debug mode.
 	GRAPHICS_HR_CHECK(D3D11CreateDevice(
 		nullptr,
 		D3D_DRIVER_TYPE_HARDWARE,
 		nullptr,
-		createFlags,
+#ifdef _DEBUG
+		D3D11_CREATE_DEVICE_DEBUG,
+#else
+		0u,
+#endif
 		nullptr,
 		0u,
 		D3D11_SDK_VERSION,
@@ -107,6 +149,7 @@ void GlobalDevice::set_global_device(GPU_PREFERENCE preference)
 		nullptr,
 		data.pContext.GetAddressOf()
 	));
+
 #endif
 }
 

@@ -35,6 +35,7 @@ private:
 	~GlobalDevice();
 
 	static inline void* globalDeviceData = nullptr; // Stores the device data masked as void*
+	static inline bool skip_error = false;			// Whether to skip debug tools error
 public:
 	// Different GPU preferences following the IDXGIFactory6::EnumAdapterByGpuPreference
 	// GPU distinction layout. 
@@ -49,6 +50,10 @@ public:
 	// creating any window instance, otherwise it will be ignored.
 	// If none is set it will automatically be created by the first window creation.
 	static void set_global_device(GPU_PREFERENCE preference = GPU_HIGH_PERFORMANCE);
+
+	// To be called by the user if it is using debug binaries to avoid D3D11 device 
+	// no debug tools error message, must be called at the beggining of the code.
+	static void skip_debug_tools_error() { skip_error = true; }
 
 private:
 	// Internal function that returns the ID3D11Device* masked as a void*.

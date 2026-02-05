@@ -1684,6 +1684,7 @@ private:
 	~GlobalDevice();
 
 	static inline void* globalDeviceData = nullptr; // Stores the device data masked as void*
+	static inline bool skip_error = false;			// Whether to skip debug tools error
 public:
 	// Different GPU preferences following the IDXGIFactory6::EnumAdapterByGpuPreference
 	// GPU distinction layout. 
@@ -1698,6 +1699,10 @@ public:
 	// creating any window instance, otherwise it will be ignored.
 	// If none is set it will automatically be created by the first window creation.
 	static void set_global_device(GPU_PREFERENCE preference = GPU_HIGH_PERFORMANCE);
+
+	// To be called by the user if it is using debug binaries to avoid D3D11 device 
+	// no debug tools error message, must be called at the beggining of the code.
+	static void skip_debug_tools_error() { skip_error = true; }
 
 private:
 	// Internal function that returns the ID3D11Device* masked as a void*.
@@ -3132,11 +3137,11 @@ class iGManager
 protected:
 	// Constructor, initializes ImGui WIN32/DX11 for the specific instance and
 	// binds Win32 to the specified window, for user interface.
-	explicit iGManager(Window& _w);
+	explicit iGManager(Window& _w, bool ini_file = true);
 
 	// Constructor, initializes ImGui DX11 for the specific instance. Does not 
 	// bind user interface to any window. Bind must be called for interaction.
-	explicit iGManager();
+	explicit iGManager(bool ini_file = true);
 
 	// If it is the last class instance shuts down ImGui WIN32/DX11.
 	virtual ~iGManager();
@@ -3369,10 +3374,10 @@ public:
 	virtual const char* GetType() const noexcept = 0;
 
 	// Getters for custom error behavior.
-	int			GetLine()   const noexcept { return line;   }
-	const char* GetFile()   const noexcept { return file;   }
-	const char* GetOrigin() const noexcept { return origin; }
-	const char* GetInfo()   const noexcept { return info;   }
+	constexpr int		  GetLine()   const noexcept { return line;   }
+	constexpr const char* GetFile()   const noexcept { return file;   }
+	constexpr const char* GetOrigin() const noexcept { return origin; }
+	constexpr const char* GetInfo()   const noexcept { return info;   }
 
 	// Creates a default message box using Win32 with the error data.
 	[[noreturn]] void PopMessageBoxAbort() const noexcept;
@@ -3419,33 +3424,7 @@ class UserError : public ChaoticError
 {
 public:
 	// Single message constructor, the message is stored in the info.
-	UserError(int line, const char* file, const char* msg) noexcept
-		: ChaoticError(line, file)
-	{
-		unsigned c = 0u;
-
-		// Add intro to information.
-		const char* intro = "\n[Error Info]\n";
-		unsigned i = 0u;
-		while (intro[i])
-			info[c++] = intro[i++];
-
-		// join all info messages with newlines into single string.
-		i = 0u;
-		while (msg[i] && c < 2047)
-			info[c++] = msg[i++];
-
-		if (c < 2047)
-			info[c++] = '\n';
-
-		// Add origin location.
-		i = 0u;
-		while (origin[i] && c < 2047)
-			info[c++] = origin[i++];
-
-		// Add final EOS
-		info[c] = '\0';
-	}
+	UserError(int line, const char* file, const char* msg) noexcept;
 
 	// Info Error type override.
 	const char* GetType() const noexcept override { return "Default User Error"; }

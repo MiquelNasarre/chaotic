@@ -173,9 +173,6 @@
     <ClCompile Include="source\imgui\imgui_widgets.cpp">
       <Filter>Sources\Private\_imgui</Filter>
     </ClCompile>
-    <ClCompile Include="source\Error\ImGuiError.cpp">
-      <Filter>Sources\Private\Error</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\Bindable.h">

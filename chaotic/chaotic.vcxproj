@@ -42,7 +42,6 @@
     <ClCompile Include="source\embedded_resources.cpp" />
     <ClCompile Include="source\Error\ChaoticError.cpp" />
     <ClCompile Include="source\Error\DxgiInfoManager.cpp" />
-    <ClCompile Include="source\Error\ImGuiError.cpp" />
     <ClCompile Include="source\Graphics.cpp" />
     <ClCompile Include="source\iGManager.cpp" />
     <ClCompile Include="source\Image\Image.cpp" />
@@ -460,7 +459,7 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>PROJECT_DIR=LR"($(ProjectDir))";_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>SOLUTION_DIR=R"($(SolutionDir))";PROJECT_DIR=LR"($(ProjectDir))";_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <AdditionalIncludeDirectories>$(ProjectDir)include/;$(ProjectDir)include/imgui/;$(ProjectDir)chaotic_headers/</AdditionalIncludeDirectories>
@@ -481,7 +480,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>PROJECT_DIR=LR"($(ProjectDir))";NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>SOLUTION_DIR=R"($(SolutionDir))";PROJECT_DIR=LR"($(ProjectDir))";NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <AdditionalIncludeDirectories>$(ProjectDir)include/;$(ProjectDir)include/imgui/;$(ProjectDir)chaotic_headers/</AdditionalIncludeDirectories>
