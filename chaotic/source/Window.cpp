@@ -336,6 +336,9 @@ private:
 		wc.lpszClassName = GetName();
 		wc.hIconSm = nullptr;
 		RegisterClassExA(&wc);
+
+		// Set context awareness to avoid looking blurry on resized windows.
+		SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
 	}
 	// Private destructor deletes the instance.
 	~WindowClass()
@@ -441,9 +444,7 @@ Window::Window(const WINDOW_DESC* pDesc): w_id { next_id++ }
 			EnumWindows(EnumWindowsFindWorkerW, (LPARAM)&workerw);
 			WINDOW_CHECK(workerw);
 
-			// Virtual desktop size. Depending on monitor
-			// This function also squeezes other windows of the same process if scale is different in a monitor, but its worth it.
-			SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
+			// Virtual desktop size. Depending on monitor.
 			RECT vr = GetMonitorRectByIndex(desc.monitor_idx);
 
 			// Set correct dimensions.
