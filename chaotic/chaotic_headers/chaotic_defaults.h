@@ -9,7 +9,7 @@
  */
 
 // Default library dependencies.
-#define _INCLUDE_DEFAULT_ERROR
+#define _INCLUDE_USER_ERROR
 #define _INCLUDE_CONSTANTS
 #include "chaotic.h"
 
@@ -62,7 +62,7 @@ But if you are just here to plot something cool feel free to use this header :)
 extern void chaotic_demo();
 #endif
 
-// Both surfaces and polyhedrons allow for ilumination, and both of them require
+// Both surfaces and polyhedrons allow for illumination, and both of them require
 // three parameters for every lightsource update, the position, the intensities
 // and the color. Therefore this struct is a compact way of representing a light
 // for both of those drawables.

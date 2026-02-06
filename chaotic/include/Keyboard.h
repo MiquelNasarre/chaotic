@@ -24,6 +24,14 @@ The keyCode used by this class is derived from the wParam of the Win32 keyboard 
   These values do not correspond to ASCII characters. Check Win32 references if you 
   want to implement non alpha-numeric keys:
   https://learn.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes
+
+ NOTE: When ImGui requests focus it captures pushChar(), so these are not stored by the 
+ keyboard, all other keyboard interactions, like setKeyPressed()/setKeyReleased() and 
+ type events are still recorded regardless of ImGui focus. That is to allow general 
+ keyboard shortcuts to work. 
+ 
+ If you have definded keyboard interactions but you also use ImGui text boxes I suggest
+ you turn your keyboard interactions to system keys or "Ctrl + key" to avoid ambiguity.
 -------------------------------------------------------------------------------------------------------
 -------------------------------------------------------------------------------------------------------
 */

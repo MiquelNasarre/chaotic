@@ -17,7 +17,7 @@ As it is standard on this library it has multiple setting to set the object rota
 position, linear distortion, and screen shifting and it is displayed in relation to the
 perspective of the Graphics currently set as render target.
 
-It allows for ilumination, texturing, transparencies and many more settings. For information
+It allows for illumination, texturing, transparencies and many more settings. For information
 on how to handle transparencies you can check the Graphics header. For information on how
 to create images for the texture you can check the Image class header.
 -------------------------------------------------------------------------------------------------------
@@ -104,7 +104,7 @@ struct SURFACE_DESC
 	// expected to be a cube-box. Check the texture header for more information.
 	Image* texture_image = nullptr;
 
-	// If the surface is iluminated it specifies how the normal vectors will be computed.
+	// If the surface is illuminated it specifies how the normal vectors will be computed.
 	enum SURFACE_NORMALS
 	{
 		// The normal vectors will be computed by calculating the function in a small
@@ -121,12 +121,12 @@ struct SURFACE_DESC
 	}
 	normal_computation = DERIVATE_NORMALS; // Defaults to derivation.
 
-	// If the surface is ilumaneted and the normal vectors are input function provided it
+	// If the surface is illumaneted and the normal vectors are input function provided it
 	// expects a valid function that will take the same coordinates as the generation function
 	// and output the normal vector of the surface. The vector will not be normailzed.
 	Vector3f(*input_normal_func)(float, float) = nullptr;
 
-	// If the surface is ilumaneted and the normal vectors are output function provided it
+	// If the surface is illumaneted and the normal vectors are output function provided it
 	// expects a valid function that will take the output position of the generation function
 	// and output the normal vector of that position. The vector will not be normailzed.
 	Vector3f(*output_normal_func)(float, float, float) = nullptr;
@@ -162,8 +162,8 @@ struct SURFACE_DESC
 	// Whether both sides of each triangle are rendered or not.
 	bool double_sided_rendering = true;
 
-	// Whether the surface uses ilumination or not.
-	bool enable_iluminated = true;
+	// Whether the surface uses illumination or not.
+	bool enable_illuminated = true;
 
 	// Sets Order Indepentdent Transparency for the Surface. Check 
 	// Graphics.h or Blender.h for more information on how to use it.
@@ -184,14 +184,14 @@ struct SURFACE_DESC
 	bool border_points_included = true;
 
 	// By default polyhedrons and surfaces are lit by four different color lights
-	// around the center of coordinates, allows for a nice default that iluminates
+	// around the center of coordinates, allows for a nice default that illuminates
 	// everything and distiguishes different areas, disable to set all to black.
 	bool default_initial_lights = true;
 };
 
 // Surface drawable class, used for drawing, interaction and visualization of user defined 
 // functionson a Graphics instance. Allows for different generation and rendering settings 
-// including but not limited to generation, textures, ilumination, transparencies. Check 
+// including but not limited to generation, textures, illumination, transparencies. Check 
 // the descriptor to see all options.
 class Surface : public Drawable
 {
@@ -243,14 +243,14 @@ public:
 	// multiple scenes/plots on the same render target.
 	void updateScreenPosition(Vector2f screenDisplacement);
 
-	// If ilumination is enabled it sets the specified light to the specified parameters.
+	// If illumination is enabled it sets the specified light to the specified parameters.
 	// Eight lights are allowed. And the intensities are directional and diffused.
 	void updateLight(unsigned id, Vector2f intensities, Color color, Vector3f position);
 
-	// If ilumination is enabled clears all lights for the Surface.
+	// If illumination is enabled clears all lights for the Surface.
 	void clearLights();
 
-	// If ilumination is enabled, to the valid pointers it writes the specified lights data.
+	// If illumination is enabled, to the valid pointers it writes the specified lights data.
 	void getLight(unsigned id, Vector2f* intensities, Color* color, Vector3f* position);
 
 	// Returns the current rotation quaternion.

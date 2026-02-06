@@ -1460,6 +1460,14 @@ The keyCode used by this class is derived from the wParam of the Win32 keyboard 
   These values do not correspond to ASCII characters. Check Win32 references if you 
   want to implement non alpha-numeric keys:
   https://learn.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes
+
+ NOTE: When ImGui requests focus it captures pushChar(), so these are not stored by the
+ keyboard, all other keyboard interactions, like setKeyPressed()/setKeyReleased() and
+ type events are still recorded regardless of ImGui focus. That is to allow general
+ keyboard shortcuts to work.
+
+ If you have definded keyboard interactions but you also use ImGui text tools I suggest
+ you turn your keyboard interactions to system keys or "Ctrl + key" to avoid ambiguity.
 -----------------------------------------------------------------------------------------------------------
 -----------------------------------------------------------------------------------------------------------
 */
@@ -1554,6 +1562,10 @@ processed by your application.
 It also stores a the mouse position relative to the window and to the screen.
 And has a buffer that stores the mouse wheel movement, it can be accessed and 
 reset by the user.
+
+NOTE: When ImGui requests focus, all Mouse interactions are exclusively captured
+by ImGui, this is to avoid unintentionally moving the plot while interacting with
+the widgets. Only mouse position changes are still recorded.
 -----------------------------------------------------------------------------------------------------------
 -----------------------------------------------------------------------------------------------------------
 */
@@ -1729,7 +1741,7 @@ public:
 
 	// Clears the buffer with the specified color. If all buffers is false it will only clear
 	// the screen color. the depth buffer and the transparency buffers will stay the same.
-	void clearBuffer(Color color = Color::Black, bool all_buffers = true);
+	void clearBuffer(Color color = Color::Transparent, bool all_buffers = true);
 
 	// Clears the depth buffer so that all objects painted are moved to the back.
 	// The last frame pixels are still on the render target.
@@ -1962,6 +1974,10 @@ public:
 	// then the wallpaper window will expand to all monitors in use.
 	void setWallpaperMonitor(int monitor_idx);
 
+	// In the event of a failed Wallpaper creation the window fallsback to 
+	// regular. This function returns whether the window is in wallpaper mode.
+	bool isWallpaperWindow() const;
+
 	// For the wallpaper mode, it tells you if a specific monitor 
 	// exists or not. Expand option, -1, is not considered a monitor.
 	static bool hasMonitor(int monitor_idx);
@@ -1994,37 +2010,37 @@ public:
 	// --- GRAPHICS OVERLOADED CALLS FOR SIMPLICITY ---
 
 	// Original method on the graphics class. Sets this window as render target.
-	inline void setRenderTarget()													{ graphics().setRenderTarget(); }
+	inline void setRenderTarget()														{ graphics().setRenderTarget(); }
 	// Original method on the graphics class. Shows the new frame to the window.
-	inline void pushFrame()															{ graphics().pushFrame(); }
+	inline void pushFrame()																{ graphics().pushFrame(); }
 	// Original method on the graphics class. Clears the buffer with the specified color.
-	inline void clearBuffer(Color color = Color::Black, bool all_buffers = true)	{ graphics().clearBuffer(color, all_buffers); }
+	inline void clearBuffer(Color color = Color::Transparent, bool all_buffers = true)	{ graphics().clearBuffer(color, all_buffers); }
 	// Original method on the graphics class. Clears the depth buffer.
-	inline void clearDepthBuffer()													{ graphics().clearDepthBuffer(); }
+	inline void clearDepthBuffer()														{ graphics().clearDepthBuffer(); }
 	// Original method on the graphics class. Clears the buffers used for transparencies.
-	inline void clearTransparencyBuffers()											{ graphics().clearTransparencyBuffers(); }
+	inline void clearTransparencyBuffers()												{ graphics().clearTransparencyBuffers(); }
 	// Original method on the graphics class. Updates the perspective on the window.
-	inline void setPerspective(Quaternion obs, Vector3f center, float scale)		{ graphics().setPerspective(obs, center, scale); }
+	inline void setPerspective(Quaternion obs, Vector3f center, float scale)			{ graphics().setPerspective(obs, center, scale); }
 	// Original method on the graphics class. Sets the observer quaternion.
-	inline void setObserver(Quaternion obs)											{ graphics().setObserver(obs); }
+	inline void setObserver(Quaternion obs)												{ graphics().setObserver(obs); }
 	// Original method on the graphics class. Sets the center of the window perspective.
-	inline void setCenter(Vector3f center)											{ graphics().setCenter(center); }
+	inline void setCenter(Vector3f center)												{ graphics().setCenter(center); }
 	// Original method on the graphics class. Sets the scale of the objects.
-	inline void setScale(float scale)												{ graphics().setScale(scale); }
+	inline void setScale(float scale)													{ graphics().setScale(scale); }
 	// Original method on the graphics class. Schedules a frame capture to be done.
-	inline void scheduleFrameCapture(Image* image, bool ui_visible = true)			{ graphics().scheduleFrameCapture(image, ui_visible); }
+	inline void scheduleFrameCapture(Image* image, bool ui_visible = true)				{ graphics().scheduleFrameCapture(image, ui_visible); }
 	// Original method on the graphics class. Allows transparent drawables.
-	inline void enableTransparency()												{ graphics().enableTransparency(); }
+	inline void enableTransparency()													{ graphics().enableTransparency(); }
 	// Original method on the graphics class. Disallows transparent drawables.
-	inline void disableTransparency()												{ graphics().disableTransparency(); }
+	inline void disableTransparency()													{ graphics().disableTransparency(); }
 	// Original method on the graphics class. Tells you whether transparenzy is allowed.
-	inline bool isTransparencyEnabled() const										{ return graphics().isTransparencyEnabled(); }
+	inline bool isTransparencyEnabled() const											{ return graphics().isTransparencyEnabled(); }
 	// Original method on the graphics class. Returns the current observer quaternion.
-	inline Quaternion getObserver() const											{ return graphics().getObserver(); }
+	inline Quaternion getObserver() const												{ return graphics().getObserver(); }
 	// Original method on the graphics class. Returns the current Center POV.
-	inline Vector3f getCenter() const												{ return graphics().getCenter(); }
+	inline Vector3f getCenter() const													{ return graphics().getCenter(); }
 	// Original method on the graphics class. Returns the current scals.
-	inline float getScale() const													{ return graphics().getScale(); }
+	inline float getScale() const														{ return graphics().getScale(); }
 
 private:
 	// --- INTERNALS ---
@@ -2410,7 +2426,7 @@ private:
 -----------------------------------------------------------------------------------------------------------
 -----------------------------------------------------------------------------------------------------------
 Drawable class to draw point light sources in the scene. Given this library supports 
-ilumination it is only natural to have a drawable to represent such light sources.
+illumination it is only natural to have a drawable to represent such light sources.
 
 This object allows for drawing of light sources anywhere in you scene with any color or
 intensity. Note that the are not actual light sources for other drawables and you will 
@@ -2506,7 +2522,7 @@ As it is standard on this library it has multiple setting to set the object rota
 position, linear distortion, and screen shifting and it is displayed in relation to the 
 perspective of the Graphics currently set as render target.
 
-It allows for ilumination, texturing, transparencies and figure updates. For information 
+It allows for illumination, texturing, transparencies and figure updates. For information 
 on how to handle transparencies you can check the Graphics header. For information on how 
 to create images for the texture you can check the Image class header.
 -----------------------------------------------------------------------------------------------------------
@@ -2557,7 +2573,7 @@ struct POLYHEDRON_DESC
 	// vertex of every triangle. Three times the traiangle count.
 	Vector2i* texture_coordinates_list = nullptr;
 
-	// If the Polyhedron is iluminated it specifies how the normal vectors will be obtained.
+	// If the Polyhedron is illuminated it specifies how the normal vectors will be obtained.
 	enum POLYHEDRON_NORMALS
 	{
 		// The normal vectors will be computed by triagle and assigned to each vertex 
@@ -2581,8 +2597,8 @@ struct POLYHEDRON_DESC
 	// Whether both sides of each triangle are rendered or not.
 	bool double_sided_rendering = true;
 
-	// Whether the polyhedron uses ilumination or not.
-	bool enable_iluminated = true;
+	// Whether the polyhedron uses illumination or not.
+	bool enable_illuminated = true;
 
 	// Sets Order Indepentdent Transparency for the Polihedrom. Check 
 	// Graphics.h or Blender.h for more information on how to use it.
@@ -2600,14 +2616,14 @@ struct POLYHEDRON_DESC
 	bool pixelated_texture = false;
 
 	// By default polyhedrons and surfaces are lit by four different color lights
-	// around the center of coordinates, allows for a nice default that iluminates
+	// around the center of coordinates, allows for a nice default that illuminates
 	// everything and distiguishes different areas, disable to set all to black.
 	bool default_initial_lights = true;
 };
 
 // Polyhedron drawable class, used for drawing and interacting with user defined triangle 
 // meshes on a Graphics instance. Allows for different rendering settings including but not 
-// limited to textures, ilumination, transparencies. Check the descriptor to see all options.
+// limited to textures, illumination, transparencies. Check the descriptor to see all options.
 class Polyhedron : public Drawable
 {
 public:
@@ -2673,14 +2689,14 @@ public:
 	// multiple scenes/plots on the same render target.
 	void updateScreenPosition(Vector2f screenDisplacement);
 
-	// If ilumination is enabled it sets the specified light to the specified parameters.
+	// If illumination is enabled it sets the specified light to the specified parameters.
 	// Eight lights are allowed. And the intensities are directional and diffused.
 	void updateLight(unsigned id, Vector2f intensities, Color color, Vector3f position);
 
-	// If ilumination is enabled clears all lights for the Polyhedron.
+	// If illumination is enabled clears all lights for the Polyhedron.
 	void clearLights();
 
-	// If ilumination is enabled, to the valid pointers it writes the specified lights data.
+	// If illumination is enabled, to the valid pointers it writes the specified lights data.
 	void getLight(unsigned id, Vector2f* intensities, Color* color, Vector3f* position);
 
 	// Returns the current rotation quaternion.
@@ -2851,7 +2867,7 @@ As it is standard on this library it has multiple setting to set the object rota
 position, linear distortion, and screen shifting and it is displayed in relation to the
 perspective of the Graphics currently set as render target.
 
-It allows for ilumination, texturing, transparencies and many more settings. For information
+It allows for illumination, texturing, transparencies and many more settings. For information
 on how to handle transparencies you can check the Graphics header. For information on how
 to create images for the texture you can check the Image class header.
 -----------------------------------------------------------------------------------------------------------
@@ -2938,7 +2954,7 @@ struct SURFACE_DESC
 	// expected to be a cube-box. Check the texture header for more information.
 	Image* texture_image = nullptr;
 
-	// If the surface is iluminated it specifies how the normal vectors will be computed.
+	// If the surface is illuminated it specifies how the normal vectors will be computed.
 	enum SURFACE_NORMALS
 	{
 		// The normal vectors will be computed by calculating the function in a small
@@ -2955,12 +2971,12 @@ struct SURFACE_DESC
 	}
 	normal_computation = DERIVATE_NORMALS; // Defaults to derivation.
 
-	// If the surface is ilumaneted and the normal vectors are input function provided it
+	// If the surface is illumaneted and the normal vectors are input function provided it
 	// expects a valid function that will take the same coordinates as the generation function
 	// and output the normal vector of the surface. The vector will not be normailzed.
 	Vector3f(*input_normal_func)(float, float) = nullptr;
 
-	// If the surface is ilumaneted and the normal vectors are output function provided it
+	// If the surface is illumaneted and the normal vectors are output function provided it
 	// expects a valid function that will take the output position of the generation function
 	// and output the normal vector of that position. The vector will not be normailzed.
 	Vector3f(*output_normal_func)(float, float, float) = nullptr;
@@ -2996,8 +3012,8 @@ struct SURFACE_DESC
 	// Whether both sides of each triangle are rendered or not.
 	bool double_sided_rendering = true;
 
-	// Whether the surface uses ilumination or not.
-	bool enable_iluminated = true;
+	// Whether the surface uses illumination or not.
+	bool enable_illuminated = true;
 
 	// Sets Order Indepentdent Transparency for the Surface. Check 
 	// Graphics.h or Blender.h for more information on how to use it.
@@ -3018,14 +3034,14 @@ struct SURFACE_DESC
 	bool border_points_included = true;
 
 	// By default polyhedrons and surfaces are lit by four different color lights
-	// around the center of coordinates, allows for a nice default that iluminates
+	// around the center of coordinates, allows for a nice default that illuminates
 	// everything and distiguishes different areas, disable to set all to black.
 	bool default_initial_lights = true;
 };
 
 // Surface drawable class, used for drawing, interaction and visualization of user defined 
 // functionson a Graphics instance. Allows for different generation and rendering settings 
-// including but not limited to generation, textures, ilumination, transparencies. Check 
+// including but not limited to generation, textures, illumination, transparencies. Check 
 // the descriptor to see all options.
 class Surface : public Drawable
 {
@@ -3077,14 +3093,14 @@ public:
 	// multiple scenes/plots on the same render target.
 	void updateScreenPosition(Vector2f screenDisplacement);
 
-	// If ilumination is enabled it sets the specified light to the specified parameters.
+	// If illumination is enabled it sets the specified light to the specified parameters.
 	// Eight lights are allowed. And the intensities are directional and diffused.
 	void updateLight(unsigned id, Vector2f intensities, Color color, Vector3f position);
 
-	// If ilumination is enabled clears all lights for the Surface.
+	// If illumination is enabled clears all lights for the Surface.
 	void clearLights();
 
-	// If ilumination is enabled, to the valid pointers it writes the specified lights data.
+	// If illumination is enabled, to the valid pointers it writes the specified lights data.
 	void getLight(unsigned id, Vector2f* intensities, Color* color, Vector3f* position);
 
 	// Returns the current rotation quaternion.

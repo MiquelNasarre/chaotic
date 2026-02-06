@@ -82,7 +82,7 @@ Index of this file:
 [[noreturn]] extern void handleImGuiAssertion(int line, const char* file, const char* msg) noexcept;
 
 // Funnel IM_ASSERT through default Chaotic error handle.
-#if defined _DEPLOYMENT && defined SOLUTION_DIR
+#ifdef SOLUTION_DIR
 #define IM_ASSERT(_EXPR)  do { if (!(_EXPR)) handleImGuiAssertion(__LINE__, __FILE__ + sizeof(SOLUTION_DIR) - 1, #_EXPR); } while(0)
 #else
 #define IM_ASSERT(_EXPR)  do { if (!(_EXPR)) handleImGuiAssertion(__LINE__, __FILE__, #_EXPR); } while(0)

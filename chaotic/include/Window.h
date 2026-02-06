@@ -143,6 +143,10 @@ public:
 	// then the wallpaper window will expand to all monitors in use.
 	void setWallpaperMonitor(int monitor_idx);
 
+	// In the event of a failed Wallpaper creation the window fallsback to 
+	// regular. This function returns whether the window is in wallpaper mode.
+	bool isWallpaperWindow() const;
+
 	// For the wallpaper mode, it tells you if a specific monitor 
 	// exists or not. Expand option, -1, is not considered a monitor.
 	static bool hasMonitor(int monitor_idx);
@@ -175,37 +179,37 @@ public:
 	// --- GRAPHICS OVERLOADED CALLS FOR SIMPLICITY ---
 
 	// Original method on the graphics class. Sets this window as render target.
-	inline void setRenderTarget()													{ graphics().setRenderTarget(); }
+	inline void setRenderTarget()														{ graphics().setRenderTarget(); }
 	// Original method on the graphics class. Shows the new frame to the window.
-	inline void pushFrame()															{ graphics().pushFrame(); }
+	inline void pushFrame()																{ graphics().pushFrame(); }
 	// Original method on the graphics class. Clears the buffer with the specified color.
-	inline void clearBuffer(Color color = Color::Black, bool all_buffers = true)	{ graphics().clearBuffer(color, all_buffers); }
+	inline void clearBuffer(Color color = Color::Transparent, bool all_buffers = true)	{ graphics().clearBuffer(color, all_buffers); }
 	// Original method on the graphics class. Clears the depth buffer.
-	inline void clearDepthBuffer()													{ graphics().clearDepthBuffer(); }
+	inline void clearDepthBuffer()														{ graphics().clearDepthBuffer(); }
 	// Original method on the graphics class. Clears the buffers used for transparencies.
-	inline void clearTransparencyBuffers()											{ graphics().clearTransparencyBuffers(); }
+	inline void clearTransparencyBuffers()												{ graphics().clearTransparencyBuffers(); }
 	// Original method on the graphics class. Updates the perspective on the window.
-	inline void setPerspective(Quaternion obs, Vector3f center, float scale)		{ graphics().setPerspective(obs, center, scale); }
+	inline void setPerspective(Quaternion obs, Vector3f center, float scale)			{ graphics().setPerspective(obs, center, scale); }
 	// Original method on the graphics class. Sets the observer quaternion.
-	inline void setObserver(Quaternion obs)											{ graphics().setObserver(obs); }
+	inline void setObserver(Quaternion obs)												{ graphics().setObserver(obs); }
 	// Original method on the graphics class. Sets the center of the window perspective.
-	inline void setCenter(Vector3f center)											{ graphics().setCenter(center); }
+	inline void setCenter(Vector3f center)												{ graphics().setCenter(center); }
 	// Original method on the graphics class. Sets the scale of the objects.
-	inline void setScale(float scale)												{ graphics().setScale(scale); }
+	inline void setScale(float scale)													{ graphics().setScale(scale); }
 	// Original method on the graphics class. Schedules a frame capture to be done.
-	inline void scheduleFrameCapture(Image* image, bool ui_visible = true)			{ graphics().scheduleFrameCapture(image, ui_visible); }
+	inline void scheduleFrameCapture(Image* image, bool ui_visible = true)				{ graphics().scheduleFrameCapture(image, ui_visible); }
 	// Original method on the graphics class. Allows transparent drawables.
-	inline void enableTransparency()												{ graphics().enableTransparency(); }
+	inline void enableTransparency()													{ graphics().enableTransparency(); }
 	// Original method on the graphics class. Disallows transparent drawables.
-	inline void disableTransparency()												{ graphics().disableTransparency(); }
+	inline void disableTransparency()													{ graphics().disableTransparency(); }
 	// Original method on the graphics class. Tells you whether transparenzy is allowed.
-	inline bool isTransparencyEnabled() const										{ return graphics().isTransparencyEnabled(); }
+	inline bool isTransparencyEnabled() const											{ return graphics().isTransparencyEnabled(); }
 	// Original method on the graphics class. Returns the current observer quaternion.
-	inline Quaternion getObserver() const											{ return graphics().getObserver(); }
+	inline Quaternion getObserver() const												{ return graphics().getObserver(); }
 	// Original method on the graphics class. Returns the current Center POV.
-	inline Vector3f getCenter() const												{ return graphics().getCenter(); }
+	inline Vector3f getCenter() const													{ return graphics().getCenter(); }
 	// Original method on the graphics class. Returns the current scals.
-	inline float getScale() const													{ return graphics().getScale(); }
+	inline float getScale() const														{ return graphics().getScale(); }
 
 private:
 	// --- INTERNALS ---

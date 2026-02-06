@@ -16,6 +16,10 @@ processed by your application.
 It also stores a the mouse position relative to the window and to the screen.
 And has a buffer that stores the mouse wheel movement, it can be accessed and 
 reset by the user.
+
+NOTE: When ImGui requests focus, all Mouse interactions are exclusively captured 
+by ImGui, this is to avoid unintentionally moving the plot while interacting with 
+the widgets. Only mouse position changes are still recorded.
 -------------------------------------------------------------------------------------------------------
 -------------------------------------------------------------------------------------------------------
 */

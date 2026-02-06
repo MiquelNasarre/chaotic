@@ -80,6 +80,8 @@ built time, if those dependencies are needed just comment them from the list.
 using Microsoft::WRL::ComPtr;
 
 // Required libraries for DirectX11
+#pragma comment(lib, "user32")
+#pragma comment(lib, "kernel32")
 #pragma comment(lib, "dxguid.lib")
 #pragma comment(lib, "Dwmapi.lib")
 #pragma comment(lib, "D3Dcompiler.lib")

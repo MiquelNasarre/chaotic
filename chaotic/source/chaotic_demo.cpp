@@ -297,7 +297,7 @@ public:
 
 		// Clear buffers and set target.
 		graphics().setRenderTarget();
-		graphics().clearBuffer(Color::Black);
+		graphics().clearBuffer();
 		// Draw.
 		attractor.Draw();
 #ifdef _INCLUDE_IMGUI
@@ -382,6 +382,7 @@ private:
 	{
 		"Hopf Fibration Wallpaper",
 		WINDOW_DESC::WINDOW_MODE_WALLPAPER,
+		{ 1920, 1080 },
 	};
 
 	EventData data = {};         // Event data storage for this class.
@@ -426,32 +427,40 @@ private:
 		imgui.eraseSelector(3);
 		imgui.eraseSelector(3);
 
-		// Update monitor if requested.
-		if (update_monitor != -2)
+		if (wallpaper.isWallpaperWindow())
 		{
-			wallpaper.setWallpaperMonitor(update_monitor);
-			update_monitor = -2;
+			// Update monitor if requested.
+			if (update_monitor != -2)
+			{
+				wallpaper.setWallpaperMonitor(update_monitor);
+				update_monitor = -2;
+			}
+
+			// Count how many monitors you have.
+			int monitor_count = 0;
+			while (hasMonitor(monitor_count))
+				monitor_count++;
+
+			// Create monitor names
+			string* names = new string[monitor_count + 1];
+			const char** c_names = new const char* [monitor_count + 1];
+			names[0] = "Expand to All";
+			for (int i = 0; i < monitor_count; i++)
+				names[i + 1] = "Monitor " + std::to_string(i);
+			for (int i = 0; i < monitor_count + 1; i++)
+				c_names[i] = names[i].c_str();
+
+			// Create selector accordingly.
+			imgui.pushSelector("Monitor", { -1, monitor_count - 1 }, &update_monitor, c_names);
+			delete[] names;
+			delete[] c_names;
 		}
-
-		// Count how many monitors you have.
-		int monitor_count = 0;
-		while (hasMonitor(monitor_count))
-			monitor_count++;
-
-		// Create monitor names
-		string* names = new string[monitor_count + 1];
-		const char** c_names = new const char* [monitor_count + 1];
-		names[0] = "Expand to All";
-		for (int i = 0; i < monitor_count; i++)
-			names[i + 1] = "Monitor " + std::to_string(i);
-		for (int i = 0; i < monitor_count + 1; i++)
-			c_names[i] = names[i].c_str();
-
-		// Create selector accordingly.
-		imgui.pushSelector("Monitor", { -1, monitor_count - 1 }, &update_monitor, c_names);
-		delete[] names;
-		delete[] c_names;
-
+		// If your device could not create the wallpaper do not give monitor selection options.
+		else
+		{
+			const char* name = " Wallpaper mode unavailable";
+			imgui.pushSelector("Monitor", { 0, 0 }, &update_monitor, &name);
+		}
 
 		// Add a new axis if requested.
 		if (current_axis == -3)
@@ -471,8 +480,8 @@ private:
 		}
 
 		// Create axis names
-		names = new string[my_axis.size() + 3];
-		c_names = new const char* [my_axis.size() + 3];
+		string* names = new string[my_axis.size() + 3];
+		const char** c_names = new const char* [my_axis.size() + 3];
 		names[0] = "New axis";
 		names[1] = "Pop axis";
 		names[2] = "All axis";
@@ -501,7 +510,7 @@ private:
 
 	static inline float g_hue_offset = 0.f;				// HUE offset value for coloring.
 	static inline float g_hue_speed = 0.20f;			// HUE range value for coloring.
-	static inline unsigned alpha = 128;					// Defines the alpha value for the coloring.
+	static inline unsigned alpha = 88;					// Defines the alpha value for the coloring.
 
 	static inline float pole = 1.02f;					// Defines distance of the poles for the projection.
 	static inline float minimum = 0.02f;				// Defines the minimum denominator for the projection.
@@ -516,7 +525,7 @@ private:
 
 	float my_pole = 1.02f;		// Local pole value for storage and imgui.
 	float my_infinity = 45.f;	// Local minimum inverse for storage and imgui.
-	unsigned my_alpha = 160;	// Local alpha value for storage and imgui.
+	unsigned my_alpha = 80;		// Local alpha value for storage and imgui.
 
 	float squeezing = 0.9f;		// Defines how close together the S2 circles are.
 	unsigned num_circles = 3;	// Defines the number of S2 circles per axis.
@@ -692,7 +701,7 @@ public:
 
 		// Initialize sphere.
 		SURFACE_DESC surf_desc = {};
-		surf_desc.enable_iluminated = true;
+		surf_desc.enable_illuminated = true;
 		surf_desc.default_initial_lights = false;
 		surf_desc.global_color = Color(45, 45, 45);
 		surf_desc.type = SURFACE_DESC::SPHERICAL_SURFACE;
@@ -811,8 +820,8 @@ public:
 			a.rotation *= a.d_rotation;
 
 		// Clear buffers.
-		graphics().clearBuffer(Color::Black);
-		wallpaper.graphics().clearBuffer(Color::Black);
+		graphics().clearBuffer();
+		wallpaper.graphics().clearBuffer();
 
 		// Plot reference sphere.
 		graphics().setRenderTarget();
@@ -1753,7 +1762,7 @@ public:
 		// Create the surface descriptor
 		SURFACE_DESC surf_desc = {};
 		surf_desc.enable_updates = true;
-		surf_desc.enable_iluminated = false;
+		surf_desc.enable_illuminated = false;
 		surf_desc.type = SURFACE_DESC::SPHERICAL_SURFACE;
 		surf_desc.coloring = SURFACE_DESC::OUTPUT_FUNCTION_COLORING;
 		surf_desc.spherical_func = wave_func;
@@ -2615,7 +2624,7 @@ public:
 
 		// Clear buffers and set target.
 		graphics().setRenderTarget();
-		graphics().clearBuffer(Color::Black);
+		graphics().clearBuffer();
 		// Draw.
 		for (Polyhedron& p : corner_pieces)
 			p.Draw();
@@ -2881,7 +2890,7 @@ public:
 
 		// Clear buffers and set target.
 		graphics().setRenderTarget();
-		graphics().clearBuffer(Color::Black);
+		graphics().clearBuffer();
 		// Draw.
 		scatter.Draw();
 		// Push.
@@ -3188,7 +3197,7 @@ public:
 
 		// Clear buffers and set target.
 		graphics().setRenderTarget();
-		graphics().clearBuffer(Color::Black);
+		graphics().clearBuffer();
 		// Draw.
 		spherical.Draw();
 		// Push.
@@ -3233,7 +3242,7 @@ bool demoWindow::new_window_event()
 			capture_scheduled = true;
 			Keyboard::popChar();
 		}
-
+#ifdef _INCLUDE_IMGUI
 		else if (ctrl_pressed && Keyboard::isKeyPressed('M'))
 		{
 			ctrl_pressed = false;
@@ -3243,6 +3252,7 @@ bool demoWindow::new_window_event()
 				imgui.visible = true;
 			Keyboard::popChar();
 		}
+#endif
 	}
 
 	// Check for screen mode uptdates.
@@ -3262,13 +3272,14 @@ bool demoWindow::new_window_event()
 			scheduleFrameCapture(&screenshot);
 			capture_scheduled = true;
 			break;
-
+#ifdef _INCLUDE_IMGUI
 		case 4:
 			if (imgui.visible)
 				imgui.visible = false;
 			else
 				imgui.visible = true;
 			break;
+#endif
 
 		default:
 			break;

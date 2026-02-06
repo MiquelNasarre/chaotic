@@ -80,7 +80,7 @@ public:
 
 	// Clears the buffer with the specified color. If all buffers is false it will only clear
 	// the screen color. the depth buffer and the transparency buffers will stay the same.
-	void clearBuffer(Color color = Color::Black, bool all_buffers = true);
+	void clearBuffer(Color color = Color::Transparent, bool all_buffers = true);
 
 	// Clears the depth buffer so that all objects painted are moved to the back.
 	// The last frame pixels are still on the render target.

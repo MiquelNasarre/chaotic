@@ -111,6 +111,8 @@ using Microsoft::WRL::ComPtr;
 
 #ifdef _LINK_LIBRARIES
 // Required libraries for DirectX11
+#pragma comment(lib, "user32")
+#pragma comment(lib, "kernel32")
 #pragma comment(lib, "dxguid.lib")
 #pragma comment(lib, "Dwmapi.lib")
 #pragma comment(lib, "D3Dcompiler.lib")

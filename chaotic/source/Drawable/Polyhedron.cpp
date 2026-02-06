@@ -544,7 +544,7 @@ void Polyhedron::initialize(const POLYHEDRON_DESC* pDesc)
 			data.Vertices[3 * i + 1].vector = v1.getVector4();
 			data.Vertices[3 * i + 2].vector = v2.getVector4();
 
-			if (data.desc.enable_iluminated)
+			if (data.desc.enable_illuminated)
 			{
 				switch (data.desc.normal_computation)
 				{
@@ -597,11 +597,11 @@ void Polyhedron::initialize(const POLYHEDRON_DESC* pDesc)
 		if (data.desc.enable_transparency)
 		{
 #ifndef _DEPLOYMENT
-			AddBind(new PixelShader(data.desc.enable_iluminated ? PROJECT_DIR L"shaders/OITGlobalColorPS.cso" : PROJECT_DIR L"shaders/OITUnlitGlobalColorPS.cso"));
+			AddBind(new PixelShader(data.desc.enable_illuminated ? PROJECT_DIR L"shaders/OITGlobalColorPS.cso" : PROJECT_DIR L"shaders/OITUnlitGlobalColorPS.cso"));
 #else
 			AddBind(new PixelShader(
-				getBlobFromId(data.desc.enable_iluminated ? BLOB_ID::BLOB_OIT_GLOBAL_COLOR_PS : BLOB_ID::BLOB_OIT_UNLIT_GLOBAL_COLOR_PS),
-				getBlobSizeFromId(data.desc.enable_iluminated ? BLOB_ID::BLOB_OIT_GLOBAL_COLOR_PS : BLOB_ID::BLOB_OIT_UNLIT_GLOBAL_COLOR_PS)
+				getBlobFromId(data.desc.enable_illuminated ? BLOB_ID::BLOB_OIT_GLOBAL_COLOR_PS : BLOB_ID::BLOB_OIT_UNLIT_GLOBAL_COLOR_PS),
+				getBlobSizeFromId(data.desc.enable_illuminated ? BLOB_ID::BLOB_OIT_GLOBAL_COLOR_PS : BLOB_ID::BLOB_OIT_UNLIT_GLOBAL_COLOR_PS)
 			));
 #endif
 			AddBind(new Blender(BLEND_MODE_OIT_WEIGHTED));
@@ -609,11 +609,11 @@ void Polyhedron::initialize(const POLYHEDRON_DESC* pDesc)
 		else
 		{
 #ifndef _DEPLOYMENT
-			AddBind(new PixelShader(data.desc.enable_iluminated ? PROJECT_DIR L"shaders/GlobalColorPS.cso" : PROJECT_DIR L"shaders/UnlitGlobalColorPS.cso"));
+			AddBind(new PixelShader(data.desc.enable_illuminated ? PROJECT_DIR L"shaders/GlobalColorPS.cso" : PROJECT_DIR L"shaders/UnlitGlobalColorPS.cso"));
 #else
 			AddBind(new PixelShader(
-				getBlobFromId(data.desc.enable_iluminated ? BLOB_ID::BLOB_GLOBAL_COLOR_PS : BLOB_ID::BLOB_UNLIT_GLOBAL_COLOR_PS),
-				getBlobSizeFromId(data.desc.enable_iluminated ? BLOB_ID::BLOB_GLOBAL_COLOR_PS : BLOB_ID::BLOB_UNLIT_GLOBAL_COLOR_PS)
+				getBlobFromId(data.desc.enable_illuminated ? BLOB_ID::BLOB_GLOBAL_COLOR_PS : BLOB_ID::BLOB_UNLIT_GLOBAL_COLOR_PS),
+				getBlobSizeFromId(data.desc.enable_illuminated ? BLOB_ID::BLOB_GLOBAL_COLOR_PS : BLOB_ID::BLOB_UNLIT_GLOBAL_COLOR_PS)
 			));
 #endif
 			AddBind(new Blender(BLEND_MODE_OPAQUE));
@@ -654,7 +654,7 @@ void Polyhedron::initialize(const POLYHEDRON_DESC* pDesc)
 			data.ColVertices[3 * i + 1].color = data.desc.color_list[3 * i + 1].getColor4();
 			data.ColVertices[3 * i + 2].color = data.desc.color_list[3 * i + 2].getColor4();
 
-			if (data.desc.enable_iluminated)
+			if (data.desc.enable_illuminated)
 			{
 				switch (data.desc.normal_computation)
 				{
@@ -707,11 +707,11 @@ void Polyhedron::initialize(const POLYHEDRON_DESC* pDesc)
 		if (data.desc.enable_transparency)
 		{
 #ifndef _DEPLOYMENT
-			AddBind(new PixelShader(data.desc.enable_iluminated ? PROJECT_DIR L"shaders/OITVertexColorPS.cso" : PROJECT_DIR L"shaders/OITUnlitVertexColorPS.cso"));
+			AddBind(new PixelShader(data.desc.enable_illuminated ? PROJECT_DIR L"shaders/OITVertexColorPS.cso" : PROJECT_DIR L"shaders/OITUnlitVertexColorPS.cso"));
 #else
 			AddBind(new PixelShader(
-				getBlobFromId(data.desc.enable_iluminated ? BLOB_ID::BLOB_OIT_VERTEX_COLOR_PS : BLOB_ID::BLOB_OIT_UNLIT_VERTEX_COLOR_PS),
-				getBlobSizeFromId(data.desc.enable_iluminated ? BLOB_ID::BLOB_OIT_VERTEX_COLOR_PS : BLOB_ID::BLOB_OIT_UNLIT_VERTEX_COLOR_PS)
+				getBlobFromId(data.desc.enable_illuminated ? BLOB_ID::BLOB_OIT_VERTEX_COLOR_PS : BLOB_ID::BLOB_OIT_UNLIT_VERTEX_COLOR_PS),
+				getBlobSizeFromId(data.desc.enable_illuminated ? BLOB_ID::BLOB_OIT_VERTEX_COLOR_PS : BLOB_ID::BLOB_OIT_UNLIT_VERTEX_COLOR_PS)
 			));
 #endif
 			AddBind(new Blender(BLEND_MODE_OIT_WEIGHTED));
@@ -719,11 +719,11 @@ void Polyhedron::initialize(const POLYHEDRON_DESC* pDesc)
 		else
 		{
 #ifndef _DEPLOYMENT
-			AddBind(new PixelShader(data.desc.enable_iluminated ? PROJECT_DIR L"shaders/VertexColorPS.cso" : PROJECT_DIR L"shaders/UnlitVertexColorPS.cso"));
+			AddBind(new PixelShader(data.desc.enable_illuminated ? PROJECT_DIR L"shaders/VertexColorPS.cso" : PROJECT_DIR L"shaders/UnlitVertexColorPS.cso"));
 #else
 			AddBind(new PixelShader(
-				getBlobFromId(data.desc.enable_iluminated ? BLOB_ID::BLOB_VERTEX_COLOR_PS : BLOB_ID::BLOB_UNLIT_VERTEX_COLOR_PS),
-				getBlobSizeFromId(data.desc.enable_iluminated ? BLOB_ID::BLOB_VERTEX_COLOR_PS : BLOB_ID::BLOB_UNLIT_VERTEX_COLOR_PS)
+				getBlobFromId(data.desc.enable_illuminated ? BLOB_ID::BLOB_VERTEX_COLOR_PS : BLOB_ID::BLOB_UNLIT_VERTEX_COLOR_PS),
+				getBlobSizeFromId(data.desc.enable_illuminated ? BLOB_ID::BLOB_VERTEX_COLOR_PS : BLOB_ID::BLOB_UNLIT_VERTEX_COLOR_PS)
 			));
 #endif
 			AddBind(new Blender(BLEND_MODE_OPAQUE));
@@ -779,7 +779,7 @@ void Polyhedron::initialize(const POLYHEDRON_DESC* pDesc)
 				float(data.desc.texture_coordinates_list[3 * i + 2].y) / data.image_height,
 			0.f,0.f };
 
-			if (data.desc.enable_iluminated)
+			if (data.desc.enable_illuminated)
 			{
 				switch (data.desc.normal_computation)
 				{
@@ -833,11 +833,11 @@ void Polyhedron::initialize(const POLYHEDRON_DESC* pDesc)
 		if (data.desc.enable_transparency)
 		{
 #ifndef _DEPLOYMENT
-			AddBind(new PixelShader(data.desc.enable_iluminated ? PROJECT_DIR L"shaders/OITVertexTexturePS.cso" : PROJECT_DIR L"shaders/OITUnlitVertexTexturePS.cso"));
+			AddBind(new PixelShader(data.desc.enable_illuminated ? PROJECT_DIR L"shaders/OITVertexTexturePS.cso" : PROJECT_DIR L"shaders/OITUnlitVertexTexturePS.cso"));
 #else
 			AddBind(new PixelShader(
-				getBlobFromId(data.desc.enable_iluminated ? BLOB_ID::BLOB_OIT_VERTEX_TEXTURE_PS : BLOB_ID::BLOB_OIT_UNLIT_VERTEX_TEXTURE_PS),
-				getBlobSizeFromId(data.desc.enable_iluminated ? BLOB_ID::BLOB_OIT_VERTEX_TEXTURE_PS : BLOB_ID::BLOB_OIT_UNLIT_VERTEX_TEXTURE_PS)
+				getBlobFromId(data.desc.enable_illuminated ? BLOB_ID::BLOB_OIT_VERTEX_TEXTURE_PS : BLOB_ID::BLOB_OIT_UNLIT_VERTEX_TEXTURE_PS),
+				getBlobSizeFromId(data.desc.enable_illuminated ? BLOB_ID::BLOB_OIT_VERTEX_TEXTURE_PS : BLOB_ID::BLOB_OIT_UNLIT_VERTEX_TEXTURE_PS)
 			));
 #endif
 			AddBind(new Blender(BLEND_MODE_OIT_WEIGHTED));
@@ -845,11 +845,11 @@ void Polyhedron::initialize(const POLYHEDRON_DESC* pDesc)
 		else
 		{
 #ifndef _DEPLOYMENT
-			AddBind(new PixelShader(data.desc.enable_iluminated ? PROJECT_DIR L"shaders/VertexTexturePS.cso" : PROJECT_DIR L"shaders/UnlitVertexTexturePS.cso"));
+			AddBind(new PixelShader(data.desc.enable_illuminated ? PROJECT_DIR L"shaders/VertexTexturePS.cso" : PROJECT_DIR L"shaders/UnlitVertexTexturePS.cso"));
 #else
 			AddBind(new PixelShader(
-				getBlobFromId(data.desc.enable_iluminated ? BLOB_ID::BLOB_VERTEX_TEXTURE_PS : BLOB_ID::BLOB_UNLIT_VERTEX_TEXTURE_PS),
-				getBlobSizeFromId(data.desc.enable_iluminated ? BLOB_ID::BLOB_VERTEX_TEXTURE_PS : BLOB_ID::BLOB_UNLIT_VERTEX_TEXTURE_PS)
+				getBlobFromId(data.desc.enable_illuminated ? BLOB_ID::BLOB_VERTEX_TEXTURE_PS : BLOB_ID::BLOB_UNLIT_VERTEX_TEXTURE_PS),
+				getBlobSizeFromId(data.desc.enable_illuminated ? BLOB_ID::BLOB_VERTEX_TEXTURE_PS : BLOB_ID::BLOB_UNLIT_VERTEX_TEXTURE_PS)
 			));
 #endif
 			AddBind(new Blender(BLEND_MODE_OPAQUE));
@@ -900,8 +900,8 @@ void Polyhedron::initialize(const POLYHEDRON_DESC* pDesc)
 
 	data.pVSCB = AddBind(new ConstantBuffer(&data.vscBuff, VERTEX_CONSTANT_BUFFER));
 
-	// If iluminated is enabled bind the default lights
-	if (data.desc.enable_iluminated)
+	// If illuminated is enabled bind the default lights
+	if (data.desc.enable_illuminated)
 	{
 		if (data.desc.default_initial_lights)
 		{
@@ -968,7 +968,7 @@ void Polyhedron::updateVertices(const Vector3f* vertex_list)
 
 			if (data.desc.normal_computation == POLYHEDRON_DESC::COMPUTED_TRIANGLE_NORMALS)
 			{
-				Vector3f norm = data.desc.enable_iluminated ? ((v1 - v0) * (v2 - v0)).normalize() : Vector3f();
+				Vector3f norm = data.desc.enable_illuminated ? ((v1 - v0) * (v2 - v0)).normalize() : Vector3f();
 
 				data.Vertices[3 * i + 0].norm = norm.getVector4();
 				data.Vertices[3 * i + 1].norm = norm.getVector4();
@@ -993,7 +993,7 @@ void Polyhedron::updateVertices(const Vector3f* vertex_list)
 
 			if (data.desc.normal_computation == POLYHEDRON_DESC::COMPUTED_TRIANGLE_NORMALS)
 			{
-				Vector3f norm = data.desc.enable_iluminated ? ((v1 - v0) * (v2 - v0)).normalize() : Vector3f();
+				Vector3f norm = data.desc.enable_illuminated ? ((v1 - v0) * (v2 - v0)).normalize() : Vector3f();
 
 				data.ColVertices[3 * i + 0].norm = norm.getVector4();
 				data.ColVertices[3 * i + 1].norm = norm.getVector4();
@@ -1018,7 +1018,7 @@ void Polyhedron::updateVertices(const Vector3f* vertex_list)
 
 			if (data.desc.normal_computation == POLYHEDRON_DESC::COMPUTED_TRIANGLE_NORMALS)
 			{
-				Vector3f norm = data.desc.enable_iluminated ? ((v1 - v0) * (v2 - v0)).normalize() : Vector3f();
+				Vector3f norm = data.desc.enable_illuminated ? ((v1 - v0) * (v2 - v0)).normalize() : Vector3f();
 
 				data.TexVertices[3 * i + 0].norm = norm.getVector4();
 				data.TexVertices[3 * i + 1].norm = norm.getVector4();
@@ -1306,7 +1306,7 @@ void Polyhedron::updateScreenPosition(Vector2f screenDisplacement)
 	data.pVSCB->update(&data.vscBuff);
 }
 
-// If ilumination is enabled it sets the specified light to the specified parameters.
+// If illumination is enabled it sets the specified light to the specified parameters.
 // Eight lights are allowed. And the intensities are directional and diffused.
 
 void Polyhedron::updateLight(unsigned id, Vector2f intensities, Color color, Vector3f position)
@@ -1317,8 +1317,8 @@ void Polyhedron::updateLight(unsigned id, Vector2f intensities, Color color, Vec
 
 	PolyhedronInternals& data = *(PolyhedronInternals*)polyhedronData;
 
-	USER_CHECK(data.desc.enable_iluminated,
-		"Trying to update a light on a Polyhedron with ilumination disabled."
+	USER_CHECK(data.desc.enable_illuminated,
+		"Trying to update a light on a Polyhedron with illumination disabled."
 	);
 
 	USER_CHECK(id < 8,
@@ -1329,7 +1329,7 @@ void Polyhedron::updateLight(unsigned id, Vector2f intensities, Color color, Vec
 	data.pPSCB->update(&data.pscBuff);
 }
 
-// If ilumination is enabled clears all lights for the Polyhedron.
+// If illumination is enabled clears all lights for the Polyhedron.
 
 void Polyhedron::clearLights()
 {
@@ -1339,8 +1339,8 @@ void Polyhedron::clearLights()
 
 	PolyhedronInternals& data = *(PolyhedronInternals*)polyhedronData;
 
-	USER_CHECK(data.desc.enable_iluminated,
-		"Trying to clear the lights on a Polyhedron with ilumination disabled."
+	USER_CHECK(data.desc.enable_illuminated,
+		"Trying to clear the lights on a Polyhedron with illumination disabled."
 	);
 
 	for (auto& light : data.pscBuff.lightsource)
@@ -1356,7 +1356,7 @@ void Polyhedron::clearLights()
 */
 
 
-// If ilumination is enabled, to the valid pointers it writes the specified lights data.
+// If illumination is enabled, to the valid pointers it writes the specified lights data.
 
 void Polyhedron::getLight(unsigned id, Vector2f* intensities, Color* color, Vector3f* position)
 {
@@ -1366,8 +1366,8 @@ void Polyhedron::getLight(unsigned id, Vector2f* intensities, Color* color, Vect
 
 	PolyhedronInternals& data = *(PolyhedronInternals*)polyhedronData;
 
-	USER_CHECK(data.desc.enable_iluminated,
-		"Trying to get a light of a Polyhedron with ilumination disabled."
+	USER_CHECK(data.desc.enable_illuminated,
+		"Trying to get a light of a Polyhedron with illumination disabled."
 	);
 
 	USER_CHECK(id < 8,

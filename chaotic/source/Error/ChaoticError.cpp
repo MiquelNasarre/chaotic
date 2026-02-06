@@ -90,7 +90,7 @@ HrError::HrError(int line, const char* file, long hr, const char* infoMsgs) noex
 
 description_done:
 	snprintf(info, 2048,
-		"\n[Error Code]  0x%8X"
+		"\n[Error Code]  0x%08X"
 		"\n\n[Description]\n%s"
 		"\n[Error Info]\n%s"
 		"%s"
@@ -122,7 +122,7 @@ WindowError::WindowError(int line, const char* file, DWORD dw) noexcept
 
 	// Store information gathered.
 	snprintf(info, 2048,
-		"\n[Error Code]\n0x%8X\n"
+		"\n[Error Code]\n0x%08X\n"
 		"\n[Description]\n%s"
 		"%s"
 		, (unsigned)dw,

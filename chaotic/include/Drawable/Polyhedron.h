@@ -12,7 +12,7 @@ As it is standard on this library it has multiple setting to set the object rota
 position, linear distortion, and screen shifting and it is displayed in relation to the 
 perspective of the Graphics currently set as render target.
 
-It allows for ilumination, texturing, transparencies and figure updates. For information 
+It allows for illumination, texturing, transparencies and figure updates. For information 
 on how to handle transparencies you can check the Graphics header. For information on how 
 to create images for the texture you can check the Image class header.
 -------------------------------------------------------------------------------------------------------
@@ -63,7 +63,7 @@ struct POLYHEDRON_DESC
 	// vertex of every triangle. Three times the traiangle count.
 	Vector2i* texture_coordinates_list = nullptr;
 
-	// If the Polyhedron is iluminated it specifies how the normal vectors will be obtained.
+	// If the Polyhedron is illuminated it specifies how the normal vectors will be obtained.
 	enum POLYHEDRON_NORMALS
 	{
 		// The normal vectors will be computed by triagle and assigned to each vertex 
@@ -87,8 +87,8 @@ struct POLYHEDRON_DESC
 	// Whether both sides of each triangle are rendered or not.
 	bool double_sided_rendering = true;
 
-	// Whether the polyhedron uses ilumination or not.
-	bool enable_iluminated = true;
+	// Whether the polyhedron uses illumination or not.
+	bool enable_illuminated = true;
 
 	// Sets Order Indepentdent Transparency for the Polihedrom. Check 
 	// Graphics.h or Blender.h for more information on how to use it.
@@ -106,14 +106,14 @@ struct POLYHEDRON_DESC
 	bool pixelated_texture = false;
 
 	// By default polyhedrons and surfaces are lit by four different color lights
-	// around the center of coordinates, allows for a nice default that iluminates
+	// around the center of coordinates, allows for a nice default that illuminates
 	// everything and distiguishes different areas, disable to set all to black.
 	bool default_initial_lights = true;
 };
 
 // Polyhedron drawable class, used for drawing and interacting with user defined triangle 
 // meshes on a Graphics instance. Allows for different rendering settings including but not 
-// limited to textures, ilumination, transparencies. Check the descriptor to see all options.
+// limited to textures, illumination, transparencies. Check the descriptor to see all options.
 class Polyhedron : public Drawable
 {
 public:
@@ -179,14 +179,14 @@ public:
 	// multiple scenes/plots on the same render target.
 	void updateScreenPosition(Vector2f screenDisplacement);
 
-	// If ilumination is enabled it sets the specified light to the specified parameters.
+	// If illumination is enabled it sets the specified light to the specified parameters.
 	// Eight lights are allowed. And the intensities are directional and diffused.
 	void updateLight(unsigned id, Vector2f intensities, Color color, Vector3f position);
 
-	// If ilumination is enabled clears all lights for the Polyhedron.
+	// If illumination is enabled clears all lights for the Polyhedron.
 	void clearLights();
 
-	// If ilumination is enabled, to the valid pointers it writes the specified lights data.
+	// If illumination is enabled, to the valid pointers it writes the specified lights data.
 	void getLight(unsigned id, Vector2f* intensities, Color* color, Vector3f* position);
 
 	// Returns the current rotation quaternion.

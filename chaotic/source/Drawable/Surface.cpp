@@ -216,8 +216,8 @@ void Surface::initialize(const SURFACE_DESC* pDesc)
 						}
 					}
 
-					// If iluminated find normal vector.
-					if (data.desc.enable_iluminated)
+					// If illuminated find normal vector.
+					if (data.desc.enable_illuminated)
 					{
 						switch (data.desc.normal_computation)
 						{
@@ -332,20 +332,20 @@ void Surface::initialize(const SURFACE_DESC* pDesc)
 					// Create the corresponding Pixel Shader
 					if (data.desc.enable_transparency)
 #ifndef _DEPLOYMENT
-						AddBind(new PixelShader(data.desc.enable_iluminated ? PROJECT_DIR L"shaders/OITGlobalColorPS.cso" : PROJECT_DIR L"shaders/OITUnlitGlobalColorPS.cso"));
+						AddBind(new PixelShader(data.desc.enable_illuminated ? PROJECT_DIR L"shaders/OITGlobalColorPS.cso" : PROJECT_DIR L"shaders/OITUnlitGlobalColorPS.cso"));
 #else
 						AddBind(new PixelShader(
-							getBlobFromId(data.desc.enable_iluminated ? BLOB_ID::BLOB_OIT_GLOBAL_COLOR_PS : BLOB_ID::BLOB_OIT_UNLIT_GLOBAL_COLOR_PS),
-							getBlobSizeFromId(data.desc.enable_iluminated ? BLOB_ID::BLOB_OIT_GLOBAL_COLOR_PS : BLOB_ID::BLOB_OIT_UNLIT_GLOBAL_COLOR_PS)
+							getBlobFromId(data.desc.enable_illuminated ? BLOB_ID::BLOB_OIT_GLOBAL_COLOR_PS : BLOB_ID::BLOB_OIT_UNLIT_GLOBAL_COLOR_PS),
+							getBlobSizeFromId(data.desc.enable_illuminated ? BLOB_ID::BLOB_OIT_GLOBAL_COLOR_PS : BLOB_ID::BLOB_OIT_UNLIT_GLOBAL_COLOR_PS)
 						));
 #endif
 					else
 #ifndef _DEPLOYMENT
-						AddBind(new PixelShader(data.desc.enable_iluminated ? PROJECT_DIR L"shaders/GlobalColorPS.cso" : PROJECT_DIR L"shaders/UnlitGlobalColorPS.cso"));
+						AddBind(new PixelShader(data.desc.enable_illuminated ? PROJECT_DIR L"shaders/GlobalColorPS.cso" : PROJECT_DIR L"shaders/UnlitGlobalColorPS.cso"));
 #else
 						AddBind(new PixelShader(
-							getBlobFromId(data.desc.enable_iluminated ? BLOB_ID::BLOB_GLOBAL_COLOR_PS : BLOB_ID::BLOB_UNLIT_GLOBAL_COLOR_PS),
-							getBlobSizeFromId(data.desc.enable_iluminated ? BLOB_ID::BLOB_GLOBAL_COLOR_PS : BLOB_ID::BLOB_UNLIT_GLOBAL_COLOR_PS)
+							getBlobFromId(data.desc.enable_illuminated ? BLOB_ID::BLOB_GLOBAL_COLOR_PS : BLOB_ID::BLOB_UNLIT_GLOBAL_COLOR_PS),
+							getBlobSizeFromId(data.desc.enable_illuminated ? BLOB_ID::BLOB_GLOBAL_COLOR_PS : BLOB_ID::BLOB_UNLIT_GLOBAL_COLOR_PS)
 						));
 #endif
 
@@ -393,8 +393,8 @@ void Surface::initialize(const SURFACE_DESC* pDesc)
 						}
 					}
 
-					// If iluminated find normal vector.
-					if (data.desc.enable_iluminated)
+					// If illuminated find normal vector.
+					if (data.desc.enable_illuminated)
 					{
 						switch (data.desc.normal_computation)
 						{
@@ -509,20 +509,20 @@ void Surface::initialize(const SURFACE_DESC* pDesc)
 					// Create the corresponding Pixel Shader
 					if (data.desc.enable_transparency)
 #ifndef _DEPLOYMENT
-						AddBind(new PixelShader(data.desc.enable_iluminated ? PROJECT_DIR L"shaders/OITVertexTexturePS.cso" : PROJECT_DIR L"shaders/OITUnlitVertexTexturePS.cso"));
+						AddBind(new PixelShader(data.desc.enable_illuminated ? PROJECT_DIR L"shaders/OITVertexTexturePS.cso" : PROJECT_DIR L"shaders/OITUnlitVertexTexturePS.cso"));
 #else
 						AddBind(new PixelShader(
-							getBlobFromId(data.desc.enable_iluminated ? BLOB_ID::BLOB_OIT_VERTEX_TEXTURE_PS : BLOB_ID::BLOB_OIT_UNLIT_VERTEX_TEXTURE_PS),
-							getBlobSizeFromId(data.desc.enable_iluminated ? BLOB_ID::BLOB_OIT_VERTEX_TEXTURE_PS : BLOB_ID::BLOB_OIT_UNLIT_VERTEX_TEXTURE_PS)
+							getBlobFromId(data.desc.enable_illuminated ? BLOB_ID::BLOB_OIT_VERTEX_TEXTURE_PS : BLOB_ID::BLOB_OIT_UNLIT_VERTEX_TEXTURE_PS),
+							getBlobSizeFromId(data.desc.enable_illuminated ? BLOB_ID::BLOB_OIT_VERTEX_TEXTURE_PS : BLOB_ID::BLOB_OIT_UNLIT_VERTEX_TEXTURE_PS)
 						));
 #endif
 					else
 #ifndef _DEPLOYMENT
-						AddBind(new PixelShader(data.desc.enable_iluminated ? PROJECT_DIR L"shaders/VertexTexturePS.cso" : PROJECT_DIR L"shaders/UnlitVertexTexturePS.cso"));
+						AddBind(new PixelShader(data.desc.enable_illuminated ? PROJECT_DIR L"shaders/VertexTexturePS.cso" : PROJECT_DIR L"shaders/UnlitVertexTexturePS.cso"));
 #else
 						AddBind(new PixelShader(
-							getBlobFromId(data.desc.enable_iluminated ? BLOB_ID::BLOB_VERTEX_TEXTURE_PS : BLOB_ID::BLOB_UNLIT_VERTEX_TEXTURE_PS),
-							getBlobSizeFromId(data.desc.enable_iluminated ? BLOB_ID::BLOB_VERTEX_TEXTURE_PS : BLOB_ID::BLOB_UNLIT_VERTEX_TEXTURE_PS)
+							getBlobFromId(data.desc.enable_illuminated ? BLOB_ID::BLOB_VERTEX_TEXTURE_PS : BLOB_ID::BLOB_UNLIT_VERTEX_TEXTURE_PS),
+							getBlobSizeFromId(data.desc.enable_illuminated ? BLOB_ID::BLOB_VERTEX_TEXTURE_PS : BLOB_ID::BLOB_UNLIT_VERTEX_TEXTURE_PS)
 						));
 #endif
 
@@ -565,8 +565,8 @@ void Surface::initialize(const SURFACE_DESC* pDesc)
 						}
 					}
 
-					// If iluminated find normal vector.
-					if (data.desc.enable_iluminated)
+					// If illuminated find normal vector.
+					if (data.desc.enable_illuminated)
 					{
 						switch (data.desc.normal_computation)
 						{
@@ -681,20 +681,20 @@ void Surface::initialize(const SURFACE_DESC* pDesc)
 					// Create the corresponding Pixel Shader and Blender
 					if (data.desc.enable_transparency)
 #ifndef _DEPLOYMENT
-						AddBind(new PixelShader(data.desc.enable_iluminated ? PROJECT_DIR L"shaders/OITVertexColorPS.cso" : PROJECT_DIR L"shaders/OITUnlitVertexColorPS.cso"));
+						AddBind(new PixelShader(data.desc.enable_illuminated ? PROJECT_DIR L"shaders/OITVertexColorPS.cso" : PROJECT_DIR L"shaders/OITUnlitVertexColorPS.cso"));
 #else
 						AddBind(new PixelShader(
-							getBlobFromId(data.desc.enable_iluminated ? BLOB_ID::BLOB_OIT_VERTEX_COLOR_PS : BLOB_ID::BLOB_OIT_UNLIT_VERTEX_COLOR_PS),
-							getBlobSizeFromId(data.desc.enable_iluminated ? BLOB_ID::BLOB_OIT_VERTEX_COLOR_PS : BLOB_ID::BLOB_OIT_UNLIT_VERTEX_COLOR_PS)
+							getBlobFromId(data.desc.enable_illuminated ? BLOB_ID::BLOB_OIT_VERTEX_COLOR_PS : BLOB_ID::BLOB_OIT_UNLIT_VERTEX_COLOR_PS),
+							getBlobSizeFromId(data.desc.enable_illuminated ? BLOB_ID::BLOB_OIT_VERTEX_COLOR_PS : BLOB_ID::BLOB_OIT_UNLIT_VERTEX_COLOR_PS)
 						));
 #endif
 					else
 #ifndef _DEPLOYMENT
-						AddBind(new PixelShader(data.desc.enable_iluminated ? PROJECT_DIR L"shaders/VertexColorPS.cso" : PROJECT_DIR L"shaders/UnlitVertexColorPS.cso"));
+						AddBind(new PixelShader(data.desc.enable_illuminated ? PROJECT_DIR L"shaders/VertexColorPS.cso" : PROJECT_DIR L"shaders/UnlitVertexColorPS.cso"));
 #else
 						AddBind(new PixelShader(
-							getBlobFromId(data.desc.enable_iluminated ? BLOB_ID::BLOB_VERTEX_COLOR_PS : BLOB_ID::BLOB_UNLIT_VERTEX_COLOR_PS),
-							getBlobSizeFromId(data.desc.enable_iluminated ? BLOB_ID::BLOB_VERTEX_COLOR_PS : BLOB_ID::BLOB_UNLIT_VERTEX_COLOR_PS)
+							getBlobFromId(data.desc.enable_illuminated ? BLOB_ID::BLOB_VERTEX_COLOR_PS : BLOB_ID::BLOB_UNLIT_VERTEX_COLOR_PS),
+							getBlobSizeFromId(data.desc.enable_illuminated ? BLOB_ID::BLOB_VERTEX_COLOR_PS : BLOB_ID::BLOB_UNLIT_VERTEX_COLOR_PS)
 						));
 #endif
 
@@ -737,8 +737,8 @@ void Surface::initialize(const SURFACE_DESC* pDesc)
 						}
 					}
 
-					// If iluminated find normal vector.
-					if (data.desc.enable_iluminated)
+					// If illuminated find normal vector.
+					if (data.desc.enable_illuminated)
 					{
 						switch (data.desc.normal_computation)
 						{
@@ -853,20 +853,20 @@ void Surface::initialize(const SURFACE_DESC* pDesc)
 					// Create the corresponding Pixel Shader and Blender
 					if (data.desc.enable_transparency)
 #ifndef _DEPLOYMENT
-						AddBind(new PixelShader(data.desc.enable_iluminated ? PROJECT_DIR L"shaders/OITVertexColorPS.cso" : PROJECT_DIR L"shaders/OITUnlitVertexColorPS.cso"));
+						AddBind(new PixelShader(data.desc.enable_illuminated ? PROJECT_DIR L"shaders/OITVertexColorPS.cso" : PROJECT_DIR L"shaders/OITUnlitVertexColorPS.cso"));
 #else
 						AddBind(new PixelShader(
-							getBlobFromId(data.desc.enable_iluminated ? BLOB_ID::BLOB_OIT_VERTEX_COLOR_PS : BLOB_ID::BLOB_OIT_UNLIT_VERTEX_COLOR_PS),
-							getBlobSizeFromId(data.desc.enable_iluminated ? BLOB_ID::BLOB_OIT_VERTEX_COLOR_PS : BLOB_ID::BLOB_OIT_UNLIT_VERTEX_COLOR_PS)
+							getBlobFromId(data.desc.enable_illuminated ? BLOB_ID::BLOB_OIT_VERTEX_COLOR_PS : BLOB_ID::BLOB_OIT_UNLIT_VERTEX_COLOR_PS),
+							getBlobSizeFromId(data.desc.enable_illuminated ? BLOB_ID::BLOB_OIT_VERTEX_COLOR_PS : BLOB_ID::BLOB_OIT_UNLIT_VERTEX_COLOR_PS)
 						));
 #endif
 					else
 #ifndef _DEPLOYMENT
-						AddBind(new PixelShader(data.desc.enable_iluminated ? PROJECT_DIR L"shaders/VertexColorPS.cso" : PROJECT_DIR L"shaders/UnlitVertexColorPS.cso"));
+						AddBind(new PixelShader(data.desc.enable_illuminated ? PROJECT_DIR L"shaders/VertexColorPS.cso" : PROJECT_DIR L"shaders/UnlitVertexColorPS.cso"));
 #else
 						AddBind(new PixelShader(
-							getBlobFromId(data.desc.enable_iluminated ? BLOB_ID::BLOB_VERTEX_COLOR_PS : BLOB_ID::BLOB_UNLIT_VERTEX_COLOR_PS),
-							getBlobSizeFromId(data.desc.enable_iluminated ? BLOB_ID::BLOB_VERTEX_COLOR_PS : BLOB_ID::BLOB_UNLIT_VERTEX_COLOR_PS)
+							getBlobFromId(data.desc.enable_illuminated ? BLOB_ID::BLOB_VERTEX_COLOR_PS : BLOB_ID::BLOB_UNLIT_VERTEX_COLOR_PS),
+							getBlobSizeFromId(data.desc.enable_illuminated ? BLOB_ID::BLOB_VERTEX_COLOR_PS : BLOB_ID::BLOB_UNLIT_VERTEX_COLOR_PS)
 						));
 #endif
 
@@ -909,8 +909,8 @@ void Surface::initialize(const SURFACE_DESC* pDesc)
 						}
 					}
 
-					// If iluminated find normal vector.
-					if (data.desc.enable_iluminated)
+					// If illuminated find normal vector.
+					if (data.desc.enable_illuminated)
 					{
 						switch (data.desc.normal_computation)
 						{
@@ -1025,20 +1025,20 @@ void Surface::initialize(const SURFACE_DESC* pDesc)
 					// Create the corresponding Pixel Shader and Blender
 					if (data.desc.enable_transparency)
 #ifndef _DEPLOYMENT
-						AddBind(new PixelShader(data.desc.enable_iluminated ? PROJECT_DIR L"shaders/OITVertexColorPS.cso" : PROJECT_DIR L"shaders/OITUnlitVertexColorPS.cso"));
+						AddBind(new PixelShader(data.desc.enable_illuminated ? PROJECT_DIR L"shaders/OITVertexColorPS.cso" : PROJECT_DIR L"shaders/OITUnlitVertexColorPS.cso"));
 #else
 						AddBind(new PixelShader(
-							getBlobFromId(data.desc.enable_iluminated ? BLOB_ID::BLOB_OIT_VERTEX_COLOR_PS : BLOB_ID::BLOB_OIT_UNLIT_VERTEX_COLOR_PS),
-							getBlobSizeFromId(data.desc.enable_iluminated ? BLOB_ID::BLOB_OIT_VERTEX_COLOR_PS : BLOB_ID::BLOB_OIT_UNLIT_VERTEX_COLOR_PS)
+							getBlobFromId(data.desc.enable_illuminated ? BLOB_ID::BLOB_OIT_VERTEX_COLOR_PS : BLOB_ID::BLOB_OIT_UNLIT_VERTEX_COLOR_PS),
+							getBlobSizeFromId(data.desc.enable_illuminated ? BLOB_ID::BLOB_OIT_VERTEX_COLOR_PS : BLOB_ID::BLOB_OIT_UNLIT_VERTEX_COLOR_PS)
 						));
 #endif
 					else
 #ifndef _DEPLOYMENT
-						AddBind(new PixelShader(data.desc.enable_iluminated ? PROJECT_DIR L"shaders/VertexColorPS.cso" : PROJECT_DIR L"shaders/UnlitVertexColorPS.cso"));
+						AddBind(new PixelShader(data.desc.enable_illuminated ? PROJECT_DIR L"shaders/VertexColorPS.cso" : PROJECT_DIR L"shaders/UnlitVertexColorPS.cso"));
 #else
 						AddBind(new PixelShader(
-							getBlobFromId(data.desc.enable_iluminated ? BLOB_ID::BLOB_VERTEX_COLOR_PS : BLOB_ID::BLOB_UNLIT_VERTEX_COLOR_PS),
-							getBlobSizeFromId(data.desc.enable_iluminated ? BLOB_ID::BLOB_VERTEX_COLOR_PS : BLOB_ID::BLOB_UNLIT_VERTEX_COLOR_PS)
+							getBlobFromId(data.desc.enable_illuminated ? BLOB_ID::BLOB_VERTEX_COLOR_PS : BLOB_ID::BLOB_UNLIT_VERTEX_COLOR_PS),
+							getBlobSizeFromId(data.desc.enable_illuminated ? BLOB_ID::BLOB_VERTEX_COLOR_PS : BLOB_ID::BLOB_UNLIT_VERTEX_COLOR_PS)
 						));
 #endif
 
@@ -1267,8 +1267,8 @@ void Surface::initialize(const SURFACE_DESC* pDesc)
 						data.Vertices[n].vector = (vertex * data.desc.spherical_func(vertex.x, vertex.y, vertex.z)).getVector4();
 					}
 
-					// If iluminated find normal vector.
-					if (data.desc.enable_iluminated)
+					// If illuminated find normal vector.
+					if (data.desc.enable_illuminated)
 					{
 						switch (data.desc.normal_computation)
 						{
@@ -1344,20 +1344,20 @@ void Surface::initialize(const SURFACE_DESC* pDesc)
 					// Create the corresponding Pixel Shader
 					if (data.desc.enable_transparency)
 #ifndef _DEPLOYMENT
-						AddBind(new PixelShader(data.desc.enable_iluminated ? PROJECT_DIR L"shaders/OITGlobalColorPS.cso" : PROJECT_DIR L"shaders/OITUnlitGlobalColorPS.cso"));
+						AddBind(new PixelShader(data.desc.enable_illuminated ? PROJECT_DIR L"shaders/OITGlobalColorPS.cso" : PROJECT_DIR L"shaders/OITUnlitGlobalColorPS.cso"));
 #else
 						AddBind(new PixelShader(
-							getBlobFromId(data.desc.enable_iluminated ? BLOB_ID::BLOB_OIT_GLOBAL_COLOR_PS : BLOB_ID::BLOB_OIT_UNLIT_GLOBAL_COLOR_PS),
-							getBlobSizeFromId(data.desc.enable_iluminated ? BLOB_ID::BLOB_OIT_GLOBAL_COLOR_PS : BLOB_ID::BLOB_OIT_UNLIT_GLOBAL_COLOR_PS)
+							getBlobFromId(data.desc.enable_illuminated ? BLOB_ID::BLOB_OIT_GLOBAL_COLOR_PS : BLOB_ID::BLOB_OIT_UNLIT_GLOBAL_COLOR_PS),
+							getBlobSizeFromId(data.desc.enable_illuminated ? BLOB_ID::BLOB_OIT_GLOBAL_COLOR_PS : BLOB_ID::BLOB_OIT_UNLIT_GLOBAL_COLOR_PS)
 						));
 #endif
 					else
 #ifndef _DEPLOYMENT
-						AddBind(new PixelShader(data.desc.enable_iluminated ? PROJECT_DIR L"shaders/GlobalColorPS.cso" : PROJECT_DIR L"shaders/UnlitGlobalColorPS.cso"));
+						AddBind(new PixelShader(data.desc.enable_illuminated ? PROJECT_DIR L"shaders/GlobalColorPS.cso" : PROJECT_DIR L"shaders/UnlitGlobalColorPS.cso"));
 #else
 						AddBind(new PixelShader(
-							getBlobFromId(data.desc.enable_iluminated ? BLOB_ID::BLOB_GLOBAL_COLOR_PS : BLOB_ID::BLOB_UNLIT_GLOBAL_COLOR_PS),
-							getBlobSizeFromId(data.desc.enable_iluminated ? BLOB_ID::BLOB_GLOBAL_COLOR_PS : BLOB_ID::BLOB_UNLIT_GLOBAL_COLOR_PS)
+							getBlobFromId(data.desc.enable_illuminated ? BLOB_ID::BLOB_GLOBAL_COLOR_PS : BLOB_ID::BLOB_UNLIT_GLOBAL_COLOR_PS),
+							getBlobSizeFromId(data.desc.enable_illuminated ? BLOB_ID::BLOB_GLOBAL_COLOR_PS : BLOB_ID::BLOB_UNLIT_GLOBAL_COLOR_PS)
 						));
 #endif
 
@@ -1397,8 +1397,8 @@ void Surface::initialize(const SURFACE_DESC* pDesc)
 						data.TexVertices[n].coord = vertex.getVector4();
 					}
 
-					// If iluminated find normal vector.
-					if (data.desc.enable_iluminated)
+					// If illuminated find normal vector.
+					if (data.desc.enable_illuminated)
 					{
 						switch (data.desc.normal_computation)
 						{
@@ -1474,20 +1474,20 @@ void Surface::initialize(const SURFACE_DESC* pDesc)
 					// Create the corresponding Pixel Shader
 					if (data.desc.enable_transparency)
 #ifndef _DEPLOYMENT
-						AddBind(new PixelShader(data.desc.enable_iluminated ? PROJECT_DIR L"shaders/OITCubeTexturePS.cso" : PROJECT_DIR L"shaders/OITUnlitCubeTexturePS.cso"));
+						AddBind(new PixelShader(data.desc.enable_illuminated ? PROJECT_DIR L"shaders/OITCubeTexturePS.cso" : PROJECT_DIR L"shaders/OITUnlitCubeTexturePS.cso"));
 #else
 						AddBind(new PixelShader(
-							getBlobFromId(data.desc.enable_iluminated ? BLOB_ID::BLOB_OIT_CUBE_TEXTURE_PS : BLOB_ID::BLOB_OIT_UNLIT_CUBE_TEXTURE_PS),
-							getBlobSizeFromId(data.desc.enable_iluminated ? BLOB_ID::BLOB_OIT_CUBE_TEXTURE_PS : BLOB_ID::BLOB_OIT_UNLIT_CUBE_TEXTURE_PS)
+							getBlobFromId(data.desc.enable_illuminated ? BLOB_ID::BLOB_OIT_CUBE_TEXTURE_PS : BLOB_ID::BLOB_OIT_UNLIT_CUBE_TEXTURE_PS),
+							getBlobSizeFromId(data.desc.enable_illuminated ? BLOB_ID::BLOB_OIT_CUBE_TEXTURE_PS : BLOB_ID::BLOB_OIT_UNLIT_CUBE_TEXTURE_PS)
 						));
 #endif
 					else
 #ifndef _DEPLOYMENT
-						AddBind(new PixelShader(data.desc.enable_iluminated ? PROJECT_DIR L"shaders/CubeTexturePS.cso" : PROJECT_DIR L"shaders/UnlitCubeTexturePS.cso"));
+						AddBind(new PixelShader(data.desc.enable_illuminated ? PROJECT_DIR L"shaders/CubeTexturePS.cso" : PROJECT_DIR L"shaders/UnlitCubeTexturePS.cso"));
 #else
 						AddBind(new PixelShader(
-							getBlobFromId(data.desc.enable_iluminated ? BLOB_ID::BLOB_CUBE_TEXTURE_PS : BLOB_ID::BLOB_UNLIT_CUBE_TEXTURE_PS),
-							getBlobSizeFromId(data.desc.enable_iluminated ? BLOB_ID::BLOB_CUBE_TEXTURE_PS : BLOB_ID::BLOB_UNLIT_CUBE_TEXTURE_PS)
+							getBlobFromId(data.desc.enable_illuminated ? BLOB_ID::BLOB_CUBE_TEXTURE_PS : BLOB_ID::BLOB_UNLIT_CUBE_TEXTURE_PS),
+							getBlobSizeFromId(data.desc.enable_illuminated ? BLOB_ID::BLOB_CUBE_TEXTURE_PS : BLOB_ID::BLOB_UNLIT_CUBE_TEXTURE_PS)
 						));
 #endif
 
@@ -1534,8 +1534,8 @@ void Surface::initialize(const SURFACE_DESC* pDesc)
 						data.ColVertices[n].color = data.desc.output_color_func(data.ColVertices[n].vector.x, data.ColVertices[n].vector.y, data.ColVertices[n].vector.z).getColor4();
 					}
 
-					// If iluminated find normal vector.
-					if (data.desc.enable_iluminated)
+					// If illuminated find normal vector.
+					if (data.desc.enable_illuminated)
 					{
 						switch (data.desc.normal_computation)
 						{
@@ -1611,20 +1611,20 @@ void Surface::initialize(const SURFACE_DESC* pDesc)
 					// Create the corresponding Pixel Shader and Blender
 					if (data.desc.enable_transparency)
 #ifndef _DEPLOYMENT
-						AddBind(new PixelShader(data.desc.enable_iluminated ? PROJECT_DIR L"shaders/OITVertexColorPS.cso" : PROJECT_DIR L"shaders/OITUnlitVertexColorPS.cso"));
+						AddBind(new PixelShader(data.desc.enable_illuminated ? PROJECT_DIR L"shaders/OITVertexColorPS.cso" : PROJECT_DIR L"shaders/OITUnlitVertexColorPS.cso"));
 #else
 						AddBind(new PixelShader(
-							getBlobFromId(data.desc.enable_iluminated ? BLOB_ID::BLOB_OIT_VERTEX_COLOR_PS : BLOB_ID::BLOB_OIT_UNLIT_VERTEX_COLOR_PS),
-							getBlobSizeFromId(data.desc.enable_iluminated ? BLOB_ID::BLOB_OIT_VERTEX_COLOR_PS : BLOB_ID::BLOB_OIT_UNLIT_VERTEX_COLOR_PS)
+							getBlobFromId(data.desc.enable_illuminated ? BLOB_ID::BLOB_OIT_VERTEX_COLOR_PS : BLOB_ID::BLOB_OIT_UNLIT_VERTEX_COLOR_PS),
+							getBlobSizeFromId(data.desc.enable_illuminated ? BLOB_ID::BLOB_OIT_VERTEX_COLOR_PS : BLOB_ID::BLOB_OIT_UNLIT_VERTEX_COLOR_PS)
 						));
 #endif
 					else
 #ifndef _DEPLOYMENT
-						AddBind(new PixelShader(data.desc.enable_iluminated ? PROJECT_DIR L"shaders/VertexColorPS.cso" : PROJECT_DIR L"shaders/UnlitVertexColorPS.cso"));
+						AddBind(new PixelShader(data.desc.enable_illuminated ? PROJECT_DIR L"shaders/VertexColorPS.cso" : PROJECT_DIR L"shaders/UnlitVertexColorPS.cso"));
 #else
 						AddBind(new PixelShader(
-							getBlobFromId(data.desc.enable_iluminated ? BLOB_ID::BLOB_VERTEX_COLOR_PS : BLOB_ID::BLOB_UNLIT_VERTEX_COLOR_PS),
-							getBlobSizeFromId(data.desc.enable_iluminated ? BLOB_ID::BLOB_VERTEX_COLOR_PS : BLOB_ID::BLOB_UNLIT_VERTEX_COLOR_PS)
+							getBlobFromId(data.desc.enable_illuminated ? BLOB_ID::BLOB_VERTEX_COLOR_PS : BLOB_ID::BLOB_UNLIT_VERTEX_COLOR_PS),
+							getBlobSizeFromId(data.desc.enable_illuminated ? BLOB_ID::BLOB_VERTEX_COLOR_PS : BLOB_ID::BLOB_UNLIT_VERTEX_COLOR_PS)
 						));
 #endif
 
@@ -1679,8 +1679,8 @@ void Surface::initialize(const SURFACE_DESC* pDesc)
 						}
 					}
 
-					// If iluminated find normal vector.
-					if (data.desc.enable_iluminated)
+					// If illuminated find normal vector.
+					if (data.desc.enable_illuminated)
 					{
 						switch (data.desc.normal_computation)
 						{
@@ -1795,20 +1795,20 @@ void Surface::initialize(const SURFACE_DESC* pDesc)
 					// Create the corresponding Pixel Shader
 					if (data.desc.enable_transparency)
 #ifndef _DEPLOYMENT
-						AddBind(new PixelShader(data.desc.enable_iluminated ? PROJECT_DIR L"shaders/OITGlobalColorPS.cso" : PROJECT_DIR L"shaders/OITUnlitGlobalColorPS.cso"));
+						AddBind(new PixelShader(data.desc.enable_illuminated ? PROJECT_DIR L"shaders/OITGlobalColorPS.cso" : PROJECT_DIR L"shaders/OITUnlitGlobalColorPS.cso"));
 #else
 						AddBind(new PixelShader(
-							getBlobFromId(data.desc.enable_iluminated ? BLOB_ID::BLOB_OIT_GLOBAL_COLOR_PS : BLOB_ID::BLOB_OIT_UNLIT_GLOBAL_COLOR_PS),
-							getBlobSizeFromId(data.desc.enable_iluminated ? BLOB_ID::BLOB_OIT_GLOBAL_COLOR_PS : BLOB_ID::BLOB_OIT_UNLIT_GLOBAL_COLOR_PS)
+							getBlobFromId(data.desc.enable_illuminated ? BLOB_ID::BLOB_OIT_GLOBAL_COLOR_PS : BLOB_ID::BLOB_OIT_UNLIT_GLOBAL_COLOR_PS),
+							getBlobSizeFromId(data.desc.enable_illuminated ? BLOB_ID::BLOB_OIT_GLOBAL_COLOR_PS : BLOB_ID::BLOB_OIT_UNLIT_GLOBAL_COLOR_PS)
 						));
 #endif
 					else
 #ifndef _DEPLOYMENT
-						AddBind(new PixelShader(data.desc.enable_iluminated ? PROJECT_DIR L"shaders/GlobalColorPS.cso" : PROJECT_DIR L"shaders/UnlitGlobalColorPS.cso"));
+						AddBind(new PixelShader(data.desc.enable_illuminated ? PROJECT_DIR L"shaders/GlobalColorPS.cso" : PROJECT_DIR L"shaders/UnlitGlobalColorPS.cso"));
 #else
 						AddBind(new PixelShader(
-							getBlobFromId(data.desc.enable_iluminated ? BLOB_ID::BLOB_GLOBAL_COLOR_PS : BLOB_ID::BLOB_UNLIT_GLOBAL_COLOR_PS),
-							getBlobSizeFromId(data.desc.enable_iluminated ? BLOB_ID::BLOB_GLOBAL_COLOR_PS : BLOB_ID::BLOB_UNLIT_GLOBAL_COLOR_PS)
+							getBlobFromId(data.desc.enable_illuminated ? BLOB_ID::BLOB_GLOBAL_COLOR_PS : BLOB_ID::BLOB_UNLIT_GLOBAL_COLOR_PS),
+							getBlobSizeFromId(data.desc.enable_illuminated ? BLOB_ID::BLOB_GLOBAL_COLOR_PS : BLOB_ID::BLOB_UNLIT_GLOBAL_COLOR_PS)
 						));
 #endif
 
@@ -1856,8 +1856,8 @@ void Surface::initialize(const SURFACE_DESC* pDesc)
 						}
 					}
 
-					// If iluminated find normal vector.
-					if (data.desc.enable_iluminated)
+					// If illuminated find normal vector.
+					if (data.desc.enable_illuminated)
 					{
 						switch (data.desc.normal_computation)
 						{
@@ -1972,20 +1972,20 @@ void Surface::initialize(const SURFACE_DESC* pDesc)
 					// Create the corresponding Pixel Shader
 					if (data.desc.enable_transparency)
 #ifndef _DEPLOYMENT
-						AddBind(new PixelShader(data.desc.enable_iluminated ? PROJECT_DIR L"shaders/OITVertexTexturePS.cso" : PROJECT_DIR L"shaders/OITUnlitVertexTexturePS.cso"));
+						AddBind(new PixelShader(data.desc.enable_illuminated ? PROJECT_DIR L"shaders/OITVertexTexturePS.cso" : PROJECT_DIR L"shaders/OITUnlitVertexTexturePS.cso"));
 #else
 						AddBind(new PixelShader(
-							getBlobFromId(data.desc.enable_iluminated ? BLOB_ID::BLOB_OIT_VERTEX_TEXTURE_PS : BLOB_ID::BLOB_OIT_UNLIT_VERTEX_TEXTURE_PS),
-							getBlobSizeFromId(data.desc.enable_iluminated ? BLOB_ID::BLOB_OIT_VERTEX_TEXTURE_PS : BLOB_ID::BLOB_OIT_UNLIT_VERTEX_TEXTURE_PS)
+							getBlobFromId(data.desc.enable_illuminated ? BLOB_ID::BLOB_OIT_VERTEX_TEXTURE_PS : BLOB_ID::BLOB_OIT_UNLIT_VERTEX_TEXTURE_PS),
+							getBlobSizeFromId(data.desc.enable_illuminated ? BLOB_ID::BLOB_OIT_VERTEX_TEXTURE_PS : BLOB_ID::BLOB_OIT_UNLIT_VERTEX_TEXTURE_PS)
 						));
 #endif
 					else
 #ifndef _DEPLOYMENT
-						AddBind(new PixelShader(data.desc.enable_iluminated ? PROJECT_DIR L"shaders/VertexTexturePS.cso" : PROJECT_DIR L"shaders/UnlitVertexTexturePS.cso"));
+						AddBind(new PixelShader(data.desc.enable_illuminated ? PROJECT_DIR L"shaders/VertexTexturePS.cso" : PROJECT_DIR L"shaders/UnlitVertexTexturePS.cso"));
 #else
 						AddBind(new PixelShader(
-							getBlobFromId(data.desc.enable_iluminated ? BLOB_ID::BLOB_VERTEX_TEXTURE_PS : BLOB_ID::BLOB_UNLIT_VERTEX_TEXTURE_PS),
-							getBlobSizeFromId(data.desc.enable_iluminated ? BLOB_ID::BLOB_VERTEX_TEXTURE_PS : BLOB_ID::BLOB_UNLIT_VERTEX_TEXTURE_PS)
+							getBlobFromId(data.desc.enable_illuminated ? BLOB_ID::BLOB_VERTEX_TEXTURE_PS : BLOB_ID::BLOB_UNLIT_VERTEX_TEXTURE_PS),
+							getBlobSizeFromId(data.desc.enable_illuminated ? BLOB_ID::BLOB_VERTEX_TEXTURE_PS : BLOB_ID::BLOB_UNLIT_VERTEX_TEXTURE_PS)
 						));
 #endif
 
@@ -2028,8 +2028,8 @@ void Surface::initialize(const SURFACE_DESC* pDesc)
 						}
 					}
 
-					// If iluminated find normal vector.
-					if (data.desc.enable_iluminated)
+					// If illuminated find normal vector.
+					if (data.desc.enable_illuminated)
 					{
 						switch (data.desc.normal_computation)
 						{
@@ -2144,20 +2144,20 @@ void Surface::initialize(const SURFACE_DESC* pDesc)
 					// Create the corresponding Pixel Shader and Blender
 					if (data.desc.enable_transparency)
 #ifndef _DEPLOYMENT
-						AddBind(new PixelShader(data.desc.enable_iluminated ? PROJECT_DIR L"shaders/OITVertexColorPS.cso" : PROJECT_DIR L"shaders/OITUnlitVertexColorPS.cso"));
+						AddBind(new PixelShader(data.desc.enable_illuminated ? PROJECT_DIR L"shaders/OITVertexColorPS.cso" : PROJECT_DIR L"shaders/OITUnlitVertexColorPS.cso"));
 #else
 						AddBind(new PixelShader(
-							getBlobFromId(data.desc.enable_iluminated ? BLOB_ID::BLOB_OIT_VERTEX_COLOR_PS : BLOB_ID::BLOB_OIT_UNLIT_VERTEX_COLOR_PS),
-							getBlobSizeFromId(data.desc.enable_iluminated ? BLOB_ID::BLOB_OIT_VERTEX_COLOR_PS : BLOB_ID::BLOB_OIT_UNLIT_VERTEX_COLOR_PS)
+							getBlobFromId(data.desc.enable_illuminated ? BLOB_ID::BLOB_OIT_VERTEX_COLOR_PS : BLOB_ID::BLOB_OIT_UNLIT_VERTEX_COLOR_PS),
+							getBlobSizeFromId(data.desc.enable_illuminated ? BLOB_ID::BLOB_OIT_VERTEX_COLOR_PS : BLOB_ID::BLOB_OIT_UNLIT_VERTEX_COLOR_PS)
 						));
 #endif
 					else
 #ifndef _DEPLOYMENT
-						AddBind(new PixelShader(data.desc.enable_iluminated ? PROJECT_DIR L"shaders/VertexColorPS.cso" : PROJECT_DIR L"shaders/UnlitVertexColorPS.cso"));
+						AddBind(new PixelShader(data.desc.enable_illuminated ? PROJECT_DIR L"shaders/VertexColorPS.cso" : PROJECT_DIR L"shaders/UnlitVertexColorPS.cso"));
 #else
 						AddBind(new PixelShader(
-							getBlobFromId(data.desc.enable_iluminated ? BLOB_ID::BLOB_VERTEX_COLOR_PS : BLOB_ID::BLOB_UNLIT_VERTEX_COLOR_PS),
-							getBlobSizeFromId(data.desc.enable_iluminated ? BLOB_ID::BLOB_VERTEX_COLOR_PS : BLOB_ID::BLOB_UNLIT_VERTEX_COLOR_PS)
+							getBlobFromId(data.desc.enable_illuminated ? BLOB_ID::BLOB_VERTEX_COLOR_PS : BLOB_ID::BLOB_UNLIT_VERTEX_COLOR_PS),
+							getBlobSizeFromId(data.desc.enable_illuminated ? BLOB_ID::BLOB_VERTEX_COLOR_PS : BLOB_ID::BLOB_UNLIT_VERTEX_COLOR_PS)
 						));
 #endif
 
@@ -2200,8 +2200,8 @@ void Surface::initialize(const SURFACE_DESC* pDesc)
 						}
 					}
 
-					// If iluminated find normal vector.
-					if (data.desc.enable_iluminated)
+					// If illuminated find normal vector.
+					if (data.desc.enable_illuminated)
 					{
 						switch (data.desc.normal_computation)
 						{
@@ -2316,20 +2316,20 @@ void Surface::initialize(const SURFACE_DESC* pDesc)
 					// Create the corresponding Pixel Shader and Blender
 					if (data.desc.enable_transparency)
 #ifndef _DEPLOYMENT
-						AddBind(new PixelShader(data.desc.enable_iluminated ? PROJECT_DIR L"shaders/OITVertexColorPS.cso" : PROJECT_DIR L"shaders/OITUnlitVertexColorPS.cso"));
+						AddBind(new PixelShader(data.desc.enable_illuminated ? PROJECT_DIR L"shaders/OITVertexColorPS.cso" : PROJECT_DIR L"shaders/OITUnlitVertexColorPS.cso"));
 #else
 						AddBind(new PixelShader(
-							getBlobFromId(data.desc.enable_iluminated ? BLOB_ID::BLOB_OIT_VERTEX_COLOR_PS : BLOB_ID::BLOB_OIT_UNLIT_VERTEX_COLOR_PS),
-							getBlobSizeFromId(data.desc.enable_iluminated ? BLOB_ID::BLOB_OIT_VERTEX_COLOR_PS : BLOB_ID::BLOB_OIT_UNLIT_VERTEX_COLOR_PS)
+							getBlobFromId(data.desc.enable_illuminated ? BLOB_ID::BLOB_OIT_VERTEX_COLOR_PS : BLOB_ID::BLOB_OIT_UNLIT_VERTEX_COLOR_PS),
+							getBlobSizeFromId(data.desc.enable_illuminated ? BLOB_ID::BLOB_OIT_VERTEX_COLOR_PS : BLOB_ID::BLOB_OIT_UNLIT_VERTEX_COLOR_PS)
 						));
 #endif
 					else
 #ifndef _DEPLOYMENT
-						AddBind(new PixelShader(data.desc.enable_iluminated ? PROJECT_DIR L"shaders/VertexColorPS.cso" : PROJECT_DIR L"shaders/UnlitVertexColorPS.cso"));
+						AddBind(new PixelShader(data.desc.enable_illuminated ? PROJECT_DIR L"shaders/VertexColorPS.cso" : PROJECT_DIR L"shaders/UnlitVertexColorPS.cso"));
 #else
 						AddBind(new PixelShader(
-							getBlobFromId(data.desc.enable_iluminated ? BLOB_ID::BLOB_VERTEX_COLOR_PS : BLOB_ID::BLOB_UNLIT_VERTEX_COLOR_PS),
-							getBlobSizeFromId(data.desc.enable_iluminated ? BLOB_ID::BLOB_VERTEX_COLOR_PS : BLOB_ID::BLOB_UNLIT_VERTEX_COLOR_PS)
+							getBlobFromId(data.desc.enable_illuminated ? BLOB_ID::BLOB_VERTEX_COLOR_PS : BLOB_ID::BLOB_UNLIT_VERTEX_COLOR_PS),
+							getBlobSizeFromId(data.desc.enable_illuminated ? BLOB_ID::BLOB_VERTEX_COLOR_PS : BLOB_ID::BLOB_UNLIT_VERTEX_COLOR_PS)
 						));
 #endif
 
@@ -2372,8 +2372,8 @@ void Surface::initialize(const SURFACE_DESC* pDesc)
 						}
 					}
 
-					// If iluminated find normal vector.
-					if (data.desc.enable_iluminated)
+					// If illuminated find normal vector.
+					if (data.desc.enable_illuminated)
 					{
 						switch (data.desc.normal_computation)
 						{
@@ -2488,20 +2488,20 @@ void Surface::initialize(const SURFACE_DESC* pDesc)
 					// Create the corresponding Pixel Shader and Blender
 					if (data.desc.enable_transparency)
 #ifndef _DEPLOYMENT
-						AddBind(new PixelShader(data.desc.enable_iluminated ? PROJECT_DIR L"shaders/OITVertexColorPS.cso" : PROJECT_DIR L"shaders/OITUnlitVertexColorPS.cso"));
+						AddBind(new PixelShader(data.desc.enable_illuminated ? PROJECT_DIR L"shaders/OITVertexColorPS.cso" : PROJECT_DIR L"shaders/OITUnlitVertexColorPS.cso"));
 #else
 						AddBind(new PixelShader(
-							getBlobFromId(data.desc.enable_iluminated ? BLOB_ID::BLOB_OIT_VERTEX_COLOR_PS : BLOB_ID::BLOB_OIT_UNLIT_VERTEX_COLOR_PS),
-							getBlobSizeFromId(data.desc.enable_iluminated ? BLOB_ID::BLOB_OIT_VERTEX_COLOR_PS : BLOB_ID::BLOB_OIT_UNLIT_VERTEX_COLOR_PS)
+							getBlobFromId(data.desc.enable_illuminated ? BLOB_ID::BLOB_OIT_VERTEX_COLOR_PS : BLOB_ID::BLOB_OIT_UNLIT_VERTEX_COLOR_PS),
+							getBlobSizeFromId(data.desc.enable_illuminated ? BLOB_ID::BLOB_OIT_VERTEX_COLOR_PS : BLOB_ID::BLOB_OIT_UNLIT_VERTEX_COLOR_PS)
 						));
 #endif
 					else
 #ifndef _DEPLOYMENT
-						AddBind(new PixelShader(data.desc.enable_iluminated ? PROJECT_DIR L"shaders/VertexColorPS.cso" : PROJECT_DIR L"shaders/UnlitVertexColorPS.cso"));
+						AddBind(new PixelShader(data.desc.enable_illuminated ? PROJECT_DIR L"shaders/VertexColorPS.cso" : PROJECT_DIR L"shaders/UnlitVertexColorPS.cso"));
 #else
 						AddBind(new PixelShader(
-							getBlobFromId(data.desc.enable_iluminated ? BLOB_ID::BLOB_VERTEX_COLOR_PS : BLOB_ID::BLOB_UNLIT_VERTEX_COLOR_PS),
-							getBlobSizeFromId(data.desc.enable_iluminated ? BLOB_ID::BLOB_VERTEX_COLOR_PS : BLOB_ID::BLOB_UNLIT_VERTEX_COLOR_PS)
+							getBlobFromId(data.desc.enable_illuminated ? BLOB_ID::BLOB_VERTEX_COLOR_PS : BLOB_ID::BLOB_UNLIT_VERTEX_COLOR_PS),
+							getBlobSizeFromId(data.desc.enable_illuminated ? BLOB_ID::BLOB_VERTEX_COLOR_PS : BLOB_ID::BLOB_UNLIT_VERTEX_COLOR_PS)
 						));
 #endif
 
@@ -3005,8 +3005,8 @@ void Surface::initialize(const SURFACE_DESC* pDesc)
 					for (unsigned n = 0u; n < n_vertices; n++)
 						data.Vertices[n].vector = data.implicit_vertices[n].getVector4();
 
-					// If iluminated find normal vector.
-					if (data.desc.enable_iluminated)
+					// If illuminated find normal vector.
+					if (data.desc.enable_illuminated)
 					{
 						switch (data.desc.normal_computation)
 						{
@@ -3078,20 +3078,20 @@ void Surface::initialize(const SURFACE_DESC* pDesc)
 					// Create the corresponding Pixel Shader
 					if (data.desc.enable_transparency)
 #ifndef _DEPLOYMENT
-						AddBind(new PixelShader(data.desc.enable_iluminated ? PROJECT_DIR L"shaders/OITGlobalColorPS.cso" : PROJECT_DIR L"shaders/OITUnlitGlobalColorPS.cso"));
+						AddBind(new PixelShader(data.desc.enable_illuminated ? PROJECT_DIR L"shaders/OITGlobalColorPS.cso" : PROJECT_DIR L"shaders/OITUnlitGlobalColorPS.cso"));
 #else
 						AddBind(new PixelShader(
-							getBlobFromId(data.desc.enable_iluminated ? BLOB_ID::BLOB_OIT_GLOBAL_COLOR_PS : BLOB_ID::BLOB_OIT_UNLIT_GLOBAL_COLOR_PS),
-							getBlobSizeFromId(data.desc.enable_iluminated ? BLOB_ID::BLOB_OIT_GLOBAL_COLOR_PS : BLOB_ID::BLOB_OIT_UNLIT_GLOBAL_COLOR_PS)
+							getBlobFromId(data.desc.enable_illuminated ? BLOB_ID::BLOB_OIT_GLOBAL_COLOR_PS : BLOB_ID::BLOB_OIT_UNLIT_GLOBAL_COLOR_PS),
+							getBlobSizeFromId(data.desc.enable_illuminated ? BLOB_ID::BLOB_OIT_GLOBAL_COLOR_PS : BLOB_ID::BLOB_OIT_UNLIT_GLOBAL_COLOR_PS)
 						));
 #endif
 					else
 #ifndef _DEPLOYMENT
-						AddBind(new PixelShader(data.desc.enable_iluminated ? PROJECT_DIR L"shaders/GlobalColorPS.cso" : PROJECT_DIR L"shaders/UnlitGlobalColorPS.cso"));
+						AddBind(new PixelShader(data.desc.enable_illuminated ? PROJECT_DIR L"shaders/GlobalColorPS.cso" : PROJECT_DIR L"shaders/UnlitGlobalColorPS.cso"));
 #else
 						AddBind(new PixelShader(
-							getBlobFromId(data.desc.enable_iluminated ? BLOB_ID::BLOB_GLOBAL_COLOR_PS : BLOB_ID::BLOB_UNLIT_GLOBAL_COLOR_PS),
-							getBlobSizeFromId(data.desc.enable_iluminated ? BLOB_ID::BLOB_GLOBAL_COLOR_PS : BLOB_ID::BLOB_UNLIT_GLOBAL_COLOR_PS)
+							getBlobFromId(data.desc.enable_illuminated ? BLOB_ID::BLOB_GLOBAL_COLOR_PS : BLOB_ID::BLOB_UNLIT_GLOBAL_COLOR_PS),
+							getBlobSizeFromId(data.desc.enable_illuminated ? BLOB_ID::BLOB_GLOBAL_COLOR_PS : BLOB_ID::BLOB_UNLIT_GLOBAL_COLOR_PS)
 						));
 #endif
 
@@ -3139,8 +3139,8 @@ void Surface::initialize(const SURFACE_DESC* pDesc)
 						data.ColVertices[n].color = data.desc.output_color_func(data.implicit_vertices[n].x, data.implicit_vertices[n].y, data.implicit_vertices[n].z).getColor4();
 					}
 
-					// If iluminated find normal vector.
-					if (data.desc.enable_iluminated)
+					// If illuminated find normal vector.
+					if (data.desc.enable_illuminated)
 					{
 						switch (data.desc.normal_computation)
 						{
@@ -3212,20 +3212,20 @@ void Surface::initialize(const SURFACE_DESC* pDesc)
 					// Create the corresponding Pixel Shader and Blender
 					if (data.desc.enable_transparency)
 #ifndef _DEPLOYMENT
-						AddBind(new PixelShader(data.desc.enable_iluminated ? PROJECT_DIR L"shaders/OITVertexColorPS.cso" : PROJECT_DIR L"shaders/OITUnlitVertexColorPS.cso"));
+						AddBind(new PixelShader(data.desc.enable_illuminated ? PROJECT_DIR L"shaders/OITVertexColorPS.cso" : PROJECT_DIR L"shaders/OITUnlitVertexColorPS.cso"));
 #else
 						AddBind(new PixelShader(
-							getBlobFromId(data.desc.enable_iluminated ? BLOB_ID::BLOB_OIT_VERTEX_COLOR_PS : BLOB_ID::BLOB_OIT_UNLIT_VERTEX_COLOR_PS),
-							getBlobSizeFromId(data.desc.enable_iluminated ? BLOB_ID::BLOB_OIT_VERTEX_COLOR_PS : BLOB_ID::BLOB_OIT_UNLIT_VERTEX_COLOR_PS)
+							getBlobFromId(data.desc.enable_illuminated ? BLOB_ID::BLOB_OIT_VERTEX_COLOR_PS : BLOB_ID::BLOB_OIT_UNLIT_VERTEX_COLOR_PS),
+							getBlobSizeFromId(data.desc.enable_illuminated ? BLOB_ID::BLOB_OIT_VERTEX_COLOR_PS : BLOB_ID::BLOB_OIT_UNLIT_VERTEX_COLOR_PS)
 						));
 #endif
 					else
 #ifndef _DEPLOYMENT
-						AddBind(new PixelShader(data.desc.enable_iluminated ? PROJECT_DIR L"shaders/VertexColorPS.cso" : PROJECT_DIR L"shaders/UnlitVertexColorPS.cso"));
+						AddBind(new PixelShader(data.desc.enable_illuminated ? PROJECT_DIR L"shaders/VertexColorPS.cso" : PROJECT_DIR L"shaders/UnlitVertexColorPS.cso"));
 #else
 						AddBind(new PixelShader(
-							getBlobFromId(data.desc.enable_iluminated ? BLOB_ID::BLOB_VERTEX_COLOR_PS : BLOB_ID::BLOB_UNLIT_VERTEX_COLOR_PS),
-							getBlobSizeFromId(data.desc.enable_iluminated ? BLOB_ID::BLOB_VERTEX_COLOR_PS : BLOB_ID::BLOB_UNLIT_VERTEX_COLOR_PS)
+							getBlobFromId(data.desc.enable_illuminated ? BLOB_ID::BLOB_VERTEX_COLOR_PS : BLOB_ID::BLOB_UNLIT_VERTEX_COLOR_PS),
+							getBlobSizeFromId(data.desc.enable_illuminated ? BLOB_ID::BLOB_VERTEX_COLOR_PS : BLOB_ID::BLOB_UNLIT_VERTEX_COLOR_PS)
 						));
 #endif
 
@@ -3256,8 +3256,8 @@ void Surface::initialize(const SURFACE_DESC* pDesc)
 
 	data.pVSCB = AddBind(new ConstantBuffer(&data.vscBuff, VERTEX_CONSTANT_BUFFER));
 
-	// If iluminated is enabled bind the default lights
-	if (data.desc.enable_iluminated)
+	// If illuminated is enabled bind the default lights
+	if (data.desc.enable_illuminated)
 	{
 		if (data.desc.default_initial_lights)
 		{
@@ -3360,8 +3360,8 @@ void Surface::updateShape(Vector2f range_u, Vector2f range_v, Vector2f range_w)
 						}
 					}
 
-					// If iluminated find normal vector.
-					if (data.desc.enable_iluminated)
+					// If illuminated find normal vector.
+					if (data.desc.enable_illuminated)
 					{
 						switch (data.desc.normal_computation)
 						{
@@ -3477,8 +3477,8 @@ void Surface::updateShape(Vector2f range_u, Vector2f range_v, Vector2f range_w)
 						}
 					}
 
-					// If iluminated find normal vector.
-					if (data.desc.enable_iluminated)
+					// If illuminated find normal vector.
+					if (data.desc.enable_illuminated)
 					{
 						switch (data.desc.normal_computation)
 						{
@@ -3594,8 +3594,8 @@ void Surface::updateShape(Vector2f range_u, Vector2f range_v, Vector2f range_w)
 						}
 					}
 
-					// If iluminated find normal vector.
-					if (data.desc.enable_iluminated)
+					// If illuminated find normal vector.
+					if (data.desc.enable_illuminated)
 					{
 						switch (data.desc.normal_computation)
 						{
@@ -3714,8 +3714,8 @@ void Surface::updateShape(Vector2f range_u, Vector2f range_v, Vector2f range_w)
 						}
 					}
 
-					// If iluminated find normal vector.
-					if (data.desc.enable_iluminated)
+					// If illuminated find normal vector.
+					if (data.desc.enable_illuminated)
 					{
 						switch (data.desc.normal_computation)
 						{
@@ -3834,8 +3834,8 @@ void Surface::updateShape(Vector2f range_u, Vector2f range_v, Vector2f range_w)
 						}
 					}
 
-					// If iluminated find normal vector.
-					if (data.desc.enable_iluminated)
+					// If illuminated find normal vector.
+					if (data.desc.enable_illuminated)
 					{
 						switch (data.desc.normal_computation)
 						{
@@ -3959,8 +3959,8 @@ void Surface::updateShape(Vector2f range_u, Vector2f range_v, Vector2f range_w)
 						data.Vertices[n].vector = (vertex * data.desc.spherical_func(vertex.x, vertex.y, vertex.z)).getVector4();
 					}
 
-					// If iluminated find normal vector.
-					if (data.desc.enable_iluminated)
+					// If illuminated find normal vector.
+					if (data.desc.enable_illuminated)
 					{
 						switch (data.desc.normal_computation)
 						{
@@ -4018,8 +4018,8 @@ void Surface::updateShape(Vector2f range_u, Vector2f range_v, Vector2f range_w)
 						data.TexVertices[n].vector = (vertex * data.desc.spherical_func(vertex.x, vertex.y, vertex.z)).getVector4();
 					}
 
-					// If iluminated find normal vector.
-					if (data.desc.enable_iluminated)
+					// If illuminated find normal vector.
+					if (data.desc.enable_illuminated)
 					{
 						switch (data.desc.normal_computation)
 						{
@@ -4080,8 +4080,8 @@ void Surface::updateShape(Vector2f range_u, Vector2f range_v, Vector2f range_w)
 						data.ColVertices[n].color = data.desc.output_color_func(data.ColVertices[n].vector.x, data.ColVertices[n].vector.y, data.ColVertices[n].vector.z).getColor4();
 					}
 
-					// If iluminated find normal vector.
-					if (data.desc.enable_iluminated)
+					// If illuminated find normal vector.
+					if (data.desc.enable_illuminated)
 					{
 						switch (data.desc.normal_computation)
 						{
@@ -4154,8 +4154,8 @@ void Surface::updateShape(Vector2f range_u, Vector2f range_v, Vector2f range_w)
 						}
 					}
 
-					// If iluminated find normal vector.
-					if (data.desc.enable_iluminated)
+					// If illuminated find normal vector.
+					if (data.desc.enable_illuminated)
 					{
 						switch (data.desc.normal_computation)
 						{
@@ -4271,8 +4271,8 @@ void Surface::updateShape(Vector2f range_u, Vector2f range_v, Vector2f range_w)
 						}
 					}
 
-					// If iluminated find normal vector.
-					if (data.desc.enable_iluminated)
+					// If illuminated find normal vector.
+					if (data.desc.enable_illuminated)
 					{
 						switch (data.desc.normal_computation)
 						{
@@ -4388,8 +4388,8 @@ void Surface::updateShape(Vector2f range_u, Vector2f range_v, Vector2f range_w)
 						}
 					}
 
-					// If iluminated find normal vector.
-					if (data.desc.enable_iluminated)
+					// If illuminated find normal vector.
+					if (data.desc.enable_illuminated)
 					{
 						switch (data.desc.normal_computation)
 						{
@@ -4508,8 +4508,8 @@ void Surface::updateShape(Vector2f range_u, Vector2f range_v, Vector2f range_w)
 						}
 					}
 
-					// If iluminated find normal vector.
-					if (data.desc.enable_iluminated)
+					// If illuminated find normal vector.
+					if (data.desc.enable_illuminated)
 					{
 						switch (data.desc.normal_computation)
 						{
@@ -4628,8 +4628,8 @@ void Surface::updateShape(Vector2f range_u, Vector2f range_v, Vector2f range_w)
 						}
 					}
 
-					// If iluminated find normal vector.
-					if (data.desc.enable_iluminated)
+					// If illuminated find normal vector.
+					if (data.desc.enable_illuminated)
 					{
 						switch (data.desc.normal_computation)
 						{
@@ -5168,8 +5168,8 @@ void Surface::updateShape(Vector2f range_u, Vector2f range_v, Vector2f range_w)
 					for (unsigned n = 0u; n < n_vertices; n++)
 						data.Vertices[n].vector = data.implicit_vertices[n].getVector4();
 
-					// If iluminated find normal vector.
-					if (data.desc.enable_iluminated)
+					// If illuminated find normal vector.
+					if (data.desc.enable_illuminated)
 					{
 						switch (data.desc.normal_computation)
 						{
@@ -5214,8 +5214,8 @@ void Surface::updateShape(Vector2f range_u, Vector2f range_v, Vector2f range_w)
 						data.ColVertices[n].color = data.desc.output_color_func(data.implicit_vertices[n].x, data.implicit_vertices[n].y, data.implicit_vertices[n].z).getColor4();
 					}
 
-					// If iluminated find normal vector.
-					if (data.desc.enable_iluminated)
+					// If illuminated find normal vector.
+					if (data.desc.enable_illuminated)
 					{
 						switch (data.desc.normal_computation)
 						{
@@ -5435,7 +5435,7 @@ void Surface::updateScreenPosition(Vector2f screenDisplacement)
 	data.pVSCB->update(&data.vscBuff);
 }
 
-// If ilumination is enabled it sets the specified light to the specified parameters.
+// If illumination is enabled it sets the specified light to the specified parameters.
 // Eight lights are allowed. And the intensities are directional and diffused.
 
 void Surface::updateLight(unsigned id, Vector2f intensities, Color color, Vector3f position)
@@ -5446,8 +5446,8 @@ void Surface::updateLight(unsigned id, Vector2f intensities, Color color, Vector
 
 	SurfaceInternals& data = *(SurfaceInternals*)surfaceData;
 
-	USER_CHECK(data.desc.enable_iluminated,
-		"Trying to update a light on a Surface with ilumination disabled."
+	USER_CHECK(data.desc.enable_illuminated,
+		"Trying to update a light on a Surface with illumination disabled."
 	);
 
 	USER_CHECK(id < 8,
@@ -5458,7 +5458,7 @@ void Surface::updateLight(unsigned id, Vector2f intensities, Color color, Vector
 	data.pPSCB->update(&data.pscBuff);
 }
 
-// If ilumination is enabled clears all lights for the Surface.
+// If illumination is enabled clears all lights for the Surface.
 
 void Surface::clearLights()
 {
@@ -5468,8 +5468,8 @@ void Surface::clearLights()
 
 	SurfaceInternals& data = *(SurfaceInternals*)surfaceData;
 
-	USER_CHECK(data.desc.enable_iluminated,
-		"Trying to clear the lights on a Surface with ilumination disabled."
+	USER_CHECK(data.desc.enable_illuminated,
+		"Trying to clear the lights on a Surface with illumination disabled."
 	);
 
 	for (auto& light : data.pscBuff.lightsource)
@@ -5484,7 +5484,7 @@ void Surface::clearLights()
 -----------------------------------------------------------------------------------------------------------
 */
 
-// If ilumination is enabled, to the valid pointers it writes the specified lights data.
+// If illumination is enabled, to the valid pointers it writes the specified lights data.
 
 void Surface::getLight(unsigned id, Vector2f* intensities, Color* color, Vector3f* position)
 {
@@ -5494,8 +5494,8 @@ void Surface::getLight(unsigned id, Vector2f* intensities, Color* color, Vector3
 
 	SurfaceInternals& data = *(SurfaceInternals*)surfaceData;
 
-	USER_CHECK(data.desc.enable_iluminated,
-		"Trying to get a light of a Surface with ilumination disabled."
+	USER_CHECK(data.desc.enable_illuminated,
+		"Trying to get a light of a Surface with illumination disabled."
 	);
 
 	USER_CHECK(id < 8,

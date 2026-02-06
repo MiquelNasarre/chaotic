@@ -55,10 +55,10 @@ float4 main(VSOut vso, bool front : SV_IsFrontFace) : SV_Target
         exposure = dot(norm, lights[i].position - pos) / dist;
         
         dist2 = dist * dist;
-        // Add diffuse ilumination
+        // Add diffuse illumination
         float light = lights[i].intensity.g / dist2;
         
-        // Add direct ilumination
+        // Add direct illumination
         if (exposure > 0)
             light += lights[i].intensity.r * exposure / dist2;
         

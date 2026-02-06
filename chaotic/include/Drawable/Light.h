@@ -5,7 +5,7 @@
 -------------------------------------------------------------------------------------------------------
 -------------------------------------------------------------------------------------------------------
 Drawable class to draw point light sources in the scene. Given this library supports 
-ilumination it is only natural to have a drawable to represent such light sources.
+illumination it is only natural to have a drawable to represent such light sources.
 
 This object allows for drawing of light sources anywhere in you scene with any color or
 intensity. Note that the are not actual light sources for other drawables and you will 

@@ -171,6 +171,26 @@ public:
 			Mouse::resetWheel();
 			Mouse::clearBuffer();
 			break;
+
+		case WM_SYSKEYDOWN:
+		case WM_KEYDOWN:
+			if (Keyboard::getAutorepeat() || !Keyboard::isKeyPressed((unsigned char)wParam))
+				Keyboard::pushEvent(Keyboard::event::Pressed, (unsigned char)wParam);
+			Keyboard::setKeyPressed((unsigned char)wParam);
+			break;
+
+		case WM_SYSKEYUP:
+		case WM_KEYUP:
+			Keyboard::setKeyReleased((unsigned char)wParam);
+			Keyboard::pushEvent(Keyboard::event::Released, (unsigned char)wParam);
+			break;
+
+		case WM_MOUSEMOVE:
+			Mouse::setPosition(Vector2i(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam)));
+			Mouse::setScPosition(Vector2i(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam)) + data.Position);
+			Mouse::pushEvent(Mouse::event::Moved, Mouse::None);
+			break;
+
 		}
 #ifdef _INCLUDE_IMGUI
 		// Let ImGui handle the rest if he has focus
@@ -185,19 +205,6 @@ public:
 		{
 		case WM_CHAR:
 			Keyboard::pushChar((char)wParam);
-			break;
-
-		case WM_SYSKEYDOWN:
-		case WM_KEYDOWN:
-			if (Keyboard::getAutorepeat() || !Keyboard::isKeyPressed((unsigned char)wParam))
-				Keyboard::pushEvent(Keyboard::event::Pressed, (unsigned char)wParam);
-			Keyboard::setKeyPressed((unsigned char)wParam);
-			break;
-
-		case WM_SYSKEYUP:
-		case WM_KEYUP:
-			Keyboard::setKeyReleased((unsigned char)wParam);
-			Keyboard::pushEvent(Keyboard::event::Released, (unsigned char)wParam);
 			break;
 
 		case WM_LBUTTONDOWN:
@@ -230,12 +237,6 @@ public:
 		case WM_MBUTTONUP:
 			Mouse::pushEvent(Mouse::event::Released, Mouse::Middle);
 			Mouse::setButtonReleased(Mouse::Middle);
-			break;
-
-		case WM_MOUSEMOVE:
-			Mouse::setPosition(Vector2i(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam)));
-			Mouse::setScPosition(Vector2i(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam)) + data.Position);
-			Mouse::pushEvent(Mouse::event::Moved, Mouse::None);
 			break;
 
 		case WM_MOUSEWHEEL:
@@ -430,11 +431,11 @@ Window::Window(const WINDOW_DESC* pDesc): w_id { next_id++ }
 			data.w_persist = desc.wallpaper_persist;
 			data.monitor_idx = desc.monitor_idx;
 
-			// Spawn the workerW
+			// Get access to the Explorer
 			HWND progman = FindWindowW(L"Progman", nullptr);
 			WINDOW_CHECK(progman);
 
-			// This function makes the workerW appear
+			// Ask it kindly to spawn the workerW.
 			DWORD_PTR result = 0;
 			if (!SendMessageTimeoutW(progman, 0x052C, 0, 0, SMTO_NORMAL, 1000, &result))
 				WINDOW_LAST_ERROR();
@@ -442,7 +443,68 @@ Window::Window(const WINDOW_DESC* pDesc): w_id { next_id++ }
 			// Find that workerW window
 			HWND workerw = nullptr;
 			EnumWindows(EnumWindowsFindWorkerW, (LPARAM)&workerw);
-			WINDOW_CHECK(workerw);
+
+			// If you cannot find it fallback to regular window and pop message.
+			if (!workerw)
+			{
+				// Not a wallpaper anymore.
+				data.wallpaper = false;
+
+				// Use specified dimensions
+				data.Dimensions = desc.window_dim;
+
+				//	Calculate window size based on desired client region size
+				RECT wr;
+				wr.left = 100;
+				wr.right = desc.window_dim.x + wr.left;
+				wr.top = 100;
+				wr.bottom = desc.window_dim.y + wr.top;
+				if (!AdjustWindowRect(&wr, WS_CAPTION | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_SYSMENU | WS_OVERLAPPEDWINDOW, FALSE))
+					WINDOW_LAST_ERROR();
+
+				//	Create Window & get hWnd
+				HWND hWnd = CreateWindowExA(
+					NULL,
+					WindowClass::GetName(),
+					NULL,
+					WS_CAPTION | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_SYSMENU | WS_VISIBLE | WS_OVERLAPPEDWINDOW,
+					CW_USEDEFAULT,
+					CW_USEDEFAULT,
+					wr.right - wr.left,
+					wr.bottom - wr.top,
+					nullptr,
+					nullptr,
+					WindowClass::GetInstance(),
+					this
+				);
+
+				//	Check for error
+				WINDOW_CHECK(hWnd);
+
+				// Pop fallback message box.
+				auto messageBox = [](void*)
+					{
+						const char* info =
+							"Chaotic could not attach itself behind your desktop icons.\n\n"
+							"This feature relies on undocumented Windows behavior and is "
+							"not guaranteed to work on all system configurations.\n\n"
+							"Falling back to regular window creation.";
+
+						MessageBoxA(nullptr, info, "Wallpaper Mode Unavailable", MB_ICONEXCLAMATION);
+						return 0UL;
+					};
+
+				CloseHandle(CreateThread(
+					NULL,
+					0ULL,
+					messageBox,
+					nullptr,
+					0UL,
+					nullptr
+				));
+				
+				break;
+			}
 
 			// Virtual desktop size. Depending on monitor.
 			RECT vr = GetMonitorRectByIndex(desc.monitor_idx);
@@ -599,6 +661,13 @@ bool Window::hasFocus() const
 void Window::requestFocus()
 {
 	WindowInternals& data = *((WindowInternals*)WindowData);
+
+	USER_CHECK(!data.wallpaper,
+		"Calling requestFocus() on a Wallpaper window is not allowed.\n"
+		"Wallpaper windows do not get focus due to their nature.\n"
+		"Please consider other means of interaction with Wallpaper windows."
+	);
+
 	SetFocus(data.hWnd);
 }
 
@@ -760,6 +829,16 @@ void Window::setWallpaperMonitor(int monitor_idx)
 	DwmFlush();
 	SystemParametersInfoW(SPI_SETDESKWALLPAPER, 0, nullptr, SPIF_SENDCHANGE);
 	SetParent(data.hWnd, workerw);
+}
+
+// In the event of a failed Wallpaper creation the window fallsback to 
+// regular. This function returns whether the window is in wallpaper mode.
+
+bool Window::isWallpaperWindow() const
+{
+	WindowInternals& data = *((WindowInternals*)WindowData);
+
+	return data.wallpaper;
 }
 
 // For the wallpaper mode, it tells you if a specific monitor 
