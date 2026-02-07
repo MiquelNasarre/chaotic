@@ -863,7 +863,7 @@ void Graphics::enableTransparency()
 		rr.DestBlend = D3D11_BLEND_INV_SRC_ALPHA;
 		rr.BlendOp = D3D11_BLEND_OP_ADD;
 		rr.SrcBlendAlpha = D3D11_BLEND_ONE;
-		rr.DestBlendAlpha = D3D11_BLEND_ZERO;
+		rr.DestBlendAlpha = D3D11_BLEND_ONE;
 		rr.BlendOpAlpha = D3D11_BLEND_OP_ADD;
 		rr.RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
 

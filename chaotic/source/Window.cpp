@@ -336,6 +336,7 @@ private:
 		wc.lpszMenuName = nullptr;
 		wc.lpszClassName = GetName();
 		wc.hIconSm = nullptr;
+		wc.hCursor = LoadCursor(nullptr, IDC_ARROW);
 		RegisterClassExA(&wc);
 
 		// Set context awareness to avoid looking blurry on resized windows.
