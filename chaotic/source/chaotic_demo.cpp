@@ -1,4 +1,4 @@
-#include "../chaotic_headers/chaotic_defaults.h"
+#include "chaotic_defaults.h"
 #ifdef _ENABLE_CHAOTIC_DEMO
 
 // Demo Window base class. Since the demo is a multi window setting, some order is needed.

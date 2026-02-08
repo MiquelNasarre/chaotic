@@ -589,7 +589,7 @@ public:
 	// Does some basic event management, clears the buffer with the specified
 	// color and draws by order all the drawables in its list, then pushes the 
 	// frame to the window.
-	void drawFrame(Color background = Color::Black)
+	void drawFrame(Color background = Color::Transparent)
 	{
 		// Set this window as the render target and clear the buffer.
 		setRenderTarget();
