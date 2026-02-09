@@ -103,7 +103,7 @@ public:
 	// handler and process events will catch it and return this window ID so that the
 	// user can close it if he pleases. The only way of closing a window properly is 
 	// through the desctructor.
-	void close();
+	void close() const;
 
 public:
 	// --- CONSTRUCTOR / DESTRUCTOR ---
@@ -126,6 +126,20 @@ public:
 
 	// Sets the focus to the current window.
 	void requestFocus();
+
+	// Enumerator for all the defalut type of cursors. To see the cursor each one
+	// produces, they reproduce the original Win32 macros found at the website 
+	// URL: https://learn.microsoft.com/en-us/windows/win32/menurc/about-cursors
+	enum class CURSOR : unsigned
+	{
+		ARROW      , IBEAM   , WAIT    , CROSS , 
+		UPARROW    , SIZENWSE, SIZENESW, SIZEWE,
+		SIZENS     , SIZEALL , NO      , HAND  , 
+		APPSTARTING, HELP    , PIN     , PERSON,
+	};
+
+	// Sets the window cursor to the one specified.
+	void setCursor(CURSOR cursor);
 
 	// Set the title of the window, allows for formatted strings.
 	void setTitle(const char* name, ...);

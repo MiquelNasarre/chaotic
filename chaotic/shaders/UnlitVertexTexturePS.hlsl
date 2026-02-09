@@ -14,5 +14,5 @@ struct VSOut
 float4 main(VSOut vso) : SV_Target
 {
     // Sample from texture
-    return _texture.Sample(_samp, vso.coord.xy);
+    return float4(_texture.Sample(_samp, vso.coord.xy).rgb, 1.f);
 }

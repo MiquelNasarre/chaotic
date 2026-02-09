@@ -597,6 +597,21 @@ void Graphics::pushFrame()
 			// Unmap resource
 			_context->Unmap(data.pCaptureStaging.Get(), 0);
 
+			// If transparent, adjust image RGB values based on alpha.
+			if (data.oitEnabled)
+			{
+				Color* pixels = data.captureImage->pixels();
+				const unsigned pixel_count = WindowDim.x * WindowDim.y;
+				for (unsigned i = 0u; i < pixel_count; i++)
+				{
+					float alpha = pixels[i].A / 255.f;
+					Color col = pixels[i] / alpha;
+					pixels[i].R = col.R;
+					pixels[i].G = col.G;
+					pixels[i].B = col.B;
+				}
+			}
+
 			// Reset image buffer.
 			data.captureImage = nullptr;
 		};
@@ -863,7 +878,7 @@ void Graphics::enableTransparency()
 		rr.DestBlend = D3D11_BLEND_INV_SRC_ALPHA;
 		rr.BlendOp = D3D11_BLEND_OP_ADD;
 		rr.SrcBlendAlpha = D3D11_BLEND_ONE;
-		rr.DestBlendAlpha = D3D11_BLEND_ONE;
+		rr.DestBlendAlpha = D3D11_BLEND_INV_SRC_ALPHA;
 		rr.BlendOpAlpha = D3D11_BLEND_OP_ADD;
 		rr.RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
 

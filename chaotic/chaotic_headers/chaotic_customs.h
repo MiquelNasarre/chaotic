@@ -60,6 +60,10 @@ the DirectX11 and Win32 dependencies used to create the internals of the library
 // Toggle to enable and disable embedded resources inside the header.
 #define _INCLUDE_EMBEDDED
 
+// If enabled, the function to genenrate the embeddings is also included. 
+// This only works if the function was also included during compilation time.
+//#define _INCLUDE_EMBEDDED_GENERATION
+
 // Imports chaotic.h classes with Bindable class
 #define _CHAOTIC_CUSTOMS
 #include "chaotic.h"
@@ -853,6 +857,11 @@ const void* getBlobFromId(BLOB_ID id) noexcept;
 
 // Returns the size in bytes of the blob data.
 size_t getBlobSizeFromId(BLOB_ID id) noexcept;
+
+#ifdef _INCLUDE_EMBEDDED_GENERATION
+// Function used to generate the embedded resources.
+void generateEmbedded(const char* out_filename);
+#endif
 
 #undef _INCLUDE_EMBEDDED
 #endif // _INCLUDE_EMBEDDED

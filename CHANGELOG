@@ -1,0 +1,20 @@
+Chaotic CHANGELOG
+
+This document holds changes made to the library across different releases.
+
+---------------------------------------------------------------------------
+ VERSION 1.01 (In Progress)
+---------------------------------------------------------------------------
+
+Additions:
+
+- Added CHANGELOG!!
+- Added Window::setCursor() to control window cursor.
+- Added generateEmbedded() function to generate the embedded_resources.cpp file.
+  The function is disabled on release under the macro _INCLUDE_EMBEDDED_GENERATION.
+
+Fixes:
+
+- Fixed ImGui cursor flickering bug.
+- Small change/fix on the Hopf Fibration Helper window inside chaotic_demo().
+- Fixed frame-capturing bug that produced incorrect coloring on transparent object screenshots.

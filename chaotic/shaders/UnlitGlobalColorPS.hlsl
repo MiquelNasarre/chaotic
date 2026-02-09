@@ -6,5 +6,5 @@ cbuffer GlobalColor : register(b1)
 
 float4 main() : SV_Target
 {
-	return color;
+	return float4(color.rgb, 1.f);
 }

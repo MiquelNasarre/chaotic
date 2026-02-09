@@ -13,5 +13,5 @@ float4 main(VSOut vso) : SV_Target
     // Get world-space view ray direction
     float3 d = normalize(vso.dir); 
     // Return sample from cubemap
-    return envMap.Sample(samp, d);
+    return float4(envMap.Sample(samp, d).rgb, 1.f);
 }

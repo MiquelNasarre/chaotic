@@ -39,6 +39,7 @@
     <ClCompile Include="source\Drawable\Polyhedron.cpp" />
     <ClCompile Include="source\Drawable\Scatter.cpp" />
     <ClCompile Include="source\Drawable\Surface.cpp" />
+    <ClCompile Include="source\embedded_generation.cpp" />
     <ClCompile Include="source\embedded_resources.cpp" />
     <ClCompile Include="source\Error\ChaoticError.cpp" />
     <ClCompile Include="source\Error\DxgiInfoManager.cpp" />

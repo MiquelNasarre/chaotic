@@ -64,6 +64,12 @@ public:
 	// If it's bound to a window it unbinds it.
 	void unbind();
 
+	// Whether ImGui is currently capturing mouse events.
+	bool wantCaptureMouse();
+
+	// Whether ImGui is currently capturing keyboard events.
+	bool wantCaptureKeyboard();
+
 private:
 	// Stores the pointer to the ImGui context of the specific window of the instance.
 	void* Context = nullptr;

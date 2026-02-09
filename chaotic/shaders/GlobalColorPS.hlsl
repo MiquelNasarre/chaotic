@@ -64,5 +64,5 @@ float4 main(VSOut vso, bool front : SV_IsFrontFace) : SV_Target
     }
     
     // Return light composition with global color
-    return color * totalLight;
+    return float4(color.rgb * totalLight.rgb, 1.f);
 }

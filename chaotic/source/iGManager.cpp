@@ -145,6 +145,44 @@ void iGManager::unbind()
 		ImGui::SetCurrentContext(current);
 }
 
+// Whether ImGui is currently capturing mouse events.
+
+bool iGManager::wantCaptureMouse()
+{
+	// Store the current imGui context if exists and set current.
+	ImGuiContext* current = ImGui::GetCurrentContext();
+	ImGui::SetCurrentContext((ImGuiContext*)Context);
+
+	// Check if current IO wants mouse capture.
+	ImGuiIO& io = ImGui::GetIO();
+	bool wants = io.WantCaptureMouse;
+
+	// Go back to previous context if existed.
+	if (current)
+		ImGui::SetCurrentContext(current);
+
+	return wants;
+}
+
+// Whether ImGui is currently capturing keyboard events.
+
+bool iGManager::wantCaptureKeyboard()
+{
+	// Store the current imGui context if exists and set current.
+	ImGuiContext* current = ImGui::GetCurrentContext();
+	ImGui::SetCurrentContext((ImGuiContext*)Context);
+
+	// Check if current IO wants mouse capture.
+	ImGuiIO& io = ImGui::GetIO();
+	bool wants = io.WantCaptureKeyboard;
+
+	// Go back to previous context if existed.
+	if (current)
+		ImGui::SetCurrentContext(current);
+
+	return wants;
+}
+
 // Called by the MSGHandlePipeline lets ImGui handle the message flow
 // if imGui is active and currently has focus on the window.
 

@@ -9,5 +9,5 @@ struct VSOut
 
 float4 main(VSOut vso) : SV_Target
 {
-    return vso.color;
+    return float4(vso.color.rgb, 1.f);
 }

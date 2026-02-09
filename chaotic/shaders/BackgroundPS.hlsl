@@ -10,5 +10,5 @@ struct VSOut
 
 float4 main(VSOut vso) : SV_Target
 {
-    return backgrd.Sample(splr, vso.tex);
+    return float4(backgrd.Sample(splr, vso.tex).rgb, 1.f);
 }

@@ -540,7 +540,7 @@ private:
 		cache_sin_t = new float[num_points_curve];
 		cache_cos_t = new float[num_points_curve];
 
-		const float step = 2.f * 3.14159265f / num_points_curve;
+		const float step = 2.f * 3.14159265f / (num_points_curve - 1.f);
 		for (unsigned i = 0; i < num_points_curve; i++)
 		{
 			cache_cos_t[i] = cosf(i * step);
@@ -733,7 +733,8 @@ public:
 		imgui.pushSliderInt((int*)&num_fibers, {1,400}, "Fibers");
 		imgui.pushSliderInt((int*)&my_alpha, { 0,255 }, "Alpha");
 		imgui.initial_size = { 315,190 };
-		imgui.inject(&initial_popup);
+		if (wallpaper.isWallpaperWindow())
+			imgui.inject(&initial_popup);
 #endif
 	}
 

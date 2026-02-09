@@ -1934,7 +1934,7 @@ public:
 	// handler and process events will catch it and return this window ID so that the
 	// user can close it if he pleases. The only way of closing a window properly is 
 	// through the desctructor.
-	void close();
+	void close() const;
 
 public:
 	// --- CONSTRUCTOR / DESTRUCTOR ---
@@ -1957,6 +1957,20 @@ public:
 
 	// Sets the focus to the current window.
 	void requestFocus();
+
+	// Enumerator for all the defalut type of cursors. To see the cursor each one
+	// produces, they reproduce the original Win32 macros found at the website 
+	// URL: https://learn.microsoft.com/en-us/windows/win32/menurc/about-cursors
+	enum class CURSOR
+	{
+		ARROW      , IBEAM   , WAIT    , CROSS , 
+		UPARROW    , SIZENWSE, SIZENESW, SIZEWE,
+		SIZENS     , SIZEALL , NO      , HAND  , 
+		APPSTARTING, HELP    , PIN     , PERSON,
+	};
+
+	// Sets the window cursor to the one specified.
+	void setCursor(CURSOR cursor);
 
 	// Set the title of the window, allows for formatted strings.
 	void setTitle(const char* name, ...);
@@ -3184,6 +3198,12 @@ public:
 	// If it's bound to a window it unbinds it.
 	void unbind();
 
+	// Whether ImGui is currently capturing mouse events.
+	bool wantCaptureMouse();
+
+	// Whether ImGui is currently capturing keyboard events.
+	bool wantCaptureKeyboard();
+
 private:
 	// Stores the pointer to the ImGui context of the specific window of the instance.
 	void* Context = nullptr;
@@ -3222,14 +3242,14 @@ resolution to 1ms by default, modifiable with set_sleep_timer_resolution_1ms().
 -----------------------------------------------------------------------------------------------------------
 */
 
-#define DEFAULT_TIMER_CAP_ 60u // Default max number of markers for Timer
-
 // Definition of the class, everything in this header is contained inside the class Timer.
 
 // A timer object can be generated anywhere in your code, and will run independently of 
 // the other timers. Upon construction the timer is reset and a first push is made.
 class Timer {
 private:
+	// Default max number of markers for Timer.
+	static constexpr unsigned DEFAULT_TIMER_CAP_ = 60u;
 
 	// Time stamps history ring
 

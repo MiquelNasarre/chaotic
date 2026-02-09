@@ -16,14 +16,14 @@ resolution to 1ms by default, modifiable with set_sleep_timer_resolution_1ms().
 -------------------------------------------------------------------------------------------------------
 */
 
-#define DEFAULT_TIMER_CAP_ 60u // Default max number of markers for Timer
-
 // Definition of the class, everything in this header is contained inside the class Timer.
 
 // A timer object can be generated anywhere in your code, and will run independently of 
 // the other timers. Upon construction the timer is reset and a first push is made.
 class Timer {
 private:
+	// Default max number of markers for Timer.
+	static constexpr unsigned DEFAULT_TIMER_CAP_ = 60u;
 
 	// Time stamps history ring
 

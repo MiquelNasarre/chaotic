@@ -42,6 +42,8 @@ struct WindowInternals
 	bool w_persist = false;		// Whether the wallpaper persisits past destructor.
 	int monitor_idx = 0;		// Stores the last monitor IDX used in wallpaper mode.
 
+	HCURSOR cursor = LoadCursor(nullptr, IDC_ARROW);  // Stores the current window cursor.
+
 	static inline bool noFrameUpdate = false;	// Schedules next frame time to be skipped.
 	static inline float frame = 0.f;			// Stores the time of the last frame push.
 	static inline float Frametime = 0.f;		// Stores the specified time for each frame.
@@ -191,7 +193,20 @@ public:
 			Mouse::pushEvent(Mouse::event::Moved, Mouse::None);
 			break;
 
+		case WM_SETCURSOR:
+			if (LOWORD(lParam) == HTCLIENT
+#ifdef _INCLUDE_IMGUI
+				&& (data.imGui == nullptr || !data.imGui->wantCaptureMouse())
+#endif
+				)
+			{
+				if (GetCursor() != data.cursor)
+					SetCursor(data.cursor);
+				return TRUE;
+			}
+			break;
 		}
+
 #ifdef _INCLUDE_IMGUI
 		// Let ImGui handle the rest if he has focus
 
@@ -336,7 +351,6 @@ private:
 		wc.lpszMenuName = nullptr;
 		wc.lpszClassName = GetName();
 		wc.hIconSm = nullptr;
-		wc.hCursor = LoadCursor(nullptr, IDC_ARROW);
 		RegisterClassExA(&wc);
 
 		// Set context awareness to avoid looking blurry on resized windows.
@@ -403,7 +417,7 @@ unsigned Window::processEvents()
 
 // Closes the window.
 
-void Window::close()
+void Window::close() const
 {
 	// Send a custom message to the thread's message queue
 	PostThreadMessage(GetCurrentThreadId(), WM_APP_WINDOW_CLOSE, (WPARAM)getID(), 0);
@@ -455,7 +469,7 @@ Window::Window(const WINDOW_DESC* pDesc): w_id { next_id++ }
 				data.Dimensions = desc.window_dim;
 
 				//	Calculate window size based on desired client region size
-				RECT wr;
+				RECT wr = {};
 				wr.left = 100;
 				wr.right = desc.window_dim.x + wr.left;
 				wr.top = 100;
@@ -567,7 +581,7 @@ Window::Window(const WINDOW_DESC* pDesc): w_id { next_id++ }
 			data.Dimensions = desc.window_dim;
 
 			//	Calculate window size based on desired client region size
-			RECT wr;
+			RECT wr = {};
 			wr.left = 100;
 			wr.right = desc.window_dim.x + wr.left;
 			wr.top = 100;
@@ -672,6 +686,60 @@ void Window::requestFocus()
 	SetFocus(data.hWnd);
 }
 
+// Sets the window cursor to the one specified.
+
+void Window::setCursor(CURSOR cursor)
+{
+	WindowInternals& data = *((WindowInternals*)WindowData);
+
+	// Load all cursors on first call.
+	static const HCURSOR cursors[] =
+	{
+		LoadCursor(nullptr, IDC_ARROW),
+		LoadCursor(nullptr, IDC_IBEAM),
+		LoadCursor(nullptr, IDC_WAIT),
+		LoadCursor(nullptr, IDC_CROSS),
+		LoadCursor(nullptr, IDC_UPARROW),
+		LoadCursor(nullptr, IDC_SIZENWSE),
+		LoadCursor(nullptr, IDC_SIZENESW),
+		LoadCursor(nullptr, IDC_SIZEWE),
+		LoadCursor(nullptr, IDC_SIZENS),
+		LoadCursor(nullptr, IDC_SIZEALL),
+		LoadCursor(nullptr, IDC_NO),
+		LoadCursor(nullptr, IDC_HAND),
+		LoadCursor(nullptr, IDC_APPSTARTING),
+		LoadCursor(nullptr, IDC_HELP),
+		LoadCursor(nullptr, IDC_PIN),
+		LoadCursor(nullptr, IDC_PERSON),
+	};
+
+	// Make sure all loaded correctly.
+	static bool is_first = true;
+	if (is_first)
+	{
+		is_first = false;
+		for (HCURSOR h : cursors)
+			WINDOW_CHECK(h);
+	}
+
+	// Check that the value is coherent.
+	USER_CHECK((unsigned)cursor < sizeof(cursors),
+		"Invalid cursor value received when updating cursor.\n"
+		"Make sure you send a valid cursor from the enumerator."
+	);
+
+	// Set cursor according to the enum value.
+	data.cursor = cursors[(unsigned)cursor];
+
+	// If has focus and mouse is in the client region set the cursor now.
+	if (hasFocus())
+	{
+		Vector2i mouse = Mouse::getPosition();
+		if (mouse.x >= 0 && mouse.y >= 0 && mouse.x < data.Dimensions.x && mouse.y < data.Dimensions.y)
+			SetCursor(data.cursor);
+	}
+}
+
 // Set the title of the window, allows for formatted strings.
 
 void Window::setTitle(const char* fmt_name, ...)
@@ -734,7 +802,7 @@ void Window::setDimensions(Vector2i Dim)
 		"Please use setWallpaperMonitor to adjust wallpaper window."
 	);
 
-	RECT wr;
+	RECT wr = {};
 	wr.left = 100;
 	wr.right = width + wr.left;
 	wr.top = 100;

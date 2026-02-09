@@ -12,6 +12,10 @@ file that contains all the necessary resources inside.
 -------------------------------------------------------------------------------------------------------
 */
 
+// If enabled, the function to genenrate the embeddings is also built in. Enable just 
+// to generate embeddings, then disable again to avoid unnecessary compiled functions.
+//#define _INCLUDE_EMBEDDED_GENERATION
+
 // List of all the different files stored as bytecode blobs.
 enum class BLOB_ID
 {
@@ -52,3 +56,8 @@ const void* getBlobFromId(BLOB_ID id) noexcept;
 
 // Returns the size in bytes of the blob data.
 unsigned long long getBlobSizeFromId(BLOB_ID id) noexcept;
+
+#ifdef _INCLUDE_EMBEDDED_GENERATION
+// Function used to generate the embedded resources.
+void generateEmbedded(const char* out_filename);
+#endif
