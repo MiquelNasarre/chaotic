@@ -58,7 +58,7 @@ public:
 	constexpr const char* GetOrigin() const noexcept { return origin; }
 	constexpr const char* GetInfo()   const noexcept { return info;   }
 
-	// Creates a default message box using Win32 with the error data.
+	// Reports the error and aborts the process.
 	[[noreturn]] void PopMessageBoxAbort() const noexcept;
 protected:
 	int line;				// Stores the line where the error was found.
@@ -70,5 +70,4 @@ protected:
 	// Pointer to the what buffer to be used by inheritance.
 	char info[2048] = {};
 };
-
 

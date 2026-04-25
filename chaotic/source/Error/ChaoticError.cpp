@@ -1,4 +1,9 @@
-#include "WinHeader.h"
+#include "Error/_erDefault.h"
+#include "Error/_erGraphics.h"
+#ifdef _WIN32
+#include <Windows.h>
+#include "Error/_erWindow.h"
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -13,12 +18,17 @@ ChaoticError::ChaoticError(int line, const char* _file) noexcept
 	snprintf(origin, 512, "\n\n[File] %s\n\n[Line] %i", _file, line);
 }
 
-// Creates a default message box using Win32 with the error data.
+// Reports the error and aborts the process.
 
 void ChaoticError::PopMessageBoxAbort() const noexcept
 {
+#ifdef _WIN32
 	MessageBoxA(nullptr, info, GetType(), MB_OK | MB_ICONEXCLAMATION);
 	ExitProcess(EXIT_FAILURE);
+#else
+	fprintf(stderr, "%s\n%s\n", GetType(), info);
+	abort();
+#endif
 }
 
 /*
@@ -59,6 +69,7 @@ HrError::HrError(int line, const char* file, long hr, const char* infoMsgs) noex
 {
 	char description[512] = {};
 
+#ifdef _WIN32
 	// Try Win32 message for HRESULT_FROM_WIN32 codes
 	DWORD err = HRESULT_CODE(hr);
 	DWORD flags = FORMAT_MESSAGE_ALLOCATE_BUFFER |
@@ -89,6 +100,9 @@ HrError::HrError(int line, const char* file, long hr, const char* infoMsgs) noex
 	snprintf(description, 512, "Unknown error (0x%8X)\n", (unsigned)hr);
 
 description_done:
+#else
+	snprintf(description, 512, "Unknown error (0x%08X)\n", (unsigned)hr);
+#endif
 	snprintf(info, 2048,
 		"\n[Error Code]  0x%08X"
 		"\n\n[Description]\n%s"
@@ -104,6 +118,7 @@ description_done:
 --------------------------------------------------------------------------------------------
 */
 
+#ifdef _WIN32
 // Constructor initializes the public Error and stores the HRESULT.
 
 WindowError::WindowError(int line, const char* file, DWORD dw) noexcept
@@ -133,6 +148,7 @@ WindowError::WindowError(int line, const char* file, DWORD dw) noexcept
 	if (pMsgBuf)
 		LocalFree(pMsgBuf);
 }
+#endif
 
 /*
 --------------------------------------------------------------------------------------------

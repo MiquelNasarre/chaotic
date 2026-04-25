@@ -40,10 +40,10 @@ struct Color
 
 	// Initializes through a float*
 	constexpr explicit Color(const _float4color col)
-		:	R{ unsigned char(col.r * 255.f) },
-			G{ unsigned char(col.g * 255.f) },
-			B{ unsigned char(col.b * 255.f) },
-			A{ unsigned char(col.a * 255.f) } {}
+		:	R{ static_cast<unsigned char>(col.r * 255.f) },
+			G{ static_cast<unsigned char>(col.g * 255.f) },
+			B{ static_cast<unsigned char>(col.b * 255.f) },
+			A{ static_cast<unsigned char>(col.a * 255.f) } {}
 
 	// Default colors for convenience
 	static const Color Black;

@@ -6,6 +6,7 @@
 lib/
 bin/
 .intermediate/
+build/
 
 # Shader Builds
 *.cso

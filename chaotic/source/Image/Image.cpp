@@ -7,6 +7,31 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <cmath>
+
+static inline FILE* chaotic_fopen(const char* filename, const char* mode)
+{
+    FILE* file = nullptr;
+#ifdef _WIN32
+    fopen_s(&file, filename, mode);
+#else
+    file = fopen(filename, mode);
+#endif
+    return file;
+}
+
+static inline void chaotic_copy_filename(char* dst, size_t dst_size, const char* src)
+{
+    if (!dst_size)
+        return;
+
+#ifdef _WIN32
+    strncpy_s(dst, dst_size, src, dst_size - 1u);
+#else
+    strncpy(dst, src, dst_size - 1u);
+#endif
+    dst[dst_size - 1u] = '\0';
+}
 
 /*
 -------------------------------------------------------------------------------------------------------
@@ -176,8 +201,7 @@ bool Image::save(const char* filename_) const
         return 0;
 
     char filename[512];
-    strncpy_s(filename, filename_, 507);
-    filename[507] = '\0';
+    chaotic_copy_filename(filename, sizeof(filename), filename_);
 
     // Force the correct extension
     char* base = filename;
@@ -193,8 +217,7 @@ bool Image::save(const char* filename_) const
     end[3] = 'p';
     end[4] = '\0';
 
-    FILE* file = nullptr;
-    fopen_s(&file, filename, "wb");
+    FILE* file = chaotic_fopen(filename, "wb");
     if (!file) 
         return false;
 
@@ -271,8 +294,7 @@ bool Image::load(const char* filename_)
         return 0;
 
     char filename[512];
-    strncpy_s(filename, filename_, 507);
-    filename[507] = '\0';
+    chaotic_copy_filename(filename, sizeof(filename), filename_);
 
     // Force the correct extension
     char* base = filename;
@@ -288,8 +310,7 @@ bool Image::load(const char* filename_)
     end[3] = 'p';
     end[4] = '\0';
 
-    FILE* file = nullptr;
-    fopen_s(&file, filename, "rb");
+    FILE* file = chaotic_fopen(filename, "rb");
     if (!file) return false;
 
     // Check signature

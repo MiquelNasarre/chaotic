@@ -2,10 +2,49 @@
 #include "Bindable/BindableBase.h"
 
 #include "Error/_erDefault.h"
+#include "chaotic/render/ScatterGeometry.h"
 
 #ifdef _DEPLOYMENT
 #include "embedded_resources.h"
 #endif
+
+namespace
+{
+	chaotic::render::ScatterColoring makeRenderScatterColoring(SCATTER_DESC::SCATTER_COLORING coloring)
+	{
+		switch (coloring)
+		{
+		case SCATTER_DESC::POINT_COLORING: return chaotic::render::ScatterColoring::Point;
+		case SCATTER_DESC::GLOBAL_COLORING: return chaotic::render::ScatterColoring::Global;
+		default: return chaotic::render::ScatterColoring::Global;
+		}
+	}
+
+	chaotic::render::ScatterBlending makeRenderScatterBlending(SCATTER_DESC::BLENDING_MODE blending)
+	{
+		switch (blending)
+		{
+		case SCATTER_DESC::TRANSPARENT_POINTS: return chaotic::render::ScatterBlending::Transparent;
+		case SCATTER_DESC::OPAQUE_POINTS: return chaotic::render::ScatterBlending::Opaque;
+		case SCATTER_DESC::GLOWING_POINTS: return chaotic::render::ScatterBlending::Glow;
+		default: return chaotic::render::ScatterBlending::Glow;
+		}
+	}
+
+	chaotic::render::ScatterDesc makeRenderScatterDesc(const SCATTER_DESC& desc)
+	{
+		return {
+			desc.point_list,
+			desc.point_count,
+			makeRenderScatterColoring(desc.coloring),
+			desc.global_color,
+			desc.color_list,
+			makeRenderScatterBlending(desc.blending),
+			desc.enable_updates,
+			desc.line_mesh
+		};
+	}
+}
 
 /*
 -----------------------------------------------------------------------------------------------------------
@@ -16,13 +55,7 @@
 // Struct that stores the internal data for a given Scatter object.
 struct ScatterInternals
 {
-	_float4vector* Points = nullptr;
-
-	struct ColPoint
-	{
-		_float4vector position;
-		_float4color color;
-	}*ColPoints = nullptr;
+	chaotic::render::ScatterGeometry geometry;
 
 	struct VSconstBuffer
 	{
@@ -72,12 +105,6 @@ Scatter::~Scatter()
 
 	ScatterInternals& data = *(ScatterInternals*)scatterData;
 
-	if (data.Points)
-		delete[] data.Points;
-
-	if (data.ColPoints)
-		delete[] data.ColPoints;
-
 	delete& data;
 }
 
@@ -115,23 +142,18 @@ void Scatter::initialize(const SCATTER_DESC* pDesc)
 		"If you want to set the Scatter to line-mesh the number of points must be divisible by two."
 	);
 
+	data.geometry.reset(makeRenderScatterDesc(data.desc));
+
 	switch (data.desc.coloring)
 	{
 	case SCATTER_DESC::GLOBAL_COLORING:
 	{
-		data.Points = new _float4vector[data.desc.point_count];
-
-		for (unsigned n = 0u; n < data.desc.point_count; n++)
-			data.Points[n] = data.desc.point_list[n].getVector4();
-
-		data.pUpdateVB = AddBind(new VertexBuffer(data.Points, data.desc.point_count, data.desc.enable_updates ? VB_USAGE_DYNAMIC : VB_USAGE_DEFAULT));
-
-		// If updates disabled delete the Points
-		if (!data.desc.enable_updates)
-		{
-			delete[] data.Points;
-			data.Points = nullptr;
-		}
+		data.pUpdateVB = AddBind(new VertexBuffer(
+			data.geometry.vertexData(),
+			data.geometry.vertexStride(),
+			data.geometry.pointCount(),
+			data.desc.enable_updates ? VB_USAGE_DYNAMIC : VB_USAGE_DEFAULT
+		));
 		// Create the corresponding Vertex Shader
 #ifndef _DEPLOYMENT
 		VertexShader* pvs = AddBind(new VertexShader(PROJECT_DIR L"shaders/CurveVS.cso"));
@@ -178,7 +200,7 @@ void Scatter::initialize(const SCATTER_DESC* pDesc)
 		AddBind(new InputLayout(ied, 1u, pvs));
 
 		// Create the constant buffer for the global color.
-		_float4color col = data.desc.global_color.getColor4();
+		_float4color col = data.geometry.globalColor();
 		data.pGlobalColorCB = AddBind(new ConstantBuffer(&col, PIXEL_CONSTANT_BUFFER, 1u /*Slot*/));
 		break;
 	}
@@ -189,22 +211,12 @@ void Scatter::initialize(const SCATTER_DESC* pDesc)
 			"Found nullptr when trying to access a color list to create a Scatter."
 		);
 
-		data.ColPoints = new ScatterInternals::ColPoint[data.desc.point_count];
-
-		for (unsigned n = 0u; n < data.desc.point_count; n++)
-		{
-			data.ColPoints[n].position = data.desc.point_list[n].getVector4();
-			data.ColPoints[n].color = data.desc.color_list[n].getColor4();
-		}
-
-		data.pUpdateVB = AddBind(new VertexBuffer(data.ColPoints, data.desc.point_count, data.desc.enable_updates ? VB_USAGE_DYNAMIC : VB_USAGE_DEFAULT));
-
-		// If updates disabled delete the points
-		if (!data.desc.enable_updates)
-		{
-			delete[] data.ColPoints;
-			data.ColPoints = nullptr;
-		}
+		data.pUpdateVB = AddBind(new VertexBuffer(
+			data.geometry.vertexData(),
+			data.geometry.vertexStride(),
+			data.geometry.pointCount(),
+			data.desc.enable_updates ? VB_USAGE_DYNAMIC : VB_USAGE_DEFAULT
+		));
 		// Create the corresponding Vertex Shader
 #ifndef _DEPLOYMENT
 		VertexShader* pvs = AddBind(new VertexShader(PROJECT_DIR L"shaders/ColorCurveVS.cso"));
@@ -297,22 +309,13 @@ void Scatter::updatePoints(Vector3f* point_list)
 		"Trying to update the points on a Scatter with updates disabled."
 	);
 
-	switch (data.desc.coloring)
-	{
-	case SCATTER_DESC::GLOBAL_COLORING:
-		for (unsigned i = 0u; i < data.desc.point_count; i++)
-			data.Points[i] = point_list[i].getVector4();
-
-		data.pUpdateVB->updateVertices(data.Points, data.desc.point_count);
-		break;
-
-	case SCATTER_DESC::POINT_COLORING:
-		for (unsigned i = 0u; i < data.desc.point_count; i++)
-			data.ColPoints[i].position = point_list[i].getVector4();
-
-		data.pUpdateVB->updateVertices(data.ColPoints, data.desc.point_count);
-		break;
-	}
+	data.desc.point_list = point_list;
+	data.geometry.updatePoints(point_list);
+	data.pUpdateVB->updateVertices(
+		data.geometry.vertexData(),
+		data.geometry.vertexStride(),
+		data.geometry.pointCount()
+	);
 }
 
 // If updates are enabled, and coloring is with a list, this function allows to change 
@@ -339,10 +342,13 @@ void Scatter::updateColors(Color* color_list)
 		"Trying to update the colors on a Scatter with updates disabled."
 	);
 
-	for (unsigned i = 0u; i < data.desc.point_count; i++)
-		data.ColPoints[i].color = color_list[i].getColor4();
-
-	data.pUpdateVB->updateVertices(data.ColPoints, data.desc.point_count);
+	data.desc.color_list = color_list;
+	data.geometry.updateColors(color_list);
+	data.pUpdateVB->updateVertices(
+		data.geometry.vertexData(),
+		data.geometry.vertexStride(),
+		data.geometry.pointCount()
+	);
 }
 
 // If the coloring is set to global, updates the global Scatter color.
@@ -359,7 +365,10 @@ void Scatter::updateGlobalColor(Color color)
 		"Trying to update the global color on a Scatter with a different coloring."
 	);
 
-	_float4color col = color.getColor4();
+	data.desc.global_color = color;
+	data.geometry.updateGlobalColor(color);
+
+	_float4color col = data.geometry.globalColor();
 	data.pGlobalColorCB->update(&col);
 }
 

@@ -51,6 +51,9 @@
     <Filter Include="Sources\Public\_imgui">
       <UniqueIdentifier>{6cc54848-2255-4c83-84a7-4eca89e8c7af}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Sources\Public\Core">
+      <UniqueIdentifier>{a452e575-5c87-49c5-a154-d03ce9c9f337}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Sources\Private\_imgui">
       <UniqueIdentifier>{82cb90b0-ded8-406b-b511-8a282c187a21}</UniqueIdentifier>
     </Filter>
@@ -222,6 +225,21 @@
     </ClInclude>
     <ClInclude Include="chaotic_headers\chaotic_internals.h">
       <Filter>Sources\Public\_chaotic</Filter>
+    </ClInclude>
+    <ClInclude Include="core\include\chaotic_core.h">
+      <Filter>Sources\Public\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="core\include\chaotic\render\CurveGeometry.h">
+      <Filter>Sources\Public\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="core\include\chaotic\render\Renderer.h">
+      <Filter>Sources\Public\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="core\include\chaotic\render\Scene.h">
+      <Filter>Sources\Public\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="core\include\chaotic\render\ScatterGeometry.h">
+      <Filter>Sources\Public\Core</Filter>
     </ClInclude>
     <ClInclude Include="include\Bindable\BindableBase.h">
       <Filter>Sources\Public\Bindable</Filter>

@@ -1,5 +1,7 @@
 #include "Timer.h"
 
+#include <cstdlib>
+
 #ifdef _WIN32
 #include <windows.h>
 #include <timeapi.h>

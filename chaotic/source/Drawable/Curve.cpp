@@ -2,10 +2,41 @@
 #include "Bindable/BindableBase.h"
 
 #include "Error/_erDefault.h"
+#include "chaotic/render/CurveGeometry.h"
 
 #ifdef _DEPLOYMENT
 #include "embedded_resources.h"
 #endif
+
+namespace
+{
+	chaotic::render::CurveColoring makeRenderCurveColoring(CURVE_DESC::CURVE_COLORING coloring)
+	{
+		switch (coloring)
+		{
+		case CURVE_DESC::FUNCTION_COLORING: return chaotic::render::CurveColoring::Function;
+		case CURVE_DESC::LIST_COLORING: return chaotic::render::CurveColoring::List;
+		case CURVE_DESC::GLOBAL_COLORING: return chaotic::render::CurveColoring::Global;
+		default: return chaotic::render::CurveColoring::Global;
+		}
+	}
+
+	chaotic::render::CurveDesc makeRenderCurveDesc(const CURVE_DESC& desc)
+	{
+		return {
+			desc.curve_function,
+			desc.range,
+			desc.vertex_count,
+			makeRenderCurveColoring(desc.coloring),
+			desc.global_color,
+			desc.color_function,
+			desc.color_list,
+			desc.enable_transparency,
+			desc.enable_updates,
+			desc.border_points_included
+		};
+	}
+}
 
 /*
 -----------------------------------------------------------------------------------------------------------
@@ -16,13 +47,7 @@
 // Struct that stores the internal data for a given Curve object.
 struct CurveInternals
 {
-	_float4vector* Vertices = nullptr;
-
-	struct ColVertex 
-	{
-		_float4vector position;
-		_float4color color;
-	}*ColVertices = nullptr;
+	chaotic::render::CurveGeometry geometry;
 
 	struct VSconstBuffer
 	{
@@ -72,12 +97,6 @@ Curve::~Curve()
 
 	CurveInternals& data = *(CurveInternals*)curveData;
 
-	if (data.Vertices)
-		delete[] data.Vertices;
-
-	if (data.ColVertices)
-		delete[] data.ColVertices;
-
 	delete& data;
 }
 
@@ -110,30 +129,18 @@ void Curve::initialize(const CURVE_DESC* pDesc)
 		"You need at least a vertex count of two to initialize a Curve."
 	);
 
-	// Define the t_values where the generator function will be evaluated.
-	float dt = data.desc.border_points_included ?
-		(data.desc.range.y - data.desc.range.x) / (data.desc.vertex_count - 1.f) :
-		(data.desc.range.y - data.desc.range.x) / (data.desc.vertex_count + 1.f);
-
-	float t_i = data.desc.border_points_included ? data.desc.range.x : data.desc.range.x + dt;
+	data.geometry.reset(makeRenderCurveDesc(data.desc));
 
 	switch (data.desc.coloring)
 	{
 		case CURVE_DESC::GLOBAL_COLORING:
 		{
-			data.Vertices = new _float4vector[data.desc.vertex_count];
-
-			for (unsigned n = 0u; n < data.desc.vertex_count; n++)
-				data.Vertices[n] = data.desc.curve_function(t_i + n * dt).getVector4();
-
-			data.pUpdateVB = AddBind(new VertexBuffer(data.Vertices, data.desc.vertex_count, data.desc.enable_updates ? VB_USAGE_DYNAMIC : VB_USAGE_DEFAULT));
-
-			// If updates disabled delete the vertices
-			if (!data.desc.enable_updates)
-			{
-				delete[] data.Vertices;
-				data.Vertices = nullptr;
-			}
+			data.pUpdateVB = AddBind(new VertexBuffer(
+				data.geometry.vertexData(),
+				data.geometry.vertexStride(),
+				data.geometry.vertexCount(),
+				data.desc.enable_updates ? VB_USAGE_DYNAMIC : VB_USAGE_DEFAULT
+			));
 			// Create the corresponding Vertex Shader
 #ifndef _DEPLOYMENT
 			VertexShader* pvs = AddBind(new VertexShader(PROJECT_DIR L"shaders/CurveVS.cso"));
@@ -167,7 +174,7 @@ void Curve::initialize(const CURVE_DESC* pDesc)
 			AddBind(new InputLayout(ied, 1u, pvs));
 
 			// Create the constant buffer for the global color.
-			_float4color col = data.desc.global_color.getColor4();
+			_float4color col = data.geometry.globalColor();
 			data.pGlobalColorCB = AddBind(new ConstantBuffer(&col, PIXEL_CONSTANT_BUFFER, 1u /*Slot*/));
 			break;
 		}
@@ -178,22 +185,12 @@ void Curve::initialize(const CURVE_DESC* pDesc)
 				"Found nullptr when trying to access a color list to create a Curve."
 			);
 
-			data.ColVertices = new CurveInternals::ColVertex[data.desc.vertex_count];
-
-			for (unsigned n = 0u; n < data.desc.vertex_count; n++)
-			{
-				data.ColVertices[n].position = data.desc.curve_function(t_i + n * dt).getVector4();
-				data.ColVertices[n].color = data.desc.color_list[n].getColor4();
-			}
-
-			data.pUpdateVB = AddBind(new VertexBuffer(data.ColVertices, data.desc.vertex_count, data.desc.enable_updates ? VB_USAGE_DYNAMIC : VB_USAGE_DEFAULT));
-
-			// If updates disabled delete the vertices
-			if (!data.desc.enable_updates)
-			{
-				delete[] data.ColVertices;
-				data.ColVertices = nullptr;
-			}
+			data.pUpdateVB = AddBind(new VertexBuffer(
+				data.geometry.vertexData(),
+				data.geometry.vertexStride(),
+				data.geometry.vertexCount(),
+				data.desc.enable_updates ? VB_USAGE_DYNAMIC : VB_USAGE_DEFAULT
+			));
 			// Create the corresponding Vertex Shader
 #ifndef _DEPLOYMENT
 			VertexShader* pvs = AddBind(new VertexShader(PROJECT_DIR L"shaders/ColorCurveVS.cso"));
@@ -235,22 +232,12 @@ void Curve::initialize(const CURVE_DESC* pDesc)
 				"Found nullptr when trying to access a color function to create a Curve."
 			);
 
-			data.ColVertices = new CurveInternals::ColVertex[data.desc.vertex_count];
-
-			for (unsigned n = 0u; n < data.desc.vertex_count; n++)
-			{
-				data.ColVertices[n].position = data.desc.curve_function(t_i + n * dt).getVector4();
-				data.ColVertices[n].color = data.desc.color_function(t_i + n * dt).getColor4();
-			}
-
-			data.pUpdateVB = AddBind(new VertexBuffer(data.ColVertices, data.desc.vertex_count, data.desc.enable_updates ? VB_USAGE_DYNAMIC : VB_USAGE_DEFAULT));
-
-			// If updates disabled delete the vertices
-			if (!data.desc.enable_updates)
-			{
-				delete[] data.ColVertices;
-				data.ColVertices = nullptr;
-			}
+			data.pUpdateVB = AddBind(new VertexBuffer(
+				data.geometry.vertexData(),
+				data.geometry.vertexStride(),
+				data.geometry.vertexCount(),
+				data.desc.enable_updates ? VB_USAGE_DYNAMIC : VB_USAGE_DEFAULT
+			));
 			// Create the corresponding Vertex Shader
 #ifndef _DEPLOYMENT
 			VertexShader* pvs = AddBind(new VertexShader(PROJECT_DIR L"shaders/ColorCurveVS.cso"));
@@ -326,49 +313,15 @@ void Curve::updateRange(Vector2f range)
 		"Trying to update the vertices on a Curve with updates disabled."
 	);
 
-	// Unpdate range values if requested.
 	if (range)
 		data.desc.range = range;
 
-	// Define the t_values where the generator function will be evaluated.
-	float dt = data.desc.border_points_included ?
-		(data.desc.range.y - data.desc.range.x) / (data.desc.vertex_count - 1.f) :
-		(data.desc.range.y - data.desc.range.x) / (data.desc.vertex_count + 1.f);
-
-	float t_i = data.desc.border_points_included ? data.desc.range.x : data.desc.range.x + dt;
-
-	switch (data.desc.coloring)
-	{
-		case CURVE_DESC::GLOBAL_COLORING:
-		{
-			for (unsigned n = 0u; n < data.desc.vertex_count; n++)
-				data.Vertices[n] = data.desc.curve_function(t_i + n * dt).getVector4();
-
-			data.pUpdateVB->updateVertices(data.Vertices, data.desc.vertex_count);
-			break;
-		}
-
-		case CURVE_DESC::LIST_COLORING:
-		{
-			for (unsigned n = 0u; n < data.desc.vertex_count; n++)
-				data.ColVertices[n].position = data.desc.curve_function(t_i + n * dt).getVector4();
-
-			data.pUpdateVB->updateVertices(data.ColVertices, data.desc.vertex_count);
-			break;
-		}
-
-		case CURVE_DESC::FUNCTION_COLORING:
-		{
-			for (unsigned n = 0u; n < data.desc.vertex_count; n++)
-			{
-				data.ColVertices[n].position = data.desc.curve_function(t_i + n * dt).getVector4();
-				data.ColVertices[n].color = data.desc.color_function(t_i + n * dt).getColor4();
-			}
-
-			data.pUpdateVB->updateVertices(data.ColVertices, data.desc.vertex_count);
-			break;
-		}
-	}
+	data.geometry.updateRange(range);
+	data.pUpdateVB->updateVertices(
+		data.geometry.vertexData(),
+		data.geometry.vertexStride(),
+		data.geometry.vertexCount()
+	);
 }
 
 // If updates are enabled, and coloring is with a list, this function allows to change 
@@ -395,10 +348,13 @@ void Curve::updateColors(Color* color_list)
 		"Trying to update the colors on a Curve with updates disabled."
 	);
 
-	for (unsigned i = 0u; i < data.desc.vertex_count; i++)
-		data.ColVertices[i].color = color_list[i].getColor4();
-
-	data.pUpdateVB->updateVertices(data.ColVertices, data.desc.vertex_count);
+	data.desc.color_list = color_list;
+	data.geometry.updateColors(color_list);
+	data.pUpdateVB->updateVertices(
+		data.geometry.vertexData(),
+		data.geometry.vertexStride(),
+		data.geometry.vertexCount()
+	);
 }
 
 // If the coloring is set to global, updates the global Curve color.
@@ -415,7 +371,10 @@ void Curve::updateGlobalColor(Color color)
 		"Trying to update the global color on a Curve with a different coloring."
 	);
 
-	_float4color col = color.getColor4();
+	data.desc.global_color = color;
+	data.geometry.updateGlobalColor(color);
+
+	_float4color col = data.geometry.globalColor();
 	data.pGlobalColorCB->update(&col);
 }
 

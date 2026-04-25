@@ -18,14 +18,18 @@ to deal with library linkage yourself.
 -------------------------------------------------------------------------------------------------------
 */
 
+// Backend toggles. The portable core can define CHAOTIC_CORE_ONLY before
+// including this header to avoid enabling renderer-specific features.
+#ifndef CHAOTIC_CORE_ONLY
 // Toggle to enable and disable all ImGui code inside the library.
-// If you want to use ImGui make sure the library has access to the 
+// If you want to use ImGui make sure the library has access to the
 // ImGui headers and this definition is uncommented during build.
 #define _INCLUDE_IMGUI
 
-// Toggle that uses the raw bytecode shaders constructors with the embedded 
+// Toggle that uses the raw bytecode shaders constructors with the embedded
 // resources instead of the files, so that the library is self sufficient.
 #define _DEPLOYMENT
+#endif
 
 // Default API includes
 

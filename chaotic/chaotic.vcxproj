@@ -65,6 +65,11 @@
     <ClInclude Include="chaotic_headers\chaotic_customs.h" />
     <ClInclude Include="chaotic_headers\chaotic_defaults.h" />
     <ClInclude Include="chaotic_headers\chaotic_internals.h" />
+    <ClInclude Include="core\include\chaotic_core.h" />
+    <ClInclude Include="core\include\chaotic\render\CurveGeometry.h" />
+    <ClInclude Include="core\include\chaotic\render\Renderer.h" />
+    <ClInclude Include="core\include\chaotic\render\Scene.h" />
+    <ClInclude Include="core\include\chaotic\render\ScatterGeometry.h" />
     <ClInclude Include="include\Bindable.h" />
     <ClInclude Include="include\Bindable\BindableBase.h" />
     <ClInclude Include="include\Bindable\Blender.h" />
@@ -430,7 +435,7 @@
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>$(ProjectDir)include/</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)include/;$(ProjectDir)core/include/</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -447,7 +452,7 @@
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>$(ProjectDir)include/</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)include/;$(ProjectDir)core/include/</AdditionalIncludeDirectories>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
     </ClCompile>
     <Link>
@@ -463,7 +468,7 @@
       <PreprocessorDefinitions>SOLUTION_DIR=R"($(SolutionDir))";PROJECT_DIR=LR"($(ProjectDir))";_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>$(ProjectDir)include/;$(ProjectDir)include/imgui/;$(ProjectDir)chaotic_headers/</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)include/;$(ProjectDir)core/include/;$(ProjectDir)include/imgui/;$(ProjectDir)chaotic_headers/</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -484,7 +489,7 @@
       <PreprocessorDefinitions>SOLUTION_DIR=R"($(SolutionDir))";PROJECT_DIR=LR"($(ProjectDir))";NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>$(ProjectDir)include/;$(ProjectDir)include/imgui/;$(ProjectDir)chaotic_headers/</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)include/;$(ProjectDir)core/include/;$(ProjectDir)include/imgui/;$(ProjectDir)chaotic_headers/</AdditionalIncludeDirectories>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
     </ClCompile>
     <Link>
